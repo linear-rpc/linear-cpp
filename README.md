@@ -2,7 +2,7 @@
 
 ## Overview
 
-a msgpack-rpc implementation for C++ language.
+a msgpack-rpc + α implementation for C++ language.
 
 ## Build Instructions
 ### Required tools and Dependencies
@@ -20,6 +20,7 @@ a msgpack-rpc implementation for C++ language.
     download binary distributions from https://www.openssl.org/community/binaries.html and install it.<br>
   * Windows SDK<br>
     Your application must link advapi32, iphlpapi, psapi, shell32, userenv and ws2_32.(needed by libuv)
+    And must link gdi32 and user32 when using OpenSSL.
 * xNix and Windows
   * Doxygen and Graphviz<br>
     If you want to create a manual, install doxygen and graphviz.
