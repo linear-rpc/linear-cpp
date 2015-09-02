@@ -7,6 +7,8 @@
 #include "ws_socket_impl.h"
 #include "auth_context_impl.h"
 
+using namespace linear::log;
+
 namespace linear {
 
 WSSocketImpl::WSSocketImpl(const std::string& host, int port, const WSRequestContext& request_context,

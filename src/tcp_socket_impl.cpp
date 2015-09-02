@@ -5,6 +5,8 @@
 #include "event_loop.h"
 #include "tcp_socket_impl.h"
 
+using namespace linear::log;
+
 namespace linear {
 
 TCPSocketImpl::TCPSocketImpl(const std::string& host, int port, const HandlerDelegate& delegate)

@@ -10,8 +10,6 @@
 #include "linear/socket.h"
 #include "linear/group.h"
 
-using namespace linear::log;
-
 namespace linear {
 
 class SocketPool {
@@ -29,19 +27,19 @@ class SocketPool {
     }
     linear::lock_guard<linear::mutex> lock(mutex_);
     if (max_ > 0 && max_ <= cur_) {
-      LINEAR_LOG(LOG_WARN, "Socket(type = %d, id = %d) excess MaxLimits(%d) <= current(%d)",
+      LINEAR_LOG(linear::log::LOG_WARN, "Socket(type = %d, id = %d) excess MaxLimits(%d) <= current(%d)",
                  socket.GetType(), id, max_, cur_);
       return Error(LNR_ENOSPC);
     }
     for (std::list<linear::Socket>::iterator it = pool_.begin(); it != pool_.end(); it++) {
       if (id == it->GetId()) {
-        LINEAR_LOG(LOG_WARN, "Socket(type = %d, id = %d) already exists", socket.GetType(), id);
+        LINEAR_LOG(linear::log::LOG_WARN, "Socket(type = %d, id = %d) already exists", socket.GetType(), id);
         return Error(LNR_EALREADY);
       }
     }
     cur_++;
     pool_.push_back(socket);
-    LINEAR_DEBUG(LOG_DEBUG, "Socket(type = %d, id = %d) is added", socket.GetType(), id);
+    LINEAR_DEBUG(linear::log::LOG_DEBUG, "Socket(type = %d, id = %d) is added", socket.GetType(), id);
     return Error(LNR_OK);
   }
   virtual void Remove(int id) {
@@ -51,23 +49,23 @@ class SocketPool {
     linear::lock_guard<linear::mutex> lock(mutex_);
     for (std::list<linear::Socket>::iterator it = pool_.begin(); it != pool_.end(); it++) {
       if (id == it->GetId()) {
-        LINEAR_DEBUG(LOG_DEBUG, "Socket(type = %d, id = %d) is removed", it->GetType(), id);
+        LINEAR_DEBUG(linear::log::LOG_DEBUG, "Socket(type = %d, id = %d) is removed", it->GetType(), id);
         cur_--;
         pool_.erase(it);
         return;
       }
     }
-    LINEAR_LOG(LOG_WARN, "Socket(id = %d) is already removed", id);
+    LINEAR_LOG(linear::log::LOG_WARN, "Socket(id = %d) is already removed", id);
   }
   virtual const Socket& Get(int id) {
     linear::lock_guard<linear::mutex> lock(mutex_);
     for (std::list<Socket>::iterator it = pool_.begin(); it != pool_.end(); it++) {
       if (id == it->GetId()) {
-        LINEAR_DEBUG(LOG_DEBUG, "found Socket(type = %d, id = %d)", it->GetType(), id);
+        LINEAR_DEBUG(linear::log::LOG_DEBUG, "found Socket(type = %d, id = %d)", it->GetType(), id);
         return (*it);
       }
     }
-    LINEAR_LOG(LOG_WARN, "not found Socket(id = %d), may be already removed", id);
+    LINEAR_LOG(linear::log::LOG_WARN, "not found Socket(id = %d), may be already removed", id);
     static Socket nil_sock;
     return nil_sock;
   }

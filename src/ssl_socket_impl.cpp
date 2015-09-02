@@ -5,6 +5,8 @@
 #include "event_loop.h"
 #include "ssl_socket_impl.h"
 
+using namespace linear::log;
+
 namespace linear {
 
 SSLSocketImpl::SSLSocketImpl(const std::string& host, int port, const linear::SSLContext& context,

@@ -10,8 +10,6 @@
 
 #define NONCE_TIMEOUT (60000) // 1 min
 
-using namespace linear::log;
-
 namespace linear {
 
 class NoncePool {
@@ -57,14 +55,14 @@ class NoncePool {
     TimerCtx* c = new TimerCtx(nonce, this);
     Nonce n(nonce, c);
     pool_.push_back(n);
-    LINEAR_DEBUG(LOG_DEBUG, "Nonce(%s...) is valid for %d msecs", nonce.substr(16).c_str(), timeout);
+    LINEAR_DEBUG(linear::log::LOG_DEBUG, "Nonce(%s...) is valid for %d msecs", nonce.substr(16).c_str(), timeout);
     return n.timer.Start(NoncePool::OnTimer, timeout, c);
   }
   void Remove(const std::string& nonce) {
     linear::lock_guard<linear::mutex> lock(mutex_);
     for (std::vector<NoncePool::Nonce>::iterator it = pool_.begin(); it != pool_.end(); it++) {
       if (nonce == it->nonce) {
-        LINEAR_DEBUG(LOG_DEBUG, "Nonce(%s...) is removed", nonce.substr(16).c_str());
+        LINEAR_DEBUG(linear::log::LOG_DEBUG, "Nonce(%s...) is removed", nonce.substr(16).c_str());
         it->timer.Stop();
         delete it->ctx;
         pool_.erase(it);
@@ -76,11 +74,11 @@ class NoncePool {
     linear::lock_guard<linear::mutex> lock(mutex_);
     for (std::vector<NoncePool::Nonce>::iterator it = pool_.begin(); it != pool_.end(); it++) {
       if (nonce == it->nonce) {
-        LINEAR_DEBUG(LOG_DEBUG, "Nonce(%s...) is valid", nonce.substr(16).c_str());
+        LINEAR_DEBUG(linear::log::LOG_DEBUG, "Nonce(%s...) is valid", nonce.substr(16).c_str());
         return true;
       }
     }
-    LINEAR_DEBUG(LOG_WARN, "Nonce(%s...) is invalid", nonce.substr(16).c_str());
+    LINEAR_DEBUG(linear::log::LOG_WARN, "Nonce(%s...) is invalid", nonce.substr(16).c_str());
     return false;
   }
 
