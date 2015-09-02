@@ -1,0 +1,13 @@
+/**
+ * @file version.h
+ * Version infomations
+ */
+
+#ifndef LINEAR_VERSION_H_
+#define LINEAR_VERSION_H_
+
+#define LINEAR_VERSION_ID	VersionId
+#define LINEAR_COMMIT_ID	CommitId
+#define LINEAR_COMMIT_DATE	CommitDate
+
+#endif // LINEAR_VERSION_H_

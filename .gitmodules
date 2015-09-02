@@ -1,0 +1,8 @@
+[submodule "deps/msgpack"]
+	path = deps/msgpack
+	url = https://github.com/msgpack/msgpack-c.git
+	ignore = dirty
+[submodule "deps/libtv"]
+	path = deps/libtv
+	url = https://github.com/linear-rpc/libtv.git
+	ignore = dirty

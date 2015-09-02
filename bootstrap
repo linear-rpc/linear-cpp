@@ -1,0 +1,26 @@
+#!/bin/sh
+
+if [ x`uname` = x"Darwin" ]; then
+    LIBTOOLIZE="glibtoolize --force --copy"
+else
+    LIBTOOLIZE="libtoolize --force --copy"
+fi
+
+unzip -n deps/gmock-1.7.0.zip -d deps/ >/dev/null 2>&1
+
+# break on error
+set -ex
+
+# libtv
+(cd deps/libtv; sh ./bootstrap >/dev/null 2>&1)
+
+# msgpack
+(cd deps/msgpack; sh ./bootstrap >/dev/null 2>&1)
+
+# linear
+$LIBTOOLIZE >/dev/null 2>&1
+aclocal -I m4
+autoheader
+automake --foreign --add-missing --copy
+autoconf
+
