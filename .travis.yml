@@ -18,3 +18,7 @@ script: make clean all check
 
 notifications:
   email: false
+
+os:
+  - linux
+  - osx
