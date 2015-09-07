@@ -64,9 +64,8 @@ class ApplicationHandler : public linear::Handler {
                   << ", params = " << request.params.stringify()
                   << " from " << info.addr << ":" << info.port << std::endl;
         if (request.method == "echo") {
-          std::string result = request.params.as<std::string>();
-          std::cout << "do echo back: " << result << std::endl;
-          linear::Response response(request.msgid, result);
+          std::cout << "do echo back: " << request.params.stringify() << std::endl;
+          linear::Response response(request.msgid, request.params);
           response.Send(socket);
         } else {
           linear::Response response(request.msgid, linear::type::nil(), std::string("method not found"));
