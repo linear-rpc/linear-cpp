@@ -511,6 +511,14 @@ void SocketImpl::OnRead(const tv_buf_t* buffer, ssize_t nread) {
     }
     return;
   }
+  Error e(nread);
+
+#ifdef WITH_SSL
+  if (nread == TV_ESSL) {
+    e = Error(LNR_ESSL, stream_->ssl_err);
+  }
+#endif
+
   state_lock.unlock();
   try {
     assert(nread != 0);
@@ -518,14 +526,6 @@ void SocketImpl::OnRead(const tv_buf_t* buffer, ssize_t nread) {
       LINEAR_LOG(LOG_DEBUG, "%s: %s:%d <-- %s --- %s:%d",
                  tv_strerror(reinterpret_cast<tv_handle_t*>(stream_), nread),
                  self_.addr.c_str(), self_.port, GetTypeString(type_).c_str(), peer_.addr.c_str(), peer_.port);
-      Error e(nread);
-
-#ifdef WITH_SSL
-      if (nread == TV_ESSL) {
-        e = Error(LNR_ESSL, stream_->ssl_err);
-      }
-#endif
-
       // error or EOF
       Disconnect(handshaking_);
       last_error_ = e;
