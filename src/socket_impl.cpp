@@ -306,6 +306,17 @@ Error SocketImpl::KeepAlive(unsigned int interval, unsigned int retry) {
     return Error(LNR_ENOTCONN);
   }
   int ret = tv_keepalive(stream_, 1, interval, interval, retry);
+  if (ret) {
+    return Error(ret);
+  }
+
+#if defined(TCP_USER_TIMEOUT)
+  int option = interval * 1000 * retry; // sec * retry
+  ret = tv_setsockopt(stream_, IPPROTO_TCP, TCP_USER_TIMEOUT, (void*)&option, sizeof(option));
+#else
+  LINEAR_LOG(LOG_DEBUG, "TCP_USER_TIMEOUT is not supported on your system");
+#endif
+
   return Error(ret);
 }
 
