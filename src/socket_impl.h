@@ -57,7 +57,7 @@ class SocketImpl {
   linear::Error Connect(unsigned int timeout, const linear::Socket& socket);
   linear::Error Disconnect(bool handshaking = false);
   linear::Error Send(const linear::Message& message, int timeout);
-  linear::Error KeepAlive(unsigned int interval, unsigned int retry);
+  linear::Error KeepAlive(unsigned int interval, unsigned int retry, Socket::KeepAliveType type);
   linear::Error BindToDevice(const std::string& ifname);
   linear::Error SetSockOpt(int level, int optname, const void* optval, size_t optlen);
 

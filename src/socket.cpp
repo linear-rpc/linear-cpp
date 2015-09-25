@@ -94,11 +94,11 @@ Error Socket::Disconnect() const {
   return socket_->Disconnect();
 }
 
-Error Socket::KeepAlive(unsigned int interval, unsigned int retry) const {
+Error Socket::KeepAlive(unsigned int interval, unsigned int retry, KeepAliveType type) const {
   if (!socket_) {
     return Error(LNR_EBADF);
   }
-  return socket_->KeepAlive(interval, retry);
+  return socket_->KeepAlive(interval, retry, type);
 }
 
 Error Socket::BindToDevice(const std::string& ifname) const {

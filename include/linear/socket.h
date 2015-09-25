@@ -41,6 +41,11 @@ class LINEAR_EXTERN Socket {
     CONNECTED,     //!< Connected
   };
 
+  enum KeepAliveType {
+    KEEPALIVE_TCP, //!< use TCP_KEEPALIVE
+    KEEPALIVE_WS,  //!< use WS_KEEPALIVE
+  };
+
  public:
   /// @cond hidden
   Socket();
@@ -90,12 +95,13 @@ class LINEAR_EXTERN Socket {
    * Interface to set SO_KEEPALIVE
    * @param [in] interval time(second) to send tcp-keepalive
    * @param [in] retry retry counter(3 times as default)
+   * @param [in] type keepalive type (TCP_KEEPALIVE as default)
    * @return linear::Error object
    * @note
-   * This method is enabled on Windows, linux 2.4- and iOS 7.0-.
+   * TCP_KEEPALIVE is enabled on Windows, linux 2.4- and iOS 7.0-.
    * refer man 2 socket and man 7 tcp
    */
-  virtual linear::Error KeepAlive(unsigned int interval = 1, unsigned int retry = 3) const;
+  virtual linear::Error KeepAlive(unsigned int interval = 1, unsigned int retry = 3, linear::Socket::KeepAliveType type = Socket::KEEPALIVE_TCP) const;
   /**
    * @fn linear::Error BindToDevice(const std::string& ifname)
    * Interface to set SO_BINDTODEVICE
