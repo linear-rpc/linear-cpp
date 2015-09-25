@@ -300,10 +300,14 @@ Error SocketImpl::Send(const Message& message, int timeout) {
   }
 }
 
-Error SocketImpl::KeepAlive(unsigned int interval, unsigned int retry) {
+Error SocketImpl::KeepAlive(unsigned int interval, unsigned int retry, Socket::KeepAliveType type) {
   lock_guard<mutex> state_lock(state_mutex_);
   if (state_ != Socket::CONNECTING && state_ != Socket::CONNECTED) {
     return Error(LNR_ENOTCONN);
+  }
+  if (type == Socket::KEEPALIVE_WS && (type_ == Socket::WS || type_ == Socket::WSS)) {
+    int ret = tv_ws_keepalive(stream_, 1, interval, retry);
+    return Error(ret);
   }
   int ret = tv_keepalive(stream_, 1, interval, interval, retry);
   if (ret) {
