@@ -151,7 +151,7 @@ void WSSSocketImpl::SetWSResponseContext(const WSResponseContext& response_conte
 Error WSSSocketImpl::GetVerifyResult() {
   int ret = tv_ssl_get_verify_result(reinterpret_cast<tv_wss_t*>(stream_)->ssl_handle);
   if (ret) {
-    return Error(ret, stream_->ssl_err);
+    return Error(ret, reinterpret_cast<tv_wss_t*>(stream_)->ssl_handle->ssl_err);
   } else {
     return Error(LNR_OK);
   }
