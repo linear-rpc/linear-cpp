@@ -1,4 +1,14 @@
+sudo: false
+
+branches:
+  only:
+    - master
+
 language: cpp
+
+os:
+  - linux
+  - osx
 
 compiler:
   - gcc
@@ -16,11 +26,9 @@ before_script:
   - if [ $TRAVIS_OS_NAME == linux ]; then ./configure --with-ssl --with-test; fi
   - if [ $TRAVIS_OS_NAME == osx ]; then ./configure --with-ssl=/usr/local/opt/openssl --with-test; fi
 
-script: make clean all check
+script:
+  - make clean all check
 
 notifications:
   email: false
 
-os:
-  - linux
-  - osx
