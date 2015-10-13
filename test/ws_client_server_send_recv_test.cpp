@@ -712,19 +712,17 @@ TEST_F(WSClientServerSendRecvTest, ZeroLengthPacket) {
 
 // Recv malformed packet issue #2790
 TEST_F(WSClientServerSendRecvTest, MalformedPacket) {
-  if (sizeof(size_t) != 4) {
-    LINEAR_LOG(LOG_DEBUG, "sizeof(size_t) != 4, so ignore this test");
-    return;
-  }
   MockHandler sh;
   WSServer sv(sh);
 
   Error e = sv.Start(TEST_ADDR, TEST_PORT);
   ASSERT_EQ(LNR_OK, e.Code());
 
-  EXPECT_CALL(sh, OnConnectMock(_)).Times(0);
+  EXPECT_CALL(sh, OnConnectMock(_)).Times(1);
+  EXPECT_CALL(sh, OnDisconnectMock(_, _)).WillOnce(DoAll(Assign(&srv_finished, true), Assign(&cli_finished, true)));
 
-  const char malformed[] = {(char)0xdd,
+  const char malformed[] = {(char)0x82, (char)0x85, (char)0x00, (char)0x00, (char)0x00, (char)0x00,
+                            (char)0xdd,
                             (char)0x0a, (char)0xaa, (char)0xaa, (char)0xab};
   struct sockaddr_in s;
   int fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -735,10 +733,16 @@ TEST_F(WSClientServerSendRecvTest, MalformedPacket) {
   ASSERT_EQ(0, ret);
 
 #define HS "GET /linear HTTP/1.1\r\nConnection: upgrade\r\nHost: 127.0.0.1:37800\r\nOrigin: http://127.0.0.1:37800\r\nSec-WebSocket-Key: BJjVLqFG70hvGQZVBfJvAw==\r\nSec-WebSocket-Version: 13\r\nUpgrade: websocket\r\n\r\n"
-    
+
   ssize_t siz = write(fd, HS, strlen(HS));
   siz = write(fd, malformed, sizeof(malformed));
   ASSERT_EQ(sizeof(malformed), (size_t)siz);
   msleep(1000);
+  if (sizeof(size_t) == 4) {
+    WAIT_TO_FINISH_CALLBACK();
+  }
   close(fd);
+  if (sizeof(size_t) != 4) {
+    WAIT_TO_FINISH_CALLBACK();
+  }
 }
