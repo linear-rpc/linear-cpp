@@ -680,6 +680,36 @@ TEST_F(WSClientServerSendRecvTest, NotifyFromClientToGroup) {
   ASSERT_EQ(params, recv_notif.params);
 }
 
+TEST_F(WSClientServerSendRecvTest, ZeroLengthPacket) {
+  MockHandler sh;
+  WSServer sv(sh);
+
+  Error e = sv.Start(TEST_ADDR, TEST_PORT);
+  ASSERT_EQ(LNR_OK, e.Code());
+
+  EXPECT_CALL(sh, OnConnectMock(_));
+  EXPECT_CALL(sh, OnDisconnectMock(_, _)).WillOnce(DoAll(Assign(&srv_finished, true), Assign(&cli_finished, true)));
+
+  const char malformed[] = {(char)0x82, (char)0x80,
+                            (char)0x00, (char)0x00, (char)0x00, (char)0x00};
+  struct sockaddr_in s;
+  int fd = socket(AF_INET, SOCK_STREAM, 0);
+  s.sin_family = AF_INET;
+  s.sin_port = htons(TEST_PORT);
+  s.sin_addr.s_addr = inet_addr(TEST_ADDR);
+  int ret = connect(fd, (struct sockaddr *)&s, sizeof(s));
+  ASSERT_EQ(0, ret);
+
+#define HS "GET /linear HTTP/1.1\r\nConnection: upgrade\r\nHost: 127.0.0.1:37800\r\nOrigin: http://127.0.0.1:37800\r\nSec-WebSocket-Key: BJjVLqFG70hvGQZVBfJvAw==\r\nSec-WebSocket-Version: 13\r\nUpgrade: websocket\r\n\r\n"
+    
+  ssize_t siz = write(fd, HS, strlen(HS));
+  siz = write(fd, malformed, sizeof(malformed));
+  ASSERT_EQ(sizeof(malformed), (size_t)siz);
+  msleep(1000);
+  close(fd);
+  WAIT_TO_FINISH_CALLBACK();
+}
+
 // Recv malformed packet issue #2790
 TEST_F(WSClientServerSendRecvTest, MalformedPacket) {
   if (sizeof(size_t) != 4) {
@@ -703,8 +733,12 @@ TEST_F(WSClientServerSendRecvTest, MalformedPacket) {
   s.sin_addr.s_addr = inet_addr(TEST_ADDR);
   int ret = connect(fd, (struct sockaddr *)&s, sizeof(s));
   ASSERT_EQ(0, ret);
-  ssize_t siz = write(fd, malformed, sizeof(malformed));
+
+#define HS "GET /linear HTTP/1.1\r\nConnection: upgrade\r\nHost: 127.0.0.1:37800\r\nOrigin: http://127.0.0.1:37800\r\nSec-WebSocket-Key: BJjVLqFG70hvGQZVBfJvAw==\r\nSec-WebSocket-Version: 13\r\nUpgrade: websocket\r\n\r\n"
+    
+  ssize_t siz = write(fd, HS, strlen(HS));
+  siz = write(fd, malformed, sizeof(malformed));
   ASSERT_EQ(sizeof(malformed), (size_t)siz);
-  msleep(3000);
+  msleep(1000);
   close(fd);
 }
