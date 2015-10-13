@@ -939,10 +939,9 @@ TEST_F(SSLClientServerSendRecvTest, MalformedPacket) {
   Error e = sv.Start(TEST_ADDR, TEST_PORT);
   ASSERT_EQ(LNR_OK, e.Code());
 
-  EXPECT_CALL(sh, OnConnectMock(_)).Times(0);
+  EXPECT_CALL(sh, OnConnectMock(_)).Times(1);
+  EXPECT_CALL(sh, OnDisconnectMock(_, _)).WillOnce(DoAll(Assign(&srv_finished, true), Assign(&cli_finished, true)));
 
-  const char malformed[] = {(char)0xdd,
-                            (char)0x0a, (char)0xaa, (char)0xaa, (char)0xab};
   struct sockaddr_in s;
   int fd = socket(AF_INET, SOCK_STREAM, 0);
   s.sin_family = AF_INET;
@@ -950,8 +949,24 @@ TEST_F(SSLClientServerSendRecvTest, MalformedPacket) {
   s.sin_addr.s_addr = inet_addr(TEST_ADDR);
   int ret = connect(fd, (struct sockaddr *)&s, sizeof(s));
   ASSERT_EQ(0, ret);
-  ssize_t siz = write(fd, malformed, sizeof(malformed));
+
+  SSL_CTX* ctx = SSL_CTX_new(TLSv1_1_client_method());
+  SSL* ssl = SSL_new(ctx);
+  SSL_set_fd(ssl, fd);
+  SSL_connect(ssl);
+
+  const char malformed[] = {(char)0xdd,
+                            (char)0x0a, (char)0xaa, (char)0xaa, (char)0xab};
+  ssize_t siz = SSL_write(ssl, malformed, sizeof(malformed));
   ASSERT_EQ(sizeof(malformed), (size_t)siz);
-  msleep(3000);
+  msleep(1000);
+  if (sizeof(size_t) == 4) {
+    WAIT_TO_FINISH_CALLBACK();
+  }
+  SSL_free(ssl);
   close(fd);
+  if (sizeof(size_t) != 4) {
+    WAIT_TO_FINISH_CALLBACK();
+  }
+  SSL_CTX_free(ctx);
 }

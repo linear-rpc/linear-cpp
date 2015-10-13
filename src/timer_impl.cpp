@@ -56,7 +56,7 @@ void TimerImpl::Stop() {
   if (state_ == STOP) {
     return;
   }
-  EventLoop::TimerEventData* data = reinterpret_cast<EventLoop::TimerEventData*>(tv_timer_->data);
+  EventLoop::TimerEventData* data = static_cast<EventLoop::TimerEventData*>(tv_timer_->data);
   data->Lock();
   data->Unregister();
   data->Unlock();

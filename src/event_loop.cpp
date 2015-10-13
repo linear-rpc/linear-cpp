@@ -30,7 +30,7 @@ void EventLoop::RemoveTimer(int id) {
 
 void EventLoop::OnAccept(tv_stream_t* srv_stream, tv_stream_t* cli_stream, int status) {
   assert(srv_stream != NULL && srv_stream->data != NULL);
-  ServerEventData* data = reinterpret_cast<ServerEventData*>(srv_stream->data);
+  ServerEventData* data = static_cast<ServerEventData*>(srv_stream->data);
   data->Lock();
   ServerImpl* server = data->GetServer();
   if (server != NULL) {
@@ -41,7 +41,7 @@ void EventLoop::OnAccept(tv_stream_t* srv_stream, tv_stream_t* cli_stream, int s
 
 void EventLoop::OnAcceptComplete(tv_stream_t* stream, int status) {
   assert(stream != NULL && stream->data != NULL);
-  SocketEventData* data = reinterpret_cast<SocketEventData*>(stream->data);
+  SocketEventData* data = static_cast<SocketEventData*>(stream->data);
   data->Lock();
   SocketImpl* socket = data->GetSocket();
   if (socket != NULL) {
@@ -52,7 +52,7 @@ void EventLoop::OnAcceptComplete(tv_stream_t* stream, int status) {
 
 void EventLoop::OnConnect(tv_stream_t* stream, int status) {
   assert(stream != NULL && stream->data != NULL);
-  SocketEventData* data = reinterpret_cast<SocketEventData*>(stream->data);
+  SocketEventData* data = static_cast<SocketEventData*>(stream->data);
   data->Lock();
   SocketImpl* socket = data->GetSocket();
   if (socket != NULL) {
@@ -63,12 +63,12 @@ void EventLoop::OnConnect(tv_stream_t* stream, int status) {
 
 void EventLoop::OnClose(tv_handle_t* handle) {
   assert(handle != NULL);
-  EventData* data = reinterpret_cast<EventData*>(handle->data);
+  EventData* data = static_cast<EventData*>(handle->data);
   assert(data != NULL);
   switch (data->GetType()) {
   case SERVER_EVENT:
     {
-      ServerEventData* server_event_data = reinterpret_cast<ServerEventData*>(handle->data);
+      ServerEventData* server_event_data = static_cast<ServerEventData*>(handle->data);
       delete server_event_data;
       handle->data = NULL;
     }
@@ -76,7 +76,7 @@ void EventLoop::OnClose(tv_handle_t* handle) {
   case SOCKET_EVENT:
     {
       linear::Socket socket; // need to copy socket to destruct after deleting socket event data.
-      SocketEventData* socket_event_data = reinterpret_cast<SocketEventData*>(handle->data);
+      SocketEventData* socket_event_data = static_cast<SocketEventData*>(handle->data);
       socket_event_data->Lock();
       SocketImpl* socket_impl = socket_event_data->GetSocket();
       if (socket_impl != NULL) {
@@ -99,7 +99,7 @@ void EventLoop::OnClose(tv_handle_t* handle) {
     break;
   case TIMER_EVENT:
     {
-      TimerEventData* timer_event_data = reinterpret_cast<TimerEventData*>(handle->data);
+      TimerEventData* timer_event_data = static_cast<TimerEventData*>(handle->data);
       RemoveTimer(timer_event_data->GetId());
       delete timer_event_data;
       handle->data = NULL;
@@ -113,7 +113,7 @@ void EventLoop::OnClose(tv_handle_t* handle) {
 
 void EventLoop::OnRead(tv_stream_t* stream, ssize_t nread, const tv_buf_t* buffer) {
   assert(stream != NULL && stream->data != NULL && buffer != NULL);
-  SocketEventData* data = reinterpret_cast<SocketEventData*>(stream->data);
+  SocketEventData* data = static_cast<SocketEventData*>(stream->data);
   data->Lock();
   SocketImpl* socket = data->GetSocket();
   if (socket != NULL) {
@@ -129,8 +129,8 @@ void EventLoop::OnWrite(tv_write_t* request, int status) {
     LINEAR_LOG(LOG_ERR, "fail to write: %s",
                tv_strerror(reinterpret_cast<tv_handle_t*>(request->handle), status));
   }
-  SocketEventData* data = reinterpret_cast<SocketEventData*>(request->handle->data);
-  const Message* message = reinterpret_cast<const Message*>(request->data);
+  SocketEventData* data = static_cast<SocketEventData*>(request->handle->data);
+  const Message* message = static_cast<const Message*>(request->data);
   data->Lock();
   SocketImpl* socket = data->GetSocket();
   if (socket != NULL) {
@@ -145,12 +145,12 @@ void EventLoop::OnWrite(tv_write_t* request, int status) {
 
 void EventLoop::OnConnectTimeout(void* args) {
   assert(args != NULL);
-  SocketImpl* socket = reinterpret_cast<SocketImpl*>(args);
+  SocketImpl* socket = static_cast<SocketImpl*>(args);
   socket->OnConnectTimeout();
 }
 
 void EventLoop::OnRequestTimeout(void* args) {
-  SocketImpl::RequestTimer* timer = reinterpret_cast<SocketImpl::RequestTimer*>(args);
+  SocketImpl::RequestTimer* timer = static_cast<SocketImpl::RequestTimer*>(args);
   assert(timer != NULL);
   SocketImpl* socket = timer->GetSocket();
   socket->OnRequestTimeout(timer->GetRequest());
@@ -159,7 +159,7 @@ void EventLoop::OnRequestTimeout(void* args) {
 
 void EventLoop::OnTimer(tv_timer_t* handle) {
   assert(handle != NULL && handle->data != NULL);
-  TimerEventData* data = reinterpret_cast<TimerEventData*>(handle->data);
+  TimerEventData* data = static_cast<TimerEventData*>(handle->data);
   data->Lock();
   TimerImpl* timer = data->GetTimer();
   if (timer != NULL) {

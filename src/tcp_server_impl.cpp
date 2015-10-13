@@ -72,7 +72,7 @@ Error TCPServerImpl::Stop() {
   if (handle_ == NULL) {
     return Error(LNR_EALREADY);
   }
-  EventLoop::ServerEventData* data = reinterpret_cast<EventLoop::ServerEventData*>(handle_->data);
+  EventLoop::ServerEventData* data = static_cast<EventLoop::ServerEventData*>(handle_->data);
   data->Lock();
   data->Unregister();
   data->Unlock();

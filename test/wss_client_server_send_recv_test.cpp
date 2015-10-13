@@ -861,12 +861,7 @@ TEST_F(WSSClientServerSendRecvTest, NotifyFromClientToGroup) {
   ASSERT_EQ(params, recv_notif.params);
 }
 
-// Recv malformed packet issue #2790
-TEST_F(WSSClientServerSendRecvTest, MalformedPacket) {
-  if (sizeof(size_t) != 4) {
-    LINEAR_LOG(LOG_DEBUG, "sizeof(size_t) != 4, so ignore this test");
-    return;
-  }
+TEST_F(WSSClientServerSendRecvTest, ZeroLengthPacket) {
   MockHandler sh;
   SSLContext server_context(SSLContext::TLSv1_1);
   server_context.SetCertificate(std::string(SERVER_CERT));
@@ -879,10 +874,9 @@ TEST_F(WSSClientServerSendRecvTest, MalformedPacket) {
   Error e = sv.Start(TEST_ADDR, TEST_PORT);
   ASSERT_EQ(LNR_OK, e.Code());
 
-  EXPECT_CALL(sh, OnConnectMock(_)).Times(0);
+  EXPECT_CALL(sh, OnConnectMock(_));
+  EXPECT_CALL(sh, OnDisconnectMock(_, _)).WillOnce(DoAll(Assign(&srv_finished, true), Assign(&cli_finished, true)));
 
-  const char malformed[] = {(char)0xdd,
-                            (char)0x0a, (char)0xaa, (char)0xaa, (char)0xab};
   struct sockaddr_in s;
   int fd = socket(AF_INET, SOCK_STREAM, 0);
   s.sin_family = AF_INET;
@@ -890,8 +884,74 @@ TEST_F(WSSClientServerSendRecvTest, MalformedPacket) {
   s.sin_addr.s_addr = inet_addr(TEST_ADDR);
   int ret = connect(fd, (struct sockaddr *)&s, sizeof(s));
   ASSERT_EQ(0, ret);
-  ssize_t siz = write(fd, malformed, sizeof(malformed));
+
+  SSL_CTX* ctx = SSL_CTX_new(TLSv1_1_client_method());
+  SSL* ssl = SSL_new(ctx);
+  SSL_set_fd(ssl, fd);
+  SSL_connect(ssl);
+
+#define HS "GET /linear HTTP/1.1\r\nConnection: upgrade\r\nHost: 127.0.0.1:37800\r\nOrigin: http://127.0.0.1:37800\r\nSec-WebSocket-Key: BJjVLqFG70hvGQZVBfJvAw==\r\nSec-WebSocket-Version: 13\r\nUpgrade: websocket\r\n\r\n"
+
+  ssize_t siz = SSL_write(ssl, HS, strlen(HS));
+
+  const char malformed[] = {(char)0x82, (char)0x80,
+                            (char)0x00, (char)0x00, (char)0x00, (char)0x00};
+  siz = SSL_write(ssl, malformed, sizeof(malformed));
   ASSERT_EQ(sizeof(malformed), (size_t)siz);
-  msleep(3000);
+  msleep(1000);
+  SSL_free(ssl);
   close(fd);
+  WAIT_TO_FINISH_CALLBACK();
+  SSL_CTX_free(ctx);
+}
+
+// Recv malformed packet issue #2790
+TEST_F(WSSClientServerSendRecvTest, MalformedPacket) {
+  MockHandler sh;
+  SSLContext server_context(SSLContext::TLSv1_1);
+  server_context.SetCertificate(std::string(SERVER_CERT));
+  server_context.SetPrivateKey(std::string(SERVER_PKEY));
+  server_context.SetCAFile(std::string(CA_CERT));
+  server_context.SetCiphers(std::string(CIPHER_LIST));
+  server_context.SetVerifyMode(SSLContext::VERIFY_PEER);
+  WSSServer sv(sh, server_context);
+
+  Error e = sv.Start(TEST_ADDR, TEST_PORT);
+  ASSERT_EQ(LNR_OK, e.Code());
+
+  EXPECT_CALL(sh, OnConnectMock(_)).Times(1);
+  EXPECT_CALL(sh, OnDisconnectMock(_, _)).WillOnce(DoAll(Assign(&srv_finished, true), Assign(&cli_finished, true)));
+
+  struct sockaddr_in s;
+  int fd = socket(AF_INET, SOCK_STREAM, 0);
+  s.sin_family = AF_INET;
+  s.sin_port = htons(TEST_PORT);
+  s.sin_addr.s_addr = inet_addr(TEST_ADDR);
+  int ret = connect(fd, (struct sockaddr *)&s, sizeof(s));
+  ASSERT_EQ(0, ret);
+
+  SSL_CTX* ctx = SSL_CTX_new(TLSv1_1_client_method());
+  SSL* ssl = SSL_new(ctx);
+  SSL_set_fd(ssl, fd);
+  SSL_connect(ssl);
+
+#define HS "GET /linear HTTP/1.1\r\nConnection: upgrade\r\nHost: 127.0.0.1:37800\r\nOrigin: http://127.0.0.1:37800\r\nSec-WebSocket-Key: BJjVLqFG70hvGQZVBfJvAw==\r\nSec-WebSocket-Version: 13\r\nUpgrade: websocket\r\n\r\n"
+
+  ssize_t siz = SSL_write(ssl, HS, strlen(HS));
+
+  const char malformed[] = {(char)0x82, (char)0x85, (char)0x00, (char)0x00, (char)0x00, (char)0x00,
+                            (char)0xdd,
+                            (char)0x0a, (char)0xaa, (char)0xaa, (char)0xab};
+  siz = SSL_write(ssl, malformed, sizeof(malformed));
+  ASSERT_EQ(sizeof(malformed), (size_t)siz);
+  msleep(1000);
+  if (sizeof(size_t) == 4) {
+    WAIT_TO_FINISH_CALLBACK();
+  }
+  SSL_free(ssl);
+  close(fd);
+  if (sizeof(size_t) != 4) {
+    WAIT_TO_FINISH_CALLBACK();
+  }
+  SSL_CTX_free(ctx);
 }
