@@ -286,7 +286,7 @@ ACTION(DisconnectFromOtherThread_WS) {
   ASSERT_EQ(0, pthread_create(&thread, NULL, call_from_thread, NULL));
   pthread_join(thread, NULL);
   linear::WSSocket ws = global::gs_.as<linear::WSSocket>();
-  ASSERT_EQ(LNR_ENOTCONN, ws.SetSockOpt(SOL_SOCKET, SO_KEEPALIVE, NULL, NULL).Code());
+  ASSERT_EQ(LNR_ENOTCONN, ws.SetSockOpt(SOL_SOCKET, SO_KEEPALIVE, NULL, 0).Code());
 }
 
 // Connect - Disconnect from other thread, and check certificate: must not SEGV

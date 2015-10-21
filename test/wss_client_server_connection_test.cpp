@@ -401,7 +401,7 @@ ACTION(DisconnectFromOtherThread_WSS) {
   ASSERT_EQ(0, pthread_create(&thread, NULL, call_from_thread, NULL));
   pthread_join(thread, NULL);
   linear::WSSSocket wss = global::gs_.as<linear::WSSSocket>();
-  ASSERT_EQ(LNR_ENOTCONN, wss.SetSockOpt(SOL_SOCKET, SO_KEEPALIVE, NULL, NULL).Code());
+  ASSERT_EQ(LNR_ENOTCONN, wss.SetSockOpt(SOL_SOCKET, SO_KEEPALIVE, NULL, 0).Code());
   ASSERT_EQ(LNR_ENOTCONN, wss.GetVerifyResult().Code());
   ASSERT_EQ(false, wss.PresentPeerCertificate());
   ASSERT_THROW(wss.GetPeerCertificate(), std::runtime_error);

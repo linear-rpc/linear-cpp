@@ -401,7 +401,7 @@ ACTION(DisconnectFromOtherThread_SSL) {
   ASSERT_EQ(0, pthread_create(&thread, NULL, call_from_thread, NULL));
   pthread_join(thread, NULL);
   linear::SSLSocket ssl = global::gs_.as<linear::SSLSocket>();
-  ASSERT_EQ(LNR_ENOTCONN, ssl.SetSockOpt(SOL_SOCKET, SO_KEEPALIVE, NULL, NULL).Code());
+  ASSERT_EQ(LNR_ENOTCONN, ssl.SetSockOpt(SOL_SOCKET, SO_KEEPALIVE, NULL, 0).Code());
   ASSERT_EQ(LNR_ENOTCONN, ssl.GetVerifyResult().Code());
   ASSERT_EQ(false, ssl.PresentPeerCertificate());
   ASSERT_THROW(ssl.GetPeerCertificate(), std::runtime_error);
