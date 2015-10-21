@@ -4,6 +4,7 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
+#include "linear/error.h"
 #include "linear/group.h"
 #include "linear/handler.h"
 #include "linear/log.h"
@@ -128,6 +129,16 @@ class DelayedMockHandler : public linear::Handler {
   MOCK_METHOD2(OnDisconnectMock, void(const linear::Socket& s, const linear::Error& e));
   DelayedMockHandler() {}
   virtual ~DelayedMockHandler() {}
+  void OnConnect(const linear::Socket& s);
+  void OnDisconnect(const linear::Socket& s, const linear::Error& e);
+};
+
+class ThreadMockHandler : public linear::Handler {
+ public:
+  MOCK_METHOD1(OnConnectMock,    void(const linear::Socket& s));
+  MOCK_METHOD2(OnDisconnectMock, void(const linear::Socket& s, const linear::Error& e));
+  ThreadMockHandler() {}
+  virtual ~ThreadMockHandler() {}
   void OnConnect(const linear::Socket& s);
   void OnDisconnect(const linear::Socket& s, const linear::Error& e);
 };

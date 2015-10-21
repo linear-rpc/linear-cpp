@@ -73,10 +73,12 @@ class SocketImpl {
  protected:
   virtual linear::Error Connect() = 0;
 
+  linear::Socket::State state_;
   tv_stream_t* stream_;
   EventLoop::SocketEventData* data_;
   linear::Addrinfo self_, peer_;
   std::string bind_ifname_;
+  linear::mutex state_mutex_;
 
  private:
   linear::Error _Send(linear::Message* ctx);
@@ -88,11 +90,9 @@ class SocketImpl {
   bool connectable_;
   bool handshaking_;
   linear::Error last_error_;
-  linear::Socket::State state_;
   linear::shared_ptr<linear::Observer<linear::HandlerDelegate> > observer_;
   std::list<linear::Message*> pending_messages_;
   std::list<linear::SocketImpl::RequestTimer*> request_timers_;
-  linear::mutex state_mutex_;
   linear::mutex request_timer_mutex_;
   linear::Timer connect_timer_;
   size_t max_buffer_size_;

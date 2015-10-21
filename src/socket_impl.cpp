@@ -48,14 +48,15 @@ static std::string GetTypeString(Socket::Type type) {
 
 // Client Socket
 SocketImpl::SocketImpl(const std::string& host, int port, const HandlerDelegate& delegate, Socket::Type type)
-  : stream_(NULL), data_(NULL), peer_(Addrinfo(host, port)), bind_ifname_(), type_(type), id_(Id()),
-    connectable_(true), handshaking_(false), last_error_(LNR_OK), state_(Socket::DISCONNECTED), observer_(delegate.GetObserver()),
+  : state_(Socket::DISCONNECTED),
+    stream_(NULL), data_(NULL), peer_(Addrinfo(host, port)), type_(type), id_(Id()),
+    connectable_(true), handshaking_(false), last_error_(LNR_OK), observer_(delegate.GetObserver()),
     max_buffer_size_(Socket::DEFAULT_MAX_BUFFER_SIZE) {
 }
 
 // Server Socket
 SocketImpl::SocketImpl(tv_stream_t* stream, const HandlerDelegate& delegate, Socket::Type type)
-  : stream_(stream), data_(NULL), bind_ifname_(), type_(type), id_(Id()),
+  : stream_(stream), data_(NULL), type_(type), id_(Id()),
     connectable_(false), last_error_(LNR_OK), observer_(delegate.GetObserver()),
     max_buffer_size_(Socket::DEFAULT_MAX_BUFFER_SIZE) {
   if (type == Socket::WS) {
@@ -330,6 +331,10 @@ Error SocketImpl::BindToDevice(const std::string& ifname) {
 }
 
 Error SocketImpl::SetSockOpt(int level, int optname, const void* optval, size_t optlen) {
+  lock_guard<mutex> state_lock(state_mutex_);
+  if (state_ != Socket::CONNECTING && state_ != Socket::CONNECTED) {
+    return Error(LNR_ENOTCONN);
+  }
   int ret = tv_setsockopt(stream_, level, optname, optval, optlen);
   if (ret != 0) {
     LINEAR_LOG(LOG_WARN, "fail to setsockopt(%s)\n",
