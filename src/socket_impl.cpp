@@ -221,6 +221,7 @@ Error SocketImpl::Connect(unsigned int timeout, const Socket& socket) {
   if (is_locked) {
     observer_->Unlock();
   }
+  self_ = Addrinfo(); // reset self info
   Error err = Connect();
   if (err.Code() == LNR_OK) {
     state_ = Socket::CONNECTING;
@@ -445,7 +446,6 @@ Socket SocketImpl::OnDisconnect() {
              self_.addr.c_str(), self_.port, GetTypeString(type_).c_str(),
              peer_.addr.c_str(), peer_.port);
   state_ = Socket::DISCONNECTED;
-  self_ = Addrinfo(); // reset self info
   observer_->Lock();
   linear::Socket socket; // need to copy socket from SocketPool
   HandlerDelegate* delegate = observer_->GetSubject();
@@ -497,6 +497,7 @@ Socket SocketImpl::OnDisconnect() {
     delegate->OnDisconnect(socket, last_error_);
   }
   observer_->Unlock();
+  self_ = Addrinfo(); // reset self info
   return socket;
 }
 
