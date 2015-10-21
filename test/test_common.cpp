@@ -13,6 +13,15 @@ void DelayedMockHandler::OnDisconnect(const linear::Socket& s, const linear::Err
   OnDisconnectMock(s, e);
 }
 
+void ThreadMockHandler::OnConnect(const linear::Socket& s) {
+  global::gs_ = s;
+  OnConnectMock(s);
+}
+void ThreadMockHandler::OnDisconnect(const linear::Socket& s, const linear::Error& e) {
+  global::gs_ = linear::Socket();
+  OnDisconnectMock(s, e);
+}
+
 #if defined(_WIN32)
 # include <windows.h>
 unsigned int msleep(unsigned int milliseconds) {

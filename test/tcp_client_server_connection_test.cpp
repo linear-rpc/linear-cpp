@@ -1,3 +1,5 @@
+#include <pthread.h>
+
 #include "test_common.h"
 
 #include "linear/tcp_client.h"
@@ -264,6 +266,51 @@ TEST_F(TCPClientServerConnectionTest, DelayedSocketDestruct) {
 
   EXPECT_CALL(sh, OnConnectMock(_)).WillOnce(Assign(&srv_finished, true));
   EXPECT_CALL(ch, OnConnectMock(cs)).WillOnce(Assign(&cli_finished, true));
+
+  e = cs.Connect();
+  ASSERT_EQ(LNR_OK, e.Code());
+  WAIT_TO_FINISH_CALLBACK();
+  ASSERT_NE(global::gs_, cs);
+
+  EXPECT_CALL(sh, OnDisconnectMock(_, _)).Times(::testing::AtLeast(0));
+  EXPECT_CALL(ch, OnDisconnectMock(_, _)).Times(::testing::AtLeast(0));
+}
+
+static void* call_from_thread(void* param) {
+  global::gs_.Disconnect();
+  return NULL;
+}
+
+ACTION(DisconnectFromOtherThread_TCP) {
+  pthread_t thread;
+  ASSERT_EQ(0, pthread_create(&thread, NULL, call_from_thread, NULL));
+  pthread_join(thread, NULL);
+  linear::TCPSocket tcp = global::gs_.as<linear::TCPSocket>();
+  ASSERT_EQ(LNR_ENOTCONN, tcp.SetSockOpt(SOL_SOCKET, SO_KEEPALIVE, NULL, 0).Code());
+}
+
+// Connect - Disconnect from other thread, and check certificate: must not SEGV
+TEST_F(TCPClientServerConnectionTest, OnConnectAndDisconnectFromOtherTherad) {
+  ThreadMockHandler ch;
+  TCPClient cl(ch);
+  MockHandler sh;
+  TCPServer sv(sh);
+
+  {
+    InSequence dummy;
+    EXPECT_CALL(sh, OnConnectMock(_));
+    EXPECT_CALL(sh, OnDisconnectMock(Eq(ByRef(sh.s_)), Error(LNR_EOF))).WillOnce(Assign(&srv_finished, true));
+  }
+
+  Error e = sv.Start(TEST_ADDR, TEST_PORT);
+  ASSERT_EQ(LNR_OK, e.Code());
+  TCPSocket cs = cl.CreateSocket(TEST_ADDR, TEST_PORT);
+
+  {
+    InSequence dummy;
+    EXPECT_CALL(ch, OnConnectMock(cs)).WillOnce(WithArg<0>(DisconnectFromOtherThread_TCP()));
+    EXPECT_CALL(ch, OnDisconnectMock(cs, Error(LNR_OK))).WillOnce(Assign(&cli_finished, true));
+  }
 
   e = cs.Connect();
   ASSERT_EQ(LNR_OK, e.Code());
