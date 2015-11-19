@@ -1,18 +1,14 @@
-# backup
-*~
-
 # autotools
-Makefile
 Makefile.in
-aclocal.m4
-autom4te.cache/
-config.*
-configure
-libtool
+/aclocal.m4
+/autom4te.cache/
+/config.*
+/configure
+/libtool
 .deps/
-m4/
-stamp-h1
-liblinear.pc
+/m4/
+/stamp-h1
+/liblinear.pc
 
 # objects
 .libs/
@@ -20,34 +16,35 @@ liblinear.pc
 *.lo
 *.a
 *.o
+*.so
 
 # samples, tests and test logs
-sample/*_sample
-sample/lperf
-test/*_test
-test/run_tests
-*.log
-*.trs
+/sample/*_sample
+/sample/lperf
+/test/*_test
+/test/run_tests
+/test/*.log
+/test/*.trs
 
 # created files
-doc/html/
-include/linear/memory.h
-include/linear/version.h
+/doc/html/
+/include/linear/memory.h
+/include/linear/version.h
 
 # depend sources
-deps/gmock-1.7.0/
+/deps/gmock-1.7.0/
 
 # gyp
-build/
-linear-package/
-configure.pyc
+/build/
+/linear-package/
+/configure.pyc
 
 # windows
-Debug/
-Release/
-*.vcxproj
-*.vcxproj.user
-*.filters
-*.sdf
-*.sln
-*.suo
+/Debug/
+/Release/
+/*.vcxproj
+/*.vcxproj.user
+/*.filters
+/*.sdf
+/*.sln
+/*.suo
