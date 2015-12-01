@@ -42,7 +42,6 @@ class NoncePool {
       it->timer.Stop();
       delete it->ctx;
       pool_.erase(it);
-      return;
     }
   }
   linear::Error Add(const std::string& nonce, int timeout = NONCE_TIMEOUT) {
