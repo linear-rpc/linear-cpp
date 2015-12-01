@@ -9,7 +9,15 @@ Makefile.in
 /m4/
 /stamp-h1
 /liblinear.pc
-
+/Makefile
+/doc/Makefile
+/include/Makefile
+/include/linear/Makefile
+/include/linear/private/Makefile
+/sample/Makefile
+/src/Makefile
+/test/Makefile
+        
 # objects
 .libs/
 *.la
