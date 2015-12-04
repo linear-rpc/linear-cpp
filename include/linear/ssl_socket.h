@@ -21,8 +21,8 @@ class LINEAR_EXTERN SSLSocket : public Socket {
  public:
   /// @cond hidden
   SSLSocket();
-  SSLSocket(const linear::shared_ptr<linear::SocketImpl>& socket);
-  SSLSocket(const linear::shared_ptr<linear::SSLSocketImpl>& ssl_socket);
+  explicit SSLSocket(const linear::shared_ptr<linear::SocketImpl>& socket);
+  explicit SSLSocket(const linear::shared_ptr<linear::SSLSocketImpl>& ssl_socket);
   virtual ~SSLSocket();
   /// @endcond
 

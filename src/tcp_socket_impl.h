@@ -12,7 +12,6 @@ class TCPSocketImpl : public linear::SocketImpl {
   // Server Socket
   TCPSocketImpl(tv_stream_t* stream, const linear::HandlerDelegate& delegate);
   virtual ~TCPSocketImpl();
-
   linear::Error Connect();
 };
 

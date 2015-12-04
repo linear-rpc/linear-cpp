@@ -10,7 +10,6 @@ namespace linear {
 
 class WSClientImpl : public ClientImpl {
  public:
-  explicit WSClientImpl(const linear::Handler& handler);
   WSClientImpl(const linear::Handler& handler, const linear::WSRequestContext& request_context);
   virtual ~WSClientImpl();
   void SetWSRequestContext(const linear::WSRequestContext& request_context);

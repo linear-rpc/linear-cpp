@@ -9,15 +9,6 @@ using namespace linear::log;
 
 namespace linear {
 
-WSSClient::WSSClient(const Handler& handler) {
-  try {
-    client_ = shared_ptr<WSSClientImpl>(new WSSClientImpl(handler));
-  } catch(...) {
-    LINEAR_LOG(LOG_ERR, "no memory");
-    throw;
-  }
-}
-
 WSSClient::WSSClient(const Handler& handler,
                      const linear::WSRequestContext& request_context,
                      const linear::SSLContext& ssl_context) {

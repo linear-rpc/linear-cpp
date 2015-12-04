@@ -20,13 +20,13 @@ class TimerImpl;
 
 /**
  * @class Timer timer.h "linear/timer.h"
- * oneshot Timer class.
+ * Oneshot timer class.
  */
 class LINEAR_EXTERN Timer {
  public:
   /// @cond hidden
   Timer();
-  ~Timer();
+  virtual ~Timer();
   Timer(const Timer& timer);
   Timer& operator=(const Timer& timer);
   /// @endcond
@@ -45,33 +45,31 @@ class LINEAR_EXTERN Timer {
    * linear::LNR_OK on success, others on failure
    *
    @code
-   static void OnTimer(void* args) {
+   static void OnOneshot(void* args) {
      int* count = reinterpret_cast<int*>(args);
      std::cout << "count: " << *count << std::endl;
      *count += 1;
-     // if you want to continue timer, do like follows
-     linear::Timer timer;
-     timer.Start(OnTimer, 1000, count);
+     // if you want to continue oneshot timer, do like follows
+     linear::OneshotTimer oneshot;
+     oneshot.Start(OnTimer, 1000, count);
    }
 
    int main() {
      int count = 1;
-     linear::Timer timer;
-     timer.Start(OnTimer, 1000, &count);
+     linear::Timer oneshot;
+     oneshot.Start(OnOneshot, 1000, &count);
      std::string parameter;
      std::getline(std::cin, parameter);
    }
    @endcode
    */
-  linear::Error Start(TimerCallback callback, unsigned int timeout, void* args);
+  linear::Error Start(TimerCallback callback, unsigned int timeout, void* args) const;
   /**
-   * cancel timer.
-   * @todo rename cancel
+   * Stop timer.
    */
-  void Stop();
+  void Stop() const;
 
  private:
-  int id_;
   shared_ptr<TimerImpl> timer_;
 };
 

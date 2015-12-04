@@ -320,3 +320,29 @@ TEST_F(TCPClientServerConnectionTest, OnConnectAndDisconnectFromOtherTherad) {
   EXPECT_CALL(sh, OnDisconnectMock(_, _)).Times(::testing::AtLeast(0));
   EXPECT_CALL(ch, OnDisconnectMock(_, _)).Times(::testing::AtLeast(0));
 }
+
+// Connect - Stop same time
+TEST_F(TCPClientServerConnectionTest, ConnectStop) {
+  MockHandler ch;
+  TCPClient cl(ch);
+  MockHandler sh;
+  TCPServer sv(sh);
+
+  Error e = sv.Start(TEST_ADDR, TEST_PORT);
+  ASSERT_EQ(LNR_OK, e.Code());
+
+  TCPSocket cs = cl.CreateSocket(TEST_ADDR, TEST_PORT);
+
+  EXPECT_CALL(sh, OnConnectMock(_)).Times(::testing::AtLeast(0)).WillOnce(WithArg<0>(Disconnect()));
+  EXPECT_CALL(sh, OnDisconnectMock(_, _)).Times(::testing::AtLeast(0));
+  // TODO(BUG): client is connected but server is not called onAccept.this bug is at tv or uv layer
+  EXPECT_CALL(ch, OnConnectMock(cs)).Times(::testing::AtLeast(0)).WillOnce(WithArg<0>(Disconnect()));
+  EXPECT_CALL(ch, OnDisconnectMock(cs, _)).WillOnce(Assign(&cli_finished, true));
+  srv_finished = true;
+
+  e = cs.Connect();
+  ASSERT_EQ(LNR_OK, e.Code());
+  sv.Stop();
+  WAIT_TO_FINISH_CALLBACK();
+}
+

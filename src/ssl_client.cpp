@@ -1,3 +1,5 @@
+#include <stdexcept>
+
 #include "linear/log.h"
 #include "linear/ssl_client.h"
 
@@ -6,15 +8,6 @@
 using namespace linear::log;
 
 namespace linear {
-
-SSLClient::SSLClient(const Handler& handler) {
-  try {
-    client_ = shared_ptr<SSLClientImpl>(new SSLClientImpl(handler));
-  } catch(...) {
-    LINEAR_LOG(LOG_ERR, "no memory");
-    throw;
-  }
-}
 
 SSLClient::SSLClient(const Handler& handler, const SSLContext& context) {
   try {

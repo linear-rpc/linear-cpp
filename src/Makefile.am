@@ -18,7 +18,6 @@ liblinear_la_SOURCES = \
 	auth_context_impl.cpp \
 	error.cpp \
 	group.cpp \
-	handler.cpp \
 	handler_delegate.cpp \
 	log.cpp \
 	log_file.cpp \

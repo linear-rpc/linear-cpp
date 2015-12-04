@@ -6,6 +6,7 @@
 
 #include "socket_impl.h"
 #include "ws_socket_impl.h"
+#include "handler_delegate.h"
 
 #ifdef WITH_SSL
 # include "linear/wss_socket.h"
@@ -47,18 +48,25 @@ static std::string GetTypeString(Socket::Type type) {
 }
 
 // Client Socket
-SocketImpl::SocketImpl(const std::string& host, int port, const HandlerDelegate& delegate, Socket::Type type)
+SocketImpl::SocketImpl(const std::string& host, int port, const HandlerDelegate& delegate,
+                       Socket::Type type)
   : state_(Socket::DISCONNECTED),
-    stream_(NULL), data_(NULL), peer_(Addrinfo(host, port)), type_(type), id_(Id()),
+    stream_(NULL), ev_(NULL), peer_(Addrinfo(host, port)), type_(type), id_(Id()),
     connectable_(true), handshaking_(false), last_error_(LNR_OK), observer_(delegate.GetObserver()),
+    connect_timeout_(0),
     max_buffer_size_(Socket::DEFAULT_MAX_BUFFER_SIZE) {
+  LINEAR_LOG(LOG_DEBUG, "socket(id = %d, type = %s, connectable) is created",
+             id_, GetTypeString(type_).c_str());
 }
 
 // Server Socket
-SocketImpl::SocketImpl(tv_stream_t* stream, const HandlerDelegate& delegate, Socket::Type type)
-  : stream_(stream), data_(NULL), type_(type), id_(Id()),
+SocketImpl::SocketImpl(tv_stream_t* stream, const HandlerDelegate& delegate,
+                       Socket::Type type)
+  : stream_(stream), ev_(NULL), type_(type), id_(Id()),
     connectable_(false), last_error_(LNR_OK), observer_(delegate.GetObserver()),
     max_buffer_size_(Socket::DEFAULT_MAX_BUFFER_SIZE) {
+  LINEAR_LOG(LOG_DEBUG, "socket(id = %d, type = %s, not connectable) is created",
+             id_, GetTypeString(type_).c_str());
   if (type == Socket::WS) {
     handshaking_ = true;
     state_ = Socket::CONNECTING;
@@ -80,16 +88,13 @@ SocketImpl::SocketImpl(tv_stream_t* stream, const HandlerDelegate& delegate, Soc
   int ret = tv_getsockname(stream_, reinterpret_cast<struct sockaddr*>(&ss), &len);
   if (ret == 0) {
     self_ = Addrinfo(reinterpret_cast<struct sockaddr*>(&ss));
-  } else {
-    LINEAR_LOG(LOG_ERR, "BUG: fail to get sockinfo: %s",
-               tv_strerror(reinterpret_cast<tv_handle_t*>(stream_), ret));
   }
   ret = tv_getpeername(stream_, reinterpret_cast<struct sockaddr*>(&ss), &len);
   if (ret == 0) {
     peer_ = Addrinfo(reinterpret_cast<struct sockaddr*>(&ss));
   } else {
-    LINEAR_LOG(LOG_WARN, "fail to get sockinfo (may disconnected by peer): %s",
-               tv_strerror(reinterpret_cast<tv_handle_t*>(stream_), ret));
+    LINEAR_LOG(LOG_WARN, "fail to get peerinfo(id = %d) (may disconnected by peer): %s",
+               id_, tv_strerror(reinterpret_cast<tv_handle_t*>(stream_), ret));
   }
   // overwrite peer_
   if (type == Socket::WS) {
@@ -147,99 +152,77 @@ SocketImpl::SocketImpl(tv_stream_t* stream, const HandlerDelegate& delegate, Soc
 #endif
 
   }
-
-  LINEAR_LOG(LOG_DEBUG, "incoming peer: %s:%d", peer_.addr.c_str(), peer_.port);
-  try {
-    data_ = new EventLoop::SocketEventData();
-  } catch(...) {
-    throw;
-  }
-  data_->Register(this);
-  stream_->data = data_;
-  ret = tv_read_start(stream_, EventLoop::OnRead);
-  if (ret != 0) {
-    data_->Unregister();
-    LINEAR_LOG(LOG_ERR, "fail to read_start: %s",
-               tv_strerror(reinterpret_cast<tv_handle_t*>(stream_), ret));
-    tv_close(reinterpret_cast<tv_handle_t*>(stream_), EventLoop::OnClose);
-    stream_ = NULL; // unref stream
-    throw ret;
-  }
-  LINEAR_LOG(LOG_DEBUG, "connected: %s:%d <-- %s --> %s:%d",
-             self_.addr.c_str(), self_.port, GetTypeString(type_).c_str(), peer_.addr.c_str(), peer_.port);
+  LINEAR_LOG(LOG_DEBUG, "incoming peer(id = %d): %s:%d <-- %s --- %s:%d",
+             id_,
+             self_.addr.c_str(), self_.port, GetTypeString(type_).c_str(),
+             peer_.addr.c_str(), peer_.port);
 }
 
 SocketImpl::~SocketImpl() {
-  unique_lock<mutex> state_lock(state_mutex_);
-  state_ = Socket::DISCONNECTED;
-  state_lock.unlock();
-  EventLoop& loop = const_cast<EventLoop&>(EventLoop::GetDefault());
-  if (loop.GetHandle() != NULL) {
-    loop.Lock();
-    if (data_) {
-      data_->Lock();
-      data_->Unregister();
-      data_->Unlock();
-    }
-    if (stream_) {
-      LINEAR_LOG(LOG_WARN, "Connected socket(id = %d) has existed yet. automatically correct this.", id_);
-      tv_close(reinterpret_cast<tv_handle_t*>(stream_), EventLoop::OnClose);
-      stream_ = NULL; // unref stream
-    }
-    loop.Unlock();
-  }
-  _DiscardMessages(Socket());
+  Disconnect(false);
+  LINEAR_LOG(LOG_DEBUG, "socket(id = %d, type = %s, %s) is destroyed",
+             id_, GetTypeString(type_).c_str(),
+             (connectable_ ? "connectable" : "not connectable"));
 }
 
-void SocketImpl::SetMaxBufferSize(size_t max_limit) {
-  max_buffer_size_ = max_limit;
+void SocketImpl::SetMaxBufferSize(size_t limit) {
+  max_buffer_size_ = limit;
 }
 
-Error SocketImpl::Connect(unsigned int timeout, const Socket& socket) {
+Error SocketImpl::Connect(unsigned int timeout, EventLoop::SocketEvent* ev) {
   lock_guard<mutex> state_lock(state_mutex_);
-  LINEAR_LOG(LOG_DEBUG, "try to connect to %s:%d,%s", peer_.addr.c_str(), peer_.port, GetTypeString(type_).c_str());
   if (!connectable_) {
-    LINEAR_LOG(LOG_WARN, "this socket is not connectable");
+    LINEAR_LOG(LOG_WARN, "this socket(id = %d) is not connectable", id_);
     return Error(LNR_EINVAL);
   }
   if (state_ == Socket::CONNECTING || state_ == Socket::CONNECTED) {
-    LINEAR_LOG(LOG_INFO, "this socket is %s",
+    LINEAR_LOG(LOG_INFO, "this socket(id = %d) is %s",
+               id_,
                (state_ == Socket::CONNECTING) ? "connecting now" : "already connected");
     return Error(LNR_EALREADY);
   } else if (state_ == Socket::DISCONNECTING) {
-    LINEAR_LOG(LOG_WARN, "this socket is disconnecting now.plz call later.");
+    LINEAR_LOG(LOG_WARN, "this socket(id = %d) is disconnecting now.plz call later.", id_);
     return Error(LNR_EBUSY);
   }
-  bool is_locked = observer_->TryLock();
-  if (!is_locked) {
-    LINEAR_LOG(LOG_DEBUG, "fail to delegate lock.(may be already locked)");
-  }
-  HandlerDelegate* delegate = observer_->GetSubject();
-  if (delegate) {
-    delegate->Retain(socket);
-  }
-  if (is_locked) {
-    observer_->Unlock();
+  LINEAR_LOG(LOG_DEBUG, "try to connect(id = %d): --- %s --> %s:%d",
+             id_,
+             GetTypeString(type_).c_str(), peer_.addr.c_str(), peer_.port);
+  ev_ = ev;
+  Error err;
+  shared_ptr<Observer<HandlerDelegate> > observer = observer_.lock();
+  shared_ptr<SocketImpl> socket = ev_->socket.lock();
+  if (observer && socket) {
+    observer->Lock();
+    HandlerDelegate* delegate = observer->GetSubject();
+    if (delegate) {
+      err = delegate->Retain(socket);
+      if (err != Error(LNR_OK)) {
+        LINEAR_LOG(LOG_ERR, "fail to connect(id = %d): %s", id_, err.Message().c_str());
+        observer->Unlock();
+        return err;
+      }
+    }
+    observer->Unlock();
   }
   self_ = Addrinfo(); // reset self info
-  Error err = Connect();
-  if (err.Code() == LNR_OK) {
+  err = Connect();
+  if (err == Error(LNR_OK)) {
     state_ = Socket::CONNECTING;
     if (timeout > 0) {
-      connect_timer_.Start(EventLoop::OnConnectTimeout, timeout, this);
+      connect_timeout_ = timeout;
+      connect_timer_.Start(EventLoop::OnConnectTimeout, connect_timeout_, ev_);
+    } else {
+      connect_timeout_ = 0;
     }
   } else {
-    LINEAR_LOG(LOG_ERR, "fail to connect: %s", err.Message().c_str());
-    is_locked = observer_->TryLock();
-    if (is_locked) {
-      LINEAR_LOG(LOG_DEBUG, "fail to delegate lock.(may be already locked)");
-    }
-    HandlerDelegate* delegate = observer_->GetSubject();
-    if (delegate) {
-      delegate->Release(socket.GetId());
-    }
-    if (is_locked) {
-      observer_->Unlock();
+    LINEAR_LOG(LOG_ERR, "fail to connect(id = %d): %s", id_, err.Message().c_str());
+    if (observer && socket) {
+      observer->Lock();
+      HandlerDelegate* delegate = observer->GetSubject();
+      if (delegate) {
+        delegate->Release(socket);
+      }
+      observer->Unlock();
     }
   }
   return err;
@@ -249,15 +232,12 @@ Error SocketImpl::Disconnect(bool handshaking) {
   lock_guard<mutex> state_lock(state_mutex_);
   handshaking_ = handshaking;
   if (state_ == Socket::DISCONNECTING || state_ == Socket::DISCONNECTED) {
-    LINEAR_LOG(LOG_INFO, "this socket is %s",
-               (state_ == Socket::DISCONNECTING) ? "disconnecting now" : "already disconnected");
     return Error(LNR_EALREADY);
   }
   connect_timer_.Stop();
   state_ = Socket::DISCONNECTING;
   last_error_ = Error(LNR_OK);
   tv_close(reinterpret_cast<tv_handle_t*>(stream_), EventLoop::OnClose);
-  stream_ = NULL; // unref stream
   return Error(LNR_OK);
 }
 
@@ -283,7 +263,7 @@ Error SocketImpl::Send(const Message& message, int timeout) {
       copy_message = new Notify(dynamic_cast<const Notify&>(message));
       break;
     default:
-      LINEAR_LOG(LOG_ERR, "message type is invalid: %d", message.type);
+      LINEAR_LOG(LOG_ERR, "invalid type of message: %d", message.type);
       throw std::bad_typeid();
     }
     if (state_ == Socket::CONNECTING) {
@@ -291,7 +271,7 @@ Error SocketImpl::Send(const Message& message, int timeout) {
       return Error(LNR_OK);
     }
     Error err = _Send(copy_message);
-    if (err.Code() != LNR_OK) {
+    if (err != Error(LNR_OK)) {
       delete copy_message;
     }
     return err;
@@ -338,25 +318,43 @@ Error SocketImpl::SetSockOpt(int level, int optname, const void* optval, size_t 
   }
   int ret = tv_setsockopt(stream_, level, optname, optval, optlen);
   if (ret != 0) {
-    LINEAR_LOG(LOG_WARN, "fail to setsockopt(%s)\n",
-               tv_strerror(reinterpret_cast<tv_handle_t*>(stream_), ret));
+    LINEAR_LOG(LOG_WARN, "fail to setsockopt(id = %d): %s\n",
+               id_, tv_strerror(reinterpret_cast<tv_handle_t*>(stream_), ret));
     return Error(LNR_EINVAL);
   }
   return Error(LNR_OK);
 }
 
-void SocketImpl::OnConnect(tv_stream_t* stream, int status) {
+Error SocketImpl::StartRead(linear::EventLoop::SocketEvent* ev) {
+  ev_ = ev;
+  stream_->data = ev;
+  int ret = tv_read_start(stream_, EventLoop::OnRead);
+  if (ret != 0) {
+    assert(false); // never reach now
+    tv_close(reinterpret_cast<tv_handle_t*>(stream_), EventLoop::OnClose);
+    return Error(ret);
+  }
+  LINEAR_LOG(LOG_DEBUG, "connected(id = %d): %s:%d <-- %s --> %s:%d",
+             id_,
+             self_.addr.c_str(), self_.port, GetTypeString(type_).c_str(),
+             peer_.addr.c_str(), peer_.port);
+  return Error(LNR_OK);
+}
+
+void SocketImpl::OnConnect(const shared_ptr<SocketImpl>& socket, tv_stream_t* stream, int status) {
   unique_lock<mutex> state_lock(state_mutex_);
   connect_timer_.Stop();
+  if (state_ == Socket::CONNECTED) {
+    return;
+  }
   if (state_ != Socket::CONNECTING) {
-    state_lock.unlock();
-    LINEAR_LOG(LOG_DEBUG, "connect to %s:%d,%s is cancelled",
-               peer_.addr.c_str(), peer_.port, GetTypeString(type_).c_str());
+    LINEAR_LOG(LOG_DEBUG, "connect(id = %d) is cancelled: x-- %s --> %s:%d",
+               id_,
+               GetTypeString(type_).c_str(), peer_.addr.c_str(), peer_.port);
     return;
   }
   if (status) {
     state_ = Socket::DISCONNECTING;
-
     if (status == TV_EWS) {
       last_error_ = Error(LNR_EWS); // TODO: detail code
     } else {
@@ -371,60 +369,49 @@ void SocketImpl::OnConnect(tv_stream_t* stream, int status) {
     }
 #endif
 
-    LINEAR_LOG(LOG_ERR, "fail to connect to %s:%d,%s: %s",
-               peer_.addr.c_str(), peer_.port, GetTypeString(type_).c_str(),
-               last_error_.Message().c_str());
-
+    LINEAR_LOG(LOG_DEBUG, "fail to connect(id = %d), %s: --- %s --x %s:%d",
+               id_,
+               last_error_.Message().c_str(),
+               GetTypeString(type_).c_str(), peer_.addr.c_str(), peer_.port);
     state_lock.unlock();
     tv_close(reinterpret_cast<tv_handle_t*>(stream_), EventLoop::OnClose);
-    stream_ = NULL; // unref stream
-    return;
-  }
-
-  // OK.starts to read
-  int ret = tv_read_start(stream_, EventLoop::OnRead);
-  if (ret != 0) { // never reach now
-    assert(false);
-    LINEAR_LOG(LOG_ERR, "fail to connect to %s:%d,%s: %s",
-               peer_.addr.c_str(), peer_.port, GetTypeString(type_).c_str(),
-               tv_strerror(reinterpret_cast<tv_handle_t*>(stream_), ret));
-    state_ = Socket::DISCONNECTING;
-    last_error_ = Error(ret);
-    state_lock.unlock();
-    tv_close(reinterpret_cast<tv_handle_t*>(stream_), EventLoop::OnClose);
-    stream_ = NULL; // unref stream
     return;
   }
   struct sockaddr_storage ss;
   int len = sizeof(struct sockaddr_storage);
-  ret = tv_getsockname(stream_, reinterpret_cast<struct sockaddr*>(&ss), &len);
+  int ret = tv_getsockname(stream_, reinterpret_cast<struct sockaddr*>(&ss), &len);
   if (ret == 0) {
     self_ = Addrinfo(reinterpret_cast<struct sockaddr*>(&ss));
-  } else {
-    LINEAR_LOG(LOG_WARN, "fail to get sockinfo: %s",
-               tv_strerror(reinterpret_cast<tv_handle_t*>(stream_), ret));
   }
-  LINEAR_LOG(LOG_DEBUG, "connected: %s:%d <-- %s --> %s:%d",
-             self_.addr.c_str(), self_.port, GetTypeString(type_).c_str(),
-             peer_.addr.c_str(), peer_.port);
+  // OK.starts to read
+  last_error_ = StartRead(ev_);
+  if (last_error_ != Error(LNR_OK)) {
+    LINEAR_LOG(LOG_DEBUG, "fail to connect(id = %d), %s: %s:%d --- %s --x %s:%d",
+               id_,
+               last_error_.Message().c_str(),
+               self_.addr.c_str(), self_.port, GetTypeString(type_).c_str(),
+               peer_.addr.c_str(), peer_.port);
+    return;
+  }
   state_lock.unlock();
-
   // call OnConnect
-  observer_->Lock();
-  HandlerDelegate* delegate = observer_->GetSubject();
-  if (delegate) {
-    delegate->OnConnect(id_);
+  if (shared_ptr<Observer<HandlerDelegate> > observer = observer_.lock()) {
+    observer->Lock();
+    HandlerDelegate* delegate = observer->GetSubject();
+    if (delegate) {
+      delegate->OnConnect(socket);
+    }
+    observer->Unlock();
   }
-  observer_->Unlock();
   state_lock.lock();
   if (state_ == Socket::CONNECTING) {
     state_ = Socket::CONNECTED;
   }
   state_lock.unlock();
-  _SendPendingMessages();
+  _SendPendingMessages(socket);
 }
 
-void SocketImpl::OnHandshakeComplete(tv_stream_t* stream, int status) {
+void SocketImpl::OnHandshakeComplete(const shared_ptr<SocketImpl>& socket, tv_stream_t* stream, int status) {
   unique_lock<mutex> state_lock(state_mutex_);
   if (status) {
     state_lock.unlock();
@@ -434,40 +421,43 @@ void SocketImpl::OnHandshakeComplete(tv_stream_t* stream, int status) {
   handshaking_ = false;
   state_ = Socket::CONNECTED;
   state_lock.unlock();
-  _SendPendingMessages();
+  _SendPendingMessages(socket);
 }
 
-Socket SocketImpl::OnDisconnect() {
+void SocketImpl::OnDisconnect(const shared_ptr<SocketImpl>& socket) {
   unique_lock<mutex> state_lock(state_mutex_);
+  connect_timer_.Stop();
   if (state_ == Socket::DISCONNECTED) {
-    return Socket();
+    return;
   }
-  LINEAR_LOG(LOG_DEBUG, "disconnected: %s:%d <-- %s --> %s:%d",
+  LINEAR_LOG(LOG_DEBUG, "disconnected(id = %d): %s:%d x-- %s --x %s:%d",
+             id_,
              self_.addr.c_str(), self_.port, GetTypeString(type_).c_str(),
              peer_.addr.c_str(), peer_.port);
   state_ = Socket::DISCONNECTED;
-  observer_->Lock();
-  linear::Socket socket; // need to copy socket from SocketPool
-  HandlerDelegate* delegate = observer_->GetSubject();
-  if (delegate) {
-    socket = delegate->Get(id_);
-    delegate->Release(id_);
-  }
-  observer_->Unlock();
   state_lock.unlock();
-
+  shared_ptr<Observer<HandlerDelegate> > observer = observer_.lock();
+  if (observer) {
+    observer->Lock();
+    HandlerDelegate* delegate = observer->GetSubject();
+    if (delegate) {
+      delegate->Release(socket);
+    }
+    observer->Unlock();
+  }
+  // retry to connect for WebSocket DigestAuth
   if (connectable_) {
     if (type_ == Socket::WS) {
       if (last_error_ == Error(LNR_EWS)) {
         if (dynamic_cast<WSSocketImpl*>(this)->CheckRetryAuth()) {
-          socket.Connect();
-          return socket;
+          Connect(connect_timeout_, ev_);
+          return;
         }
       } else {
         WSResponseContext ctx;
         ctx.code = LNR_WS_SERVICE_UNAVAILABLE;
         try {
-          socket.as<WSSocket>().SetWSResponseContext(ctx);
+          dynamic_cast<WSSocketImpl*>(this)->SetWSResponseContext(ctx);
         } catch(...) {}
       }
 
@@ -475,30 +465,31 @@ Socket SocketImpl::OnDisconnect() {
     } else if (type_ == Socket::WSS) {
       if (last_error_ == Error(LNR_EWS)) {
         if (dynamic_cast<WSSSocketImpl*>(this)->CheckRetryAuth()) {
-          socket.Connect();
-          return socket;
+          Connect(connect_timeout_, ev_);
+          return;
         }
       } else {
         WSResponseContext ctx;
         ctx.code = LNR_WS_SERVICE_UNAVAILABLE;
         try {
-          socket.as<WSSSocket>().SetWSResponseContext(ctx);
+          dynamic_cast<WSSSocketImpl*>(this)->SetWSResponseContext(ctx);
         } catch(...) {}
       }
 #endif
 
     }
   }
-
   _DiscardMessages(socket);
-  observer_->Lock();
-  delegate = observer_->GetSubject();
-  if (delegate && !handshaking_) {
-    delegate->OnDisconnect(socket, last_error_);
+  if (observer && !handshaking_) {
+    observer->Lock();
+    HandlerDelegate* delegate = observer->GetSubject();
+    if (delegate) {
+      delegate->OnDisconnect(socket, last_error_);
+    }
+    observer->Unlock();
   }
-  observer_->Unlock();
   self_ = Addrinfo(); // reset self info
-  return socket;
+  return;
 }
 
 class _Response : public Message {
@@ -513,7 +504,7 @@ class _Response : public Message {
   MSGPACK_DEFINE(type, msgid, error, result);
 };
 
-void SocketImpl::OnRead(const tv_buf_t* buffer, ssize_t nread) {
+void SocketImpl::OnRead(const shared_ptr<SocketImpl>& socket, const tv_buf_t* buffer, ssize_t nread) {
   unique_lock<mutex> state_lock(state_mutex_);
   if (state_ != Socket::CONNECTING && state_ != Socket::CONNECTED) {
     if (nread > 0) {
@@ -521,119 +512,131 @@ void SocketImpl::OnRead(const tv_buf_t* buffer, ssize_t nread) {
     }
     return;
   }
-  Error e(nread);
+  state_lock.unlock();
 
+  Error e(nread);
 #ifdef WITH_SSL
   if (nread == TV_ESSL) {
     e = Error(LNR_ESSL, stream_->ssl_err);
   }
 #endif
 
-  state_lock.unlock();
+  assert(nread != 0);
+  if (nread <= 0) {
+    LINEAR_LOG(LOG_DEBUG, "%s(id = %d): %s:%d --- %s --x %s:%d",
+               tv_strerror(reinterpret_cast<tv_handle_t*>(stream_), nread), id_,
+               self_.addr.c_str(), self_.port, GetTypeString(type_).c_str(), peer_.addr.c_str(), peer_.port);
+    // error or EOF
+    Disconnect(handshaking_);
+    last_error_ = e;
+    return;
+  }
+  // nread > 0
+  unpacker_.reserve_buffer(nread);
+  memcpy(unpacker_.buffer(), buffer->base, nread);
+  free(buffer->base);
+  unpacker_.buffer_consumed(nread);
+  HandlerDelegate* delegate = NULL;
+  shared_ptr<Observer<HandlerDelegate> > observer = observer_.lock();
+  if (observer) {
+    observer->Lock();
+    delegate = observer->GetSubject();
+  }
   try {
-    assert(nread != 0);
-    if (nread < 0) {
-      LINEAR_LOG(LOG_DEBUG, "%s: %s:%d <-- %s --- %s:%d",
-                 tv_strerror(reinterpret_cast<tv_handle_t*>(stream_), nread),
-                 self_.addr.c_str(), self_.port, GetTypeString(type_).c_str(), peer_.addr.c_str(), peer_.port);
-      // error or EOF
-      Disconnect(handshaking_);
-      last_error_ = e;
-    } else if (nread > 0) {
-      unpacker_.reserve_buffer(nread);
-      memcpy(unpacker_.buffer(), buffer->base, nread);
-      free(buffer->base);
-      unpacker_.buffer_consumed(nread);
-      msgpack::unpacked result;
-      while (unpacker_.next(&result)) {
-        msgpack::object obj = result.get();
-        std::auto_ptr<msgpack::zone> zone = result.zone();
-        // ReThink: use const ref (NVRO issue)
-        Message message = obj.as<Message>();
-        switch(message.type) {
-        case REQUEST:
-          {
-            Request request = obj.as<Request>();
-            LINEAR_LOG(LOG_DEBUG, "recv request: msgid = %u, method = \"%s\", params = %s, %s:%d <-- %s --- %s:%d",
-                       request.msgid, request.method.c_str(), LINEAR_LOG_PRINTABLE_STRING(request.params).c_str(),
-                       self_.addr.c_str(), self_.port, GetTypeString(type_).c_str(), peer_.addr.c_str(), peer_.port);
-            observer_->Lock();
-            HandlerDelegate* delegate = observer_->GetSubject();
-            if (delegate) {
-              delegate->OnMessage(id_, request);
-            }
-            observer_->Unlock();
+    msgpack::unpacked result;
+    while (unpacker_.next(&result)) {
+      msgpack::object obj = result.get();
+      std::auto_ptr<msgpack::zone> zone = result.zone();
+      Message message = obj.as<Message>();
+      switch(message.type) {
+      case REQUEST:
+        {
+          Request request = obj.as<Request>();
+          LINEAR_LOG(LOG_DEBUG, "recv request(id = %d): msgid = %u, method = \"%s\", params = %s, %s:%d <-- %s --- %s:%d",
+                     id_, request.msgid,
+                     request.method.c_str(), LINEAR_LOG_PRINTABLE_STRING(request.params).c_str(),
+                     self_.addr.c_str(), self_.port, GetTypeString(type_).c_str(), peer_.addr.c_str(), peer_.port);
+          if (delegate) {
+            delegate->OnMessage(socket, request);
           }
-          break;
-        case RESPONSE:
-          {
-            _Response _response = obj.as<_Response>();
-            LINEAR_LOG(LOG_DEBUG, "recv response: msgid = %u, result = %s, error = %s, %s:%d <-- %s --- %s:%d",
-                       _response.msgid,
-                       LINEAR_LOG_PRINTABLE_STRING(_response.result).c_str(),
-                       LINEAR_LOG_PRINTABLE_STRING(_response.error).c_str(),
-                       self_.addr.c_str(), self_.port, GetTypeString(type_).c_str(), peer_.addr.c_str(), peer_.port);
-            unique_lock<mutex> request_timer_lock(request_timer_mutex_);
-            for (std::list<SocketImpl::RequestTimer*>::iterator it = request_timers_.begin();
-                 it != request_timers_.end(); it++) {
-              const Request& request = (*it)->GetRequest();
-              if (request.msgid == _response.msgid) {
-                Response response(_response.msgid, _response.result, _response.error, request);
-                delete *it;
-                request_timers_.erase(it);
-                request_timer_lock.unlock();
-                observer_->Lock();
-                HandlerDelegate* delegate = observer_->GetSubject();
-                if (delegate) {
-                  delegate->OnMessage(id_, response);
-                }
-                observer_->Unlock();
-                break;
-              }
-            }
-          }
-          break;
-        case NOTIFY:
-          {
-            Notify notify = obj.as<Notify>();
-            LINEAR_LOG(LOG_DEBUG, "recv notify: method = \"%s\", params = %s, %s:%d <-- %s --- %s:%d",
-                       notify.method.c_str(), LINEAR_LOG_PRINTABLE_STRING(notify.params).c_str(),
-                       self_.addr.c_str(), self_.port, GetTypeString(type_).c_str(), peer_.addr.c_str(), peer_.port);
-            observer_->Lock();
-            HandlerDelegate* delegate = observer_->GetSubject();
-            if (delegate) {
-              delegate->OnMessage(id_, notify);
-            }
-            observer_->Unlock();
-            break;
-          }
-          break;
-        default:
-          throw std::bad_cast();
         }
-      }
-      if (unpacker_.message_size() > max_buffer_size_) {
-        throw std::runtime_error("");
+        break;
+      case RESPONSE:
+        {
+          _Response _response = obj.as<_Response>();
+          LINEAR_LOG(LOG_DEBUG, "recv response(id = %d): msgid = %u, result = %s, error = %s, %s:%d <-- %s --- %s:%d",
+                     id_, _response.msgid,
+                     LINEAR_LOG_PRINTABLE_STRING(_response.result).c_str(),
+                     LINEAR_LOG_PRINTABLE_STRING(_response.error).c_str(),
+                     self_.addr.c_str(), self_.port, GetTypeString(type_).c_str(), peer_.addr.c_str(), peer_.port);
+          unique_lock<mutex> request_timer_lock(request_timer_mutex_);
+          for (std::vector<SocketImpl::RequestTimer*>::iterator it = request_timers_.begin();
+               it != request_timers_.end(); it++) {
+            const Request& request = (*it)->request;
+            if (request.msgid == _response.msgid) {
+              Response response(_response.msgid, _response.result, _response.error, request);
+              delete *it;
+              request_timers_.erase(it);
+              request_timer_lock.unlock();
+              if (delegate) {
+                delegate->OnMessage(socket, response);
+              }
+              break;
+            }
+          }
+        }
+        break;
+      case NOTIFY:
+        {
+          Notify notify = obj.as<Notify>();
+          LINEAR_LOG(LOG_DEBUG, "recv notify(id = %d): method = \"%s\", params = %s, %s:%d <-- %s --- %s:%d",
+                     id_,
+                     notify.method.c_str(), LINEAR_LOG_PRINTABLE_STRING(notify.params).c_str(),
+                     self_.addr.c_str(), self_.port, GetTypeString(type_).c_str(), peer_.addr.c_str(), peer_.port);
+          if (delegate) {
+            delegate->OnMessage(socket, notify);
+          }
+          break;
+        }
+        break;
+      default:
+        throw std::bad_cast();
       }
     }
+    if (unpacker_.message_size() > max_buffer_size_) {
+      throw std::runtime_error("");
+    }
   } catch (const std::bad_cast&) {
-    LINEAR_LOG(LOG_WARN, "recv invalid message from %s:%d <-- %s -- %s:%d",
+    LINEAR_LOG(LOG_WARN, "recv invalid message(id = %d): %s:%d <-- %s -- %s:%d",
+               id_,
                self_.addr.c_str(), self_.port, GetTypeString(type_).c_str(),
                peer_.addr.c_str(), peer_.port);
     Disconnect();
   } catch (...) {
-    LINEAR_LOG(LOG_ERR, "recv malformed packet or message size is too big");
+    LINEAR_LOG(LOG_ERR, "recv malformed or big message(id = %d): %s:%d <-- %s -- %s:%d",
+               id_,
+               self_.addr.c_str(), self_.port, GetTypeString(type_).c_str(),
+               peer_.addr.c_str(), peer_.port);
     Disconnect();
+  }
+  if (observer) {
+    observer->Unlock();
   }
 }
 
-void SocketImpl::OnWrite(const Message* message, int status) {
+void SocketImpl::OnWrite(const shared_ptr<SocketImpl>& socket, const Message* message, int status) {
   assert(message != NULL);
   if (status) {
-    observer_->Lock();
-    HandlerDelegate* delegate = observer_->GetSubject();
+    LINEAR_LOG(LOG_ERR, "fail to send message(id = %d): %s",
+               id_,
+               tv_strerror(reinterpret_cast<tv_handle_t*>(stream_), status));
+    HandlerDelegate* delegate = NULL;
+    shared_ptr<Observer<HandlerDelegate> > observer = observer_.lock();
+    if (observer) {
+      observer->Lock();
+      delegate = observer->GetSubject();
+    }
     if (delegate) {
-      Socket socket = delegate->Get(id_);
       switch(message->type) {
       case REQUEST:
         delegate->OnError(socket, *(dynamic_cast<const Request*>(message)), Error(status));
@@ -649,51 +652,48 @@ void SocketImpl::OnWrite(const Message* message, int status) {
         assert(false);
       }
     }
-    observer_->Unlock();
+    if (observer) {
+      observer->Unlock();
+    }
   }
-  delete message;
 }
 
-void SocketImpl::OnConnectTimeout() {
-  OnConnect(stream_, TV_ETIMEDOUT);
+void SocketImpl::OnConnectTimeout(const shared_ptr<SocketImpl>& socket) {
+  OnConnect(socket, stream_, TV_ETIMEDOUT);
 }
 
-void SocketImpl::OnRequestTimeout(const Request& request) {
+void SocketImpl::OnRequestTimeout(const shared_ptr<SocketImpl>& socket, const Request& request) {
   unique_lock<mutex> request_timer_lock(request_timer_mutex_);
-  for (std::list<SocketImpl::RequestTimer*>::iterator it = request_timers_.begin();
+  for (std::vector<SocketImpl::RequestTimer*>::iterator it = request_timers_.begin();
        it != request_timers_.end(); it++) {
-    const Request& ref = (*it)->GetRequest();
+    const Request& ref = (*it)->request;
     if (ref.msgid == request.msgid) {
-      LINEAR_LOG(LOG_INFO, "occur request timeout: msgid = %d", request.msgid);
+      LINEAR_LOG(LOG_INFO, "occur request timeout(id = %d): msgid = %d",
+                 id_, request.msgid);
       request_timers_.erase(it);
       break;
     }
   }
   request_timer_lock.unlock();
-  observer_->Lock();
-  HandlerDelegate* delegate = observer_->GetSubject();
-  if (delegate) {
-    Socket socket = delegate->Get(id_);
-    delegate->OnError(socket, request, Error(LNR_ETIMEDOUT));
+  if (shared_ptr<Observer<HandlerDelegate> > observer = observer_.lock()) {
+    observer->Lock();
+    HandlerDelegate* delegate = observer->GetSubject();
+    if (delegate) {
+      delegate->OnError(socket, request, Error(LNR_ETIMEDOUT));
+    }
+    observer->Unlock();
   }
-  observer_->Unlock();
 }
 
 Error SocketImpl::_Send(Message* message) {
   assert(message != NULL);
-  if (message == NULL) {
-    return Error(LNR_EINVAL);
-  }
   msgpack::sbuffer sbuf;
   switch(message->type) {
   case REQUEST:
     {
       const Request* request = dynamic_cast<const Request*>(message);
-      assert(request != NULL);
-      if (request == NULL) {
-        return Error(LNR_EINVAL);
-      }
-      LINEAR_LOG(LOG_DEBUG, "send request: msgid = %u, method = \"%s\", params = %s, %s:%d --- %s --> %s:%d",
+      LINEAR_LOG(LOG_DEBUG, "send request(id = %d): msgid = %u, method = \"%s\", params = %s, %s:%d --- %s --> %s:%d",
+                 id_,
                  request->msgid, request->method.c_str(), LINEAR_LOG_PRINTABLE_STRING(request->params).c_str(),
                  self_.addr.c_str(), self_.port, GetTypeString(type_).c_str(), peer_.addr.c_str(), peer_.port);
       msgpack::pack(sbuf, *request);
@@ -702,11 +702,8 @@ Error SocketImpl::_Send(Message* message) {
   case RESPONSE:
     {
       const Response* response = dynamic_cast<const Response*>(message);
-      assert(response != NULL);
-      if (response == NULL) {
-        return Error(LNR_EINVAL);
-      }
-      LINEAR_LOG(LOG_DEBUG, "send response: msgid = %u, result = %s, error = %s, %s:%d --- %s --> %s:%d",
+      LINEAR_LOG(LOG_DEBUG, "send response(id = %d): msgid = %u, result = %s, error = %s, %s:%d --- %s --> %s:%d",
+                 id_,
                  response->msgid,
                  LINEAR_LOG_PRINTABLE_STRING(response->result).c_str(),
                  LINEAR_LOG_PRINTABLE_STRING(response->error).c_str(),
@@ -717,24 +714,22 @@ Error SocketImpl::_Send(Message* message) {
   case NOTIFY:
     {
       const Notify* notify = dynamic_cast<const Notify*>(message);
-      assert(notify != NULL);
-      if (notify == NULL) {
-        return Error(LNR_EINVAL);
-      }
-      LINEAR_LOG(LOG_DEBUG, "send notify: method = \"%s\", params = %s, %s:%d --- %s --> %s:%d",
+      LINEAR_LOG(LOG_DEBUG, "send notify(id = %d): method = \"%s\", params = %s, %s:%d --- %s --> %s:%d",
+                 id_,
                  notify->method.c_str(), LINEAR_LOG_PRINTABLE_STRING(notify->params).c_str(),
                  self_.addr.c_str(), self_.port, GetTypeString(type_).c_str(), peer_.addr.c_str(), peer_.port);
       msgpack::pack(sbuf, *notify);
       break;
     }
   default:
-    LINEAR_LOG(LOG_ERR, "message type is invalid: %d", message->type);
+    LINEAR_LOG(LOG_ERR, "invalid type of message: %d", message->type);
     return Error(LNR_EINVAL);
   }
   char* copy_data = static_cast<char*>(malloc(sbuf.size()));
   if (copy_data == NULL) {
     Error err(LNR_ENOMEM);
-    LINEAR_LOG(LOG_ERR, "fail to send: %s", err.Message().c_str());
+    LINEAR_LOG(LOG_ERR, "fail to send message(id = %d): %s",
+               id_, err.Message().c_str());
     return err;
   }
   memcpy(copy_data, sbuf.data(), sbuf.size());
@@ -743,85 +738,69 @@ Error SocketImpl::_Send(Message* message) {
   if (w == NULL) {
     free(copy_data);
     Error err(LNR_ENOMEM);
-    LINEAR_LOG(LOG_ERR, "fail to send: %s", err.Message().c_str());
+    LINEAR_LOG(LOG_ERR, "fail to send message(id = %d): %s",
+               id_, err.Message().c_str());
     return err;
   }
   w->data = message;
-  RequestTimer* request_timer = NULL;
   if (message->type == REQUEST) {
     const Request* request = dynamic_cast<const Request*>(message);
-    assert(request != NULL);
-    if (request == NULL) {
-      free(w);
-      free(copy_data);
-      return Error(LNR_EINVAL);
-    }
     try {
-      request_timer = new RequestTimer(*request, this);
+      RequestTimer* request_timer = new RequestTimer(*request, ev_->socket);
+      unique_lock<mutex> request_timer_lock(request_timer_mutex_);
+      request_timers_.push_back(request_timer);
+      request_timer_lock.unlock();
+      request_timer->Start();
     } catch(...) {
       free(w);
       free(copy_data);
-      return Error(LNR_ENOMEM);
+      Error err(LNR_ENOMEM);
+      LINEAR_LOG(LOG_ERR, "fail to send message(id = %d): %s",
+                 id_, err.Message().c_str());
+      return err;
     }
-    unique_lock<mutex> request_timer_lock(request_timer_mutex_);
-    request_timers_.push_back(request_timer);
-    request_timer_lock.unlock();
-    request_timer->Start();
   }
   int ret = tv_write(w, stream_, buffer, EventLoop::OnWrite);
   if (ret) { // EINVAL or ENOMEM
-    if (message->type == REQUEST) {
-      unique_lock<mutex> request_timer_lock(request_timer_mutex_);
-      request_timers_.pop_back();
-      request_timer_lock.unlock();
-      if (request_timer != NULL) {
-        delete request_timer;
-      }
-    }
     free(w);
     free(copy_data);
     Error err(ret);
-    LINEAR_LOG(LOG_ERR, "fail to send: %s", err.Message().c_str());
+    LINEAR_LOG(LOG_ERR, "fail to send message(id = %d): %s",
+               id_, err.Message().c_str());
     return err;
   }
   return Error(LNR_OK);
 }
 
-void SocketImpl::UnrefResources() {
-  lock_guard<mutex> state_lock(state_mutex_);
-  if (state_ == Socket::DISCONNECTED) {
-    stream_ = NULL; // unref tv_stream
-    data_ = NULL; // unref SocketEventData
-  }
-}
-
-void SocketImpl::_SendPendingMessages() {
+void SocketImpl::_SendPendingMessages(const shared_ptr<SocketImpl>& socket) {
   unique_lock<mutex> state_lock(state_mutex_);
   // Send pending messages
-  std::list<Message*> error_to_send;
-  for (std::list<Message*>::iterator it = pending_messages_.begin();
+  std::vector<Message*> fail_to_send;
+  for (std::vector<Message*>::iterator it = pending_messages_.begin();
        it != pending_messages_.end(); it++) {
     if (state_ != Socket::CONNECTED) {
-      error_to_send.push_back(*it);
+      fail_to_send.push_back(*it);
     } else {
       Error err = _Send(*it);
-      if (err.Code() != LNR_OK) {
-        error_to_send.push_back(*it);
+      if (err != Error(LNR_OK)) {
+        fail_to_send.push_back(*it);
       }
     }
   }
-  std::list<Message*>().swap(pending_messages_);
+  std::vector<Message*>().swap(pending_messages_);
   state_lock.unlock();
-
   // call OnError when fail to send pending messages
+  HandlerDelegate* delegate = NULL;
+  shared_ptr<Observer<HandlerDelegate> > observer = observer_.lock();
+  if (observer) {
+    observer->Lock();
+    delegate = observer->GetSubject();
+  }
   Error pending_err = Error(LNR_ECANCELED);
-  for (std::list<Message*>::iterator it = error_to_send.begin();
-       it != error_to_send.end(); it++) {
+  for (std::vector<Message*>::iterator it = fail_to_send.begin();
+       it != fail_to_send.end(); it++) {
     Message* message = *it;
-    observer_->Lock();
-    HandlerDelegate* delegate = observer_->GetSubject();
     if (delegate) {
-      Socket socket = delegate->Get(id_); // copy socket
       switch(message->type) {
       case REQUEST:
         delegate->OnError(socket, *(dynamic_cast<Request*>(message)), pending_err);
@@ -836,24 +815,27 @@ void SocketImpl::_SendPendingMessages() {
         LINEAR_LOG(LOG_ERR, "BUG: invalid type of message");
         assert(false);
       }
-      observer_->Unlock();
     }
-    delete *it;
+    delete message;
+  }
+  if (observer) {
+    observer->Unlock();
   }
 }
 
-void SocketImpl::_DiscardMessages(const Socket& socket) {
+void SocketImpl::_DiscardMessages(const shared_ptr<SocketImpl>& socket) {
+  HandlerDelegate* delegate = NULL;
+  shared_ptr<Observer<HandlerDelegate> > observer = observer_.lock();
+  if (observer) {
+    observer->Lock();
+    delegate = observer->GetSubject();
+  }
   Error err = Error(LNR_ECANCELED);
-
-  std::list<Message*> cancelled_pendings;
-  unique_lock<mutex> state_lock(state_mutex_);
-  cancelled_pendings.swap(pending_messages_);
-  state_lock.unlock();
-  for (std::list<Message*>::iterator it = cancelled_pendings.begin();
-       it != cancelled_pendings.end(); it++) {
+  std::vector<Message*> fail_to_send;
+  fail_to_send.swap(pending_messages_);
+  for (std::vector<Message*>::iterator it = fail_to_send.begin();
+       it != fail_to_send.end(); it++) {
     Message* message = *it;
-    observer_->Lock();
-    HandlerDelegate* delegate = observer_->GetSubject();
     if (delegate) {
       switch(message->type) {
       case REQUEST:
@@ -870,28 +852,22 @@ void SocketImpl::_DiscardMessages(const Socket& socket) {
         assert(false);
       }
     }
-    observer_->Unlock();
-    delete *it;
+    delete message;
   }
 
-  std::list<RequestTimer*> cancelled_requests;
+  std::vector<RequestTimer*> cancelled_requests;
   unique_lock<mutex> request_timer_lock(request_timer_mutex_);
-  for (std::list<RequestTimer*>::iterator it = request_timers_.begin();
-       it != request_timers_.end(); it++) {
-    (*it)->Stop();
-  }
   cancelled_requests.swap(request_timers_);
   request_timer_lock.unlock();
-  for (std::list<RequestTimer*>::iterator it = cancelled_requests.begin();
+  for (std::vector<RequestTimer*>::iterator it = cancelled_requests.begin();
        it != cancelled_requests.end(); it++) {
-    const Request& request = (*it)->GetRequest();
-    observer_->Lock();
-    HandlerDelegate* delegate = observer_->GetSubject();
     if (delegate) {
-      delegate->OnError(socket, request, err);
+      delegate->OnError(socket, (*it)->request, err);
     }
-    observer_->Unlock();
     delete *it;
+  }
+  if (observer) {
+    observer->Unlock();
   }
 }
 

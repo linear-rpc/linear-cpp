@@ -15,8 +15,7 @@ TCPClientImpl::~TCPClientImpl() {
 
 TCPSocket TCPClientImpl::CreateSocket(const std::string& hostname, int port) {
   try {
-    TCPSocket socket(shared_ptr<TCPSocketImpl>(new TCPSocketImpl(hostname, port, *this)));
-    return socket;
+    return TCPSocket(shared_ptr<TCPSocketImpl>(new TCPSocketImpl(hostname, port, *this)));
   } catch (...) {
     LINEAR_LOG(LOG_ERR, "no memory");
     throw;

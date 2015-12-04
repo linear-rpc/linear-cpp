@@ -70,11 +70,11 @@ bool Socket::operator>=(const Socket& socket) const {
   return (GetId() >= socket.GetId());
 }
 
-Error Socket::SetMaxBufferSize(size_t max_limit) const {
+Error Socket::SetMaxBufferSize(size_t limit) const {
   if (!socket_) {
     return Error(LNR_EBADF);
   }
-  socket_->SetMaxBufferSize(max_limit);
+  socket_->SetMaxBufferSize(limit);
   return Error(LNR_OK);
 }
 
@@ -82,15 +82,29 @@ Error Socket::Connect(unsigned int timeout) const {
   if (!socket_) {
     return Error(LNR_EBADF);
   }
-  return socket_->Connect(timeout, *this);
+  Error e(LNR_ENOMEM);
+  try {
+    EventLoop::SocketEvent* ev = new EventLoop::SocketEvent(socket_);
+    e = socket_->Connect(timeout, ev);
+    if (e != Error(LNR_OK)) {
+      delete ev;
+    }
+  } catch(...) {
+    LINEAR_LOG(LOG_ERR, "no memory");
+  }
+  return e;
 }
 
 Error Socket::Disconnect() const {
   if (!socket_) {
     return Error(LNR_EBADF);
   }
+  const linear::Addrinfo& self = GetSelfInfo();
   const linear::Addrinfo& peer = GetPeerInfo();
-  LINEAR_LOG(LOG_DEBUG, "try to disconnect: %s:%d,%s", peer.addr.c_str(), peer.port, GetTypeString(GetType()).c_str());
+  LINEAR_LOG(LOG_DEBUG, "try to disconnect(id = %d): %s:%d x-- %s --- %s:%d",
+             GetId(),
+             self.addr.c_str(), self.port, GetTypeString(GetType()).c_str(),
+             peer.addr.c_str(), peer.port);
   return socket_->Disconnect();
 }
 

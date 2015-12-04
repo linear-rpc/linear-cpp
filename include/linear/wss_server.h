@@ -8,8 +8,8 @@
 
 #include "linear/handler.h"
 #include "linear/server.h"
-#include "linear/wss_socket.h"
 #include "linear/ssl_context.h"
+#include "linear/wss_socket.h"
 
 namespace linear {
 

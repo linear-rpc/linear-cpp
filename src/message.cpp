@@ -79,10 +79,10 @@ void Notify::Send(const std::string& group_name, const Socket& except_socket) co
     return;
   }
   if (group_name == std::string(LINEAR_BROADCAST_GROUP)) {
-    LINEAR_LOG(LOG_DEBUG, "Send to broadcast group except for socket.id = %d",
+    LINEAR_LOG(LOG_DEBUG, "Send to broadcast group except for socket(id = %d)",
                except_socket.GetId());
   } else {
-    LINEAR_LOG(LOG_DEBUG, "Send to group: \"%s\" except for socket.id = %d",
+    LINEAR_LOG(LOG_DEBUG, "Send to group: \"%s\" except for socket(id = %d)",
                group_name.c_str(), except_socket.GetId());
   }
   std::set<linear::Socket>::iterator it = sockets.begin();

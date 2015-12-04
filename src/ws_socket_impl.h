@@ -17,9 +17,8 @@ class WSSocketImpl : public linear::SocketImpl {
   WSSocketImpl(tv_stream_t* stream, const linear::WSRequestContext& response_context,
                const linear::HandlerDelegate& delegate);
   virtual ~WSSocketImpl();
-
   linear::Error Connect();
-  void OnConnect(tv_stream_t* handle, int status);
+  void OnConnect(const shared_ptr<SocketImpl>& socket, tv_stream_t* handle, int status);
   bool CheckRetryAuth();
   const linear::WSRequestContext& GetWSRequestContext();
   void SetWSRequestContext(const WSRequestContext& request_context);

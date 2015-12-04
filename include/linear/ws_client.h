@@ -26,15 +26,10 @@ class LINEAR_EXTERN WSClient : public Client {
   /**
    * Constructor
    * @param [in] handler application defined behavior.
-   */
-  explicit WSClient(const linear::Handler& handler);
-  /**
-   * Constructor
-   * @param [in] handler application defined behavior.
-   * @param [in] request_context common linear::WSRequestContext object
+   * @param [in] [request_context] common linear::WSRequestContext object
    */
   WSClient(const linear::Handler& handler,
-           const linear::WSRequestContext& request_context);
+           const linear::WSRequestContext& request_context = linear::WSRequestContext());
   /**
    * Set common linear::WSRequestContext into Client Object.
    * If you can not provide linear::WSRequestContext when construct WSClient, call this method.

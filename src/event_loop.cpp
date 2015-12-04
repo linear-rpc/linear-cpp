@@ -1,171 +1,123 @@
-#include <assert.h>
-#include <stdlib.h>
+#include <cassert>
+#include <cstdlib>
 
 #include "linear/log.h"
 
 #include "event_loop.h"
 #include "server_impl.h"
 #include "socket_impl.h"
-#include "socket_pool.h"
 #include "timer_impl.h"
 
 using namespace linear::log;
 
 namespace linear {
 
+// -fthreadsafe-statics
 const EventLoop& EventLoop::GetDefault() {
   static EventLoop g_loop;
   return g_loop;
 }
 
-void EventLoop::AddTimer(const Timer& timer) {
-  EventLoop& loop = const_cast<EventLoop&>(GetDefault());
-  loop.pool_.Add(timer);
-}
-
-void EventLoop::RemoveTimer(int id) {
-  EventLoop& loop = const_cast<EventLoop&>(GetDefault());
-  loop.pool_.Remove(id);
-}
-
 void EventLoop::OnAccept(tv_stream_t* srv_stream, tv_stream_t* cli_stream, int status) {
   assert(srv_stream != NULL && srv_stream->data != NULL);
-  ServerEventData* data = static_cast<ServerEventData*>(srv_stream->data);
-  data->Lock();
-  ServerImpl* server = data->GetServer();
-  if (server != NULL) {
+  ServerEvent* ev = static_cast<ServerEvent*>(srv_stream->data);
+  if (linear::shared_ptr<ServerImpl> server = ev->server.lock()) {
     server->OnAccept(srv_stream, cli_stream, status);
   }
-  data->Unlock();
 }
 
 void EventLoop::OnAcceptComplete(tv_stream_t* stream, int status) {
   assert(stream != NULL && stream->data != NULL);
-  SocketEventData* data = static_cast<SocketEventData*>(stream->data);
-  data->Lock();
-  SocketImpl* socket = data->GetSocket();
-  if (socket != NULL) {
-    socket->OnHandshakeComplete(stream, status);
+  SocketEvent* ev = static_cast<SocketEvent*>(stream->data);
+  if (linear::shared_ptr<SocketImpl> socket = ev->socket.lock()) {
+    socket->OnHandshakeComplete(socket, stream, status);
   }
-  data->Unlock();
 }
 
 void EventLoop::OnConnect(tv_stream_t* stream, int status) {
   assert(stream != NULL && stream->data != NULL);
-  SocketEventData* data = static_cast<SocketEventData*>(stream->data);
-  data->Lock();
-  SocketImpl* socket = data->GetSocket();
-  if (socket != NULL) {
-    socket->OnConnect(stream, status);
+  SocketEvent* ev = static_cast<SocketEvent*>(stream->data);
+  if (linear::shared_ptr<SocketImpl> socket = ev->socket.lock()) {
+    socket->OnConnect(socket, stream, status);
   }
-  data->Unlock();
 }
 
 void EventLoop::OnClose(tv_handle_t* handle) {
-  assert(handle != NULL);
-  EventData* data = static_cast<EventData*>(handle->data);
-  assert(data != NULL);
-  switch (data->GetType()) {
-  case SERVER_EVENT:
+  assert(handle != NULL && handle->data != NULL);
+  switch (static_cast<Event*>(handle->data)->type) {
+  case SERVER:
     {
-      ServerEventData* server_event_data = static_cast<ServerEventData*>(handle->data);
-      delete server_event_data;
-      handle->data = NULL;
+      ServerEvent* ev = static_cast<ServerEvent*>(handle->data);
+      delete ev;
     }
     break;
-  case SOCKET_EVENT:
+  case SOCKET:
     {
-      linear::Socket socket; // need to copy socket to destruct after deleting socket event data.
-      SocketEventData* socket_event_data = static_cast<SocketEventData*>(handle->data);
-      socket_event_data->Lock();
-      SocketImpl* socket_impl = socket_event_data->GetSocket();
-      if (socket_impl != NULL) {
-        socket = socket_impl->OnDisconnect();
+      SocketEvent* ev = static_cast<SocketEvent*>(handle->data);
+      if (linear::shared_ptr<SocketImpl> socket = ev->socket.lock()) {
+        socket->OnDisconnect(socket);
       }
-      socket_event_data->Unlock();
-
-      EventLoop& loop = const_cast<EventLoop&>(GetDefault());
-      loop.Lock();
-      socket_event_data->Lock();
-      socket_impl = socket_event_data->GetSocket();
-      if (socket_impl != NULL) {
-        socket_impl->UnrefResources();
-      }
-      socket_event_data->Unlock();
-      loop.Unlock();
-
-      delete socket_event_data;
-    } // destruct socket here
+      delete ev;
+    }
     break;
-  case TIMER_EVENT:
+  case TIMER:
     {
-      TimerEventData* timer_event_data = static_cast<TimerEventData*>(handle->data);
-      RemoveTimer(timer_event_data->GetId());
-      delete timer_event_data;
-      handle->data = NULL;
+      TimerEvent* ev = static_cast<TimerEvent*>(handle->data);
+      delete ev;
     }
     break;
   default:
-    break;
+    LINEAR_LOG(LOG_ERR, "BUG: invalid type of event");
+    assert(false);
   }
   free(handle);
 }
 
 void EventLoop::OnRead(tv_stream_t* stream, ssize_t nread, const tv_buf_t* buffer) {
   assert(stream != NULL && stream->data != NULL && buffer != NULL);
-  SocketEventData* data = static_cast<SocketEventData*>(stream->data);
-  data->Lock();
-  SocketImpl* socket = data->GetSocket();
-  if (socket != NULL) {
-    socket->OnRead(buffer, nread);
+  SocketEvent* ev = static_cast<SocketEvent*>(stream->data);
+  if (linear::shared_ptr<SocketImpl> socket = ev->socket.lock()) {
+    socket->OnRead(socket, buffer, nread);
   }
-  data->Unlock();
 }
 
 void EventLoop::OnWrite(tv_write_t* request, int status) {
-  assert(request != NULL && request->handle != NULL &&
-         request->handle->data != NULL && request->buf.base != NULL);
-  if (status) {
-    LINEAR_LOG(LOG_ERR, "fail to write: %s",
-               tv_strerror(reinterpret_cast<tv_handle_t*>(request->handle), status));
+  assert(request != NULL && request->data != NULL &&
+         request->handle != NULL && request->handle->data != NULL &&
+         request->buf.base != NULL);
+  Message* message = static_cast<Message*>(request->data);
+  SocketEvent* ev = static_cast<SocketEvent*>(request->handle->data);
+  if (linear::shared_ptr<SocketImpl> socket = ev->socket.lock()) {
+    socket->OnWrite(socket, message, status);
   }
-  SocketEventData* data = static_cast<SocketEventData*>(request->handle->data);
-  const Message* message = static_cast<const Message*>(request->data);
-  data->Lock();
-  SocketImpl* socket = data->GetSocket();
-  if (socket != NULL) {
-    socket->OnWrite(message, status);
-  } else {
-    delete message;
-  }
-  data->Unlock();
+  delete message;
   free(request->buf.base);
   free(request);
 }
 
+void EventLoop::OnTimer(tv_timer_t* handle) {
+  assert(handle != NULL && handle->data != NULL);
+  TimerEvent* ev = static_cast<TimerEvent*>(handle->data);
+  if (linear::shared_ptr<TimerImpl> timer = ev->timer.lock()) {
+    timer->OnTimer();
+  }
+}
+
 void EventLoop::OnConnectTimeout(void* args) {
   assert(args != NULL);
-  SocketImpl* socket = static_cast<SocketImpl*>(args);
-  socket->OnConnectTimeout();
+  SocketEvent* ev = static_cast<SocketEvent*>(args);
+  if (linear::shared_ptr<SocketImpl> socket = ev->socket.lock()) {
+    socket->OnConnectTimeout(socket);
+  }
 }
 
 void EventLoop::OnRequestTimeout(void* args) {
-  SocketImpl::RequestTimer* timer = static_cast<SocketImpl::RequestTimer*>(args);
-  assert(timer != NULL);
-  SocketImpl* socket = timer->GetSocket();
-  socket->OnRequestTimeout(timer->GetRequest());
-  delete timer;
-}
-
-void EventLoop::OnTimer(tv_timer_t* handle) {
-  assert(handle != NULL && handle->data != NULL);
-  TimerEventData* data = static_cast<TimerEventData*>(handle->data);
-  data->Lock();
-  TimerImpl* timer = data->GetTimer();
-  if (timer != NULL) {
-    timer->OnTimer();
+  assert(args != NULL);
+  SocketImpl::RequestTimer* request_timer = static_cast<SocketImpl::RequestTimer*>(args);
+  if (linear::shared_ptr<SocketImpl> socket = request_timer->socket.lock()) {
+    socket->OnRequestTimeout(socket, request_timer->request);
   }
-  data->Unlock();
+  delete request_timer;
 }
 
 EventLoop::EventLoop() : handle_(tv_loop_new()) {
@@ -181,17 +133,7 @@ EventLoop& EventLoop::operator=(const EventLoop& loop) {
 }
 
 EventLoop::~EventLoop() {
-  pool_.Clear();
   tv_loop_delete(handle_);
-  handle_ = NULL;
-}
-
-void EventLoop::Lock() {
-  mutex_.lock();
-}
-
-void EventLoop::Unlock() {
-  mutex_.unlock();
 }
 
 tv_loop_t* EventLoop::GetHandle() const {

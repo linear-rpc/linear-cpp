@@ -40,13 +40,13 @@ class Pool {
   }
   void Join(const std::string& name, const linear::Socket& socket) {
     lock_guard<linear::mutex> lock(mutex_);
-    LINEAR_LOG(LOG_DEBUG, "join socket_id = %d into group_name = \"%s\"",
+    LINEAR_LOG(LOG_DEBUG, "join socket(id = %d) into group_name = \"%s\"",
                socket.GetId(), name.c_str());
     pool_[name].insert(socket);
   }
   void Leave(const std::string& name, const linear::Socket& socket) {
     lock_guard<linear::mutex> lock(mutex_);
-    LINEAR_LOG(LOG_DEBUG, "leave socket_id = %d from group_name = \"%s\"",
+    LINEAR_LOG(LOG_DEBUG, "leave socket(id = %d) from group_name = \"%s\"",
                socket.GetId(), name.c_str());
     pool_[name].erase(socket);
   }
@@ -58,7 +58,7 @@ class Pool {
       std::set<linear::Socket>::iterator socket_it = sockets.begin();
       while (socket_it != sockets.end()) {
         if (socket.GetId() == (*socket_it).GetId()) {
-          LINEAR_LOG(LOG_DEBUG, "leave socket_id = %d from group_name = \"%s\"",
+          LINEAR_LOG(LOG_DEBUG, "leave socket(id = %d) from group_name = \"%s\"",
                      socket.GetId(), (*pool_it).first.c_str());
           sockets.erase(*socket_it);
           break;

@@ -8,6 +8,19 @@
 
 typedef LinearTest TimerTest;
 
+void fakeOnTimer(void* args) {
+}
+
+TEST_F(TimerTest, createDelete) {
+  linear::Timer* timer1 = new linear::Timer();
+  timer1->Start(fakeOnTimer, 0, NULL);
+  timer1->Stop();
+  delete timer1;
+  linear::Timer* timer2 = new linear::Timer();
+  timer2->Start(fakeOnTimer, 0, NULL);
+  delete timer2;
+}
+
 void deleteOnTimer(void* args) {
   linear::Timer* timer = reinterpret_cast<linear::Timer*>(args);
   delete timer;

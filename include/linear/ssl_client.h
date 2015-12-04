@@ -27,14 +27,9 @@ class LINEAR_EXTERN SSLClient : public Client {
   /**
    * Constructor
    * @param [in] handler application defined behavior.
+   * @param [in] [context] common linear::SSLContext object
    */
-  explicit SSLClient(const linear::Handler& handler);
-  /**
-   * Constructor
-   * @param [in] handler application defined behavior.
-   * @param [in] context common linear::SSLContext object
-   */
-  SSLClient(const linear::Handler& handler, const linear::SSLContext& context);
+  SSLClient(const linear::Handler& handler, const linear::SSLContext& context = linear::SSLContext());
   /**
    * Set common linear::SSLContext into Client Object.
    * If you can not provide linear::SSLContext when construct SSLClient, call this method.

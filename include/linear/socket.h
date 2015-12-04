@@ -77,7 +77,7 @@ class LINEAR_EXTERN Socket {
    * @return linear::Error object
    * @see linaer::Socket::DEFAULT_MAX_BUFFER_SIZE
    */
-  virtual linear::Error SetMaxBufferSize(size_t max_limit) const;
+  virtual linear::Error SetMaxBufferSize(size_t limit) const;
   /**
    * connect to target.
    * @param [in] timeout connect timeout(msec)\n
@@ -101,7 +101,8 @@ class LINEAR_EXTERN Socket {
    * TCP_KEEPALIVE is enabled on Windows, linux 2.4- and iOS 7.0-.
    * refer man 2 socket and man 7 tcp
    */
-  virtual linear::Error KeepAlive(unsigned int interval = 1, unsigned int retry = 3, linear::Socket::KeepAliveType type = Socket::KEEPALIVE_TCP) const;
+  virtual linear::Error KeepAlive(unsigned int interval = 1, unsigned int retry = 3,
+                                  linear::Socket::KeepAliveType type = Socket::KEEPALIVE_TCP) const;
   /**
    * @fn linear::Error BindToDevice(const std::string& ifname)
    * Interface to set SO_BINDTODEVICE

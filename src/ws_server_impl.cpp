@@ -1,5 +1,4 @@
-#include <stdlib.h>
-
+#include <cstdlib>
 #include <sstream>
 
 #include "linear/log.h"
@@ -22,35 +21,24 @@ WSServerImpl::~WSServerImpl() {
   Stop();
 }
 
-Error WSServerImpl::Start(const std::string& hostname, int port) {
+Error WSServerImpl::Start(const std::string& hostname, int port, EventLoop::ServerEvent* ev) {
   lock_guard<mutex> lock(mutex_);
-
-  if (handle_ != NULL) {
-    Error err(LNR_EALREADY);
-    LINEAR_LOG(LOG_WARN, "fail to start server(%s:%d,WS): %s",
-               self_.addr.c_str(), self_.port, err.Message().c_str());
-    return err;
+  if (state_ == START) {
+    return Error(LNR_EALREADY);
   }
-  self_ = Addrinfo(hostname, port);
   handle_ = static_cast<tv_ws_t*>(malloc(sizeof(tv_ws_t)));
   if (handle_ == NULL) {
-    Error err(LNR_ENOMEM);
-    LINEAR_LOG(LOG_ERR, "fail to start server(%s:%d,WS): %s",
-               self_.addr.c_str(), self_.port, err.Message().c_str());
-    return err;
+    return Error(LNR_ENOMEM);
   }
   int ret = tv_ws_init(EventLoop::GetDefault().GetHandle(), handle_);
   if (ret) {
     Error err(ret);
     LINEAR_LOG(LOG_ERR, "fail to start server(%s:%d,WS): %s",
-               self_.addr.c_str(), self_.port, err.Message().c_str());
+               hostname.c_str(), port, err.Message().c_str());
     free(handle_);
-    handle_ = NULL;
     return err;
   }
-  EventLoop::ServerEventData* data = new EventLoop::ServerEventData();
-  data->Register(this);
-  handle_->data = data;
+  handle_->data = ev;
   std::ostringstream port_str;
   port_str << port;
   ret = tv_listen(reinterpret_cast<tv_stream_t*>(handle_),
@@ -59,37 +47,37 @@ Error WSServerImpl::Start(const std::string& hostname, int port) {
     Error err(ret);
     LINEAR_LOG(LOG_ERR, "fail to start server(%s:%d,WS): %s",
                hostname.c_str(), port, err.Message().c_str());
-    delete data;
     free(handle_);
-    handle_ = NULL;
     return err;
   }
+  state_ = START;
+  self_ = Addrinfo(hostname, port);
   LINEAR_LOG(LOG_DEBUG, "start server: %s:%d,WS", self_.addr.c_str(), self_.port);
   return Error(LNR_OK);
 }
 
 Error WSServerImpl::Stop() {
   lock_guard<mutex> lock(mutex_);
-
-  if (handle_ == NULL) {
+  if (state_ == STOP) {
     return Error(LNR_EALREADY);
   }
-  EventLoop::ServerEventData* data = static_cast<EventLoop::ServerEventData*>(handle_->data);
-  data->Lock();
-  data->Unregister();
-  data->Unlock();
-  tv_close(reinterpret_cast<tv_handle_t*>(handle_), EventLoop::OnClose);
   LINEAR_LOG(LOG_DEBUG, "stop server: %s:%d,WS", self_.addr.c_str(), self_.port);
-  handle_ = NULL; // only dereferencing.delete at EventLoop::OnClose
+  state_ = STOP;
+  tv_close(reinterpret_cast<tv_handle_t*>(handle_), EventLoop::OnClose);
   pool_.Clear();
   return Error(LNR_OK);
 }
 
 void WSServerImpl::OnAccept(tv_stream_t* srv_stream, tv_stream_t* cli_stream, int status) {
+  unique_lock<mutex> lock(mutex_);
+  if (state_ == STOP) {
+    return;
+  }
   assert(status || cli_stream != NULL);
   if (status) {
     LINEAR_LOG(LOG_ERR, "fail to accept at %s:%d,WS, reason = %s",
-               self_.addr.c_str(), self_.port, tv_strerror(reinterpret_cast<tv_handle_t*>(srv_stream), status));
+               self_.addr.c_str(), self_.port,
+               tv_strerror(reinterpret_cast<tv_handle_t*>(srv_stream), status));
     return;
   } else if (cli_stream == NULL) {
     // TODO: LNR_EINTENAL or LNR_ENOMEM?
@@ -98,9 +86,13 @@ void WSServerImpl::OnAccept(tv_stream_t* srv_stream, tv_stream_t* cli_stream, in
     return;
   }
   try {
-    // create WSRequestContext from handshake->request
     linear::WSRequestContext request_context_;
-    WSSocket socket(shared_ptr<WSSocketImpl>(new WSSocketImpl(cli_stream, request_context_, *this)));
+    shared_ptr<WSSocketImpl> shared = shared_ptr<WSSocketImpl>(new WSSocketImpl(cli_stream, request_context_, *this));
+    EventLoop::SocketEvent* ev = new EventLoop::SocketEvent(shared);
+    if (shared->StartRead(ev) != Error(LNR_OK)) {
+        throw std::runtime_error("fail to accept");
+    }
+    // create WSRequestContext from handshake->request
     tv_ws_t* handle = (tv_ws_t*) cli_stream;
     if (handle->handshake.response.code == WSHS_SUCCESS) {
       if (handle->handshake.request.url.field_set & (1 << UF_PATH)) {
@@ -113,7 +105,7 @@ void WSServerImpl::OnAccept(tv_stream_t* srv_stream, tv_stream_t* cli_stream, in
            kv; kv = buffer_kvs_get_next(kv)) {
         request_context_.headers[std::string(kv->key.ptr)] = std::string(kv->val.ptr);
       }
-      if (Retain(socket).Code() == LNR_ENOSPC) {
+      if (Retain(shared) == Error(LNR_ENOSPC)) {
         handle->handshake.response.code = WSHS_SERVICE_UNAVAILABLE;
         return;
       }
@@ -140,15 +132,16 @@ void WSServerImpl::OnAccept(tv_stream_t* srv_stream, tv_stream_t* cli_stream, in
         authorization.username = impl.username;
         authorization.realm = impl.realm;
         request_context_.authorization = authorization;
-        WSResponseContext response_context = socket.GetWSResponseContext();
+        WSResponseContext response_context = shared->GetWSResponseContext();
         response_context.code = LNR_WS_UNAUTHORIZED;
-        socket.SetWSResponseContext(response_context);
+        shared->SetWSResponseContext(response_context);
       }
-      socket.SetWSRequestContext(request_context_);
-      Group::Join(LINEAR_BROADCAST_GROUP, socket);
-      OnConnect(socket.GetId());
+      shared->SetWSRequestContext(request_context_);
+      Group::Join(LINEAR_BROADCAST_GROUP, WSSocket(shared));
+      OnConnect(shared);
+
       // create handshake->response from WSResponseContext
-      const WSResponseContext& response_context = socket.GetWSResponseContext();
+      const WSResponseContext& response_context = shared->GetWSResponseContext();
       handle->handshake.response.code = static_cast<enum ws_handshake_response_code>(response_context.code);
       buffer_kv kv;
       buffer_kv_init(&kv);

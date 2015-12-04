@@ -30,19 +30,19 @@ class LINEAR_EXTERN Server {
    * default == -1: no limit
    * @return linear::Error object
    */
-  virtual linear::Error SetMaxClients(int max_clients);
+  virtual linear::Error SetMaxClients(int max_clients) const;
   /**
    * Starts a server with specified parameters.
    * @param [in] hostname IPAddr or FQDN of host
    * @param [in] port portnumber
    * @return linear::Error object
    */
-  virtual linear::Error Start(const std::string& hostname, int port);
+  virtual linear::Error Start(const std::string& hostname, int port) const;
   /**
    * Stops a server.
    * @return linear::Error object
    */
-  virtual linear::Error Stop();
+  virtual linear::Error Stop() const;
 
  protected:
   /// @cond hidden

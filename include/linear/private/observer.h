@@ -13,14 +13,15 @@ namespace linear {
 template <class T>
 class LINEAR_EXTERN Observer {
  public:
-  Observer() : subject_(NULL) {}
-  ~Observer() {}
-
-  void Register(T* subject) {
-    subject_ = subject;
+  explicit Observer(T* subject) : subject_(subject) {
   }
-  void Unregister() {
+  ~Observer() {
+    Terminate();
+  }
+  void Terminate() {
+    Lock();
     subject_ = NULL;
+    Unlock();
   }
   T* GetSubject() {
     return subject_;
@@ -28,13 +29,9 @@ class LINEAR_EXTERN Observer {
   void Lock() {
     mutex_.lock();
   }
-  bool TryLock() {
-    return mutex_.try_lock();
-  }
   void Unlock() {
     mutex_.unlock();
   }
-
  private:
   T* subject_;
   linear::mutex mutex_;

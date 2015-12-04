@@ -8,6 +8,7 @@
 
 #include "linear/handler.h"
 #include "linear/server.h"
+#include "linear/tcp_socket.h"
 
 namespace linear {
 

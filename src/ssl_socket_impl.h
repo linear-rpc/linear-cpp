@@ -16,7 +16,6 @@ class SSLSocketImpl : public linear::SocketImpl {
   SSLSocketImpl(tv_stream_t* stream, const SSLContext& context,
                 const linear::HandlerDelegate& delegate);
   virtual ~SSLSocketImpl();
-
   linear::Error Connect();
   linear::Error GetVerifyResult();
   bool PresentPeerCertificate();

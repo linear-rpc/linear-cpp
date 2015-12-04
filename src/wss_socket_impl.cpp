@@ -64,8 +64,11 @@ Error WSSSocketImpl::Connect() {
                                                                                 request_context_.authenticate.username,
                                                                                 request_context_.authenticate.password);
     if (!authorization.empty()) {
+      LINEAR_LOG(LOG_DEBUG, "created Authorization: %s", authorization.c_str());
       request_context_.headers["Authorization"] = authorization;
     }
+  } else if (authenticate_context_.type == AuthContext::UNUSED || authenticate_context_.type == AuthContext::UNKNOWN) {
+    request_context_.headers.erase("Authorization");
   }
   buffer_kv kv;
   buffer_kv_init(&kv);
@@ -81,34 +84,28 @@ Error WSSSocketImpl::Connect() {
     }
   }
   buffer_kv_fin(&kv);
-  stream_ = reinterpret_cast<tv_stream_t*>(handle);
-  data_ = new EventLoop::SocketEventData();
-  data_->Register(this);
-  stream_->data = data_;
-  response_context_.headers.clear(); // clear response context
-  std::ostringstream port_str;
-  port_str << peer_.port;
   if (!bind_ifname_.empty()) {
     ret = tv_bindtodevice(stream_, bind_ifname_.c_str());
     if (ret != 0) {
-      LINEAR_LOG(LOG_ERR, "SO_BINDTODEVICE failed(%d)", ret);
+      free(handle);
       return Error(ret);
     }
   }
+  stream_ = reinterpret_cast<tv_stream_t*>(handle);
+  stream_->data = ev_;
+  response_context_.headers.clear(); // clear response context
+  std::ostringstream port_str;
+  port_str << peer_.port;
   ret = tv_connect(stream_, peer_.addr.c_str(), port_str.str().c_str(), EventLoop::OnConnect);
   if (ret) {
     assert(false); // never reach now
-    delete data_;
-    data_ = NULL;
-    stream_->data = NULL;
     free(stream_);
-    stream_ = NULL;
     return Error(ret);
   }
   return Error(LNR_OK);
 }
 
-void WSSSocketImpl::OnConnect(tv_stream_t* stream, int status) {
+void WSSSocketImpl::OnConnect(const shared_ptr<SocketImpl>& socket, tv_stream_t* stream, int status) {
   tv_wss_t* handle = reinterpret_cast<tv_wss_t*>(stream);
 
   response_context_.code = handle->handshake.response.code;
@@ -124,7 +121,7 @@ void WSSSocketImpl::OnConnect(tv_stream_t* stream, int status) {
   } else {
     authenticate_context_ = AuthenticateContextImpl();
   }
-  SocketImpl::OnConnect(stream, status);
+  SocketImpl::OnConnect(socket, stream, status);
 }
 
 bool WSSSocketImpl::CheckRetryAuth() {
@@ -150,7 +147,7 @@ void WSSSocketImpl::SetWSResponseContext(const WSResponseContext& response_conte
 
 Error WSSSocketImpl::GetVerifyResult() {
   lock_guard<mutex> state_lock(state_mutex_);
-  if (state_ != Socket::CONNECTING && state_ != Socket::CONNECTED) {
+  if (state_ != Socket::CONNECTED) {
     return Error(LNR_ENOTCONN);
   }
   int ret = tv_ssl_get_verify_result(reinterpret_cast<tv_wss_t*>(stream_)->ssl_handle);
@@ -163,7 +160,7 @@ Error WSSSocketImpl::GetVerifyResult() {
 
 bool WSSSocketImpl::PresentPeerCertificate() {
   lock_guard<mutex> state_lock(state_mutex_);
-  if (state_ != Socket::CONNECTING && state_ != Socket::CONNECTED) {
+  if (state_ != Socket::CONNECTED) {
     return false;
   }
   X509* xcert = tv_ssl_get_peer_certificate(reinterpret_cast<tv_wss_t*>(stream_)->ssl_handle);
@@ -176,7 +173,7 @@ bool WSSSocketImpl::PresentPeerCertificate() {
 
 X509Certificate WSSSocketImpl::GetPeerCertificate() {
   lock_guard<mutex> state_lock(state_mutex_);
-  if (state_ != Socket::CONNECTING && state_ != Socket::CONNECTED) {
+  if (state_ != Socket::CONNECTED) {
     throw std::runtime_error("peer certificate does not exist");
   }
   X509* xcert = tv_ssl_get_peer_certificate(reinterpret_cast<tv_wss_t*>(stream_)->ssl_handle);

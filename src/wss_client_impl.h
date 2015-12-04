@@ -11,8 +11,6 @@ namespace linear {
 
 class WSSClientImpl : public ClientImpl {
  public:
-  explicit WSSClientImpl(const linear::Handler& handler);
-  WSSClientImpl(const linear::Handler& handler, const linear::WSRequestContext& request_context);
   WSSClientImpl(const linear::Handler& handler,
                 const linear::WSRequestContext& request_context,
                 const linear::SSLContext& ssl_context);

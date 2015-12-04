@@ -20,8 +20,8 @@ class LINEAR_EXTERN TCPSocket : public Socket {
  public:
   /// @cond hidden
   TCPSocket();
-  TCPSocket(const linear::shared_ptr<linear::SocketImpl>& socket);
-  TCPSocket(const linear::shared_ptr<linear::TCPSocketImpl>& tcp_socket);
+  explicit TCPSocket(const linear::shared_ptr<linear::SocketImpl>& socket);
+  explicit TCPSocket(const linear::shared_ptr<linear::TCPSocketImpl>& tcp_socket);
   ~TCPSocket();
   /// @endcond
 };

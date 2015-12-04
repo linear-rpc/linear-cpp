@@ -7,15 +7,6 @@ using namespace linear::log;
 
 namespace linear {
 
-SSLServer::SSLServer(const Handler& handler) {
-  try {
-    server_ = shared_ptr<ServerImpl>(new SSLServerImpl(handler));
-  } catch(...) {
-    LINEAR_LOG(LOG_ERR, "no memory");
-    throw;
-  }
-}
-
 SSLServer::SSLServer(const Handler& handler, const SSLContext& context) {
   try {
     server_ = shared_ptr<ServerImpl>(new SSLServerImpl(handler, context));

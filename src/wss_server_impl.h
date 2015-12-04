@@ -16,7 +16,7 @@ class WSSServerImpl : public ServerImpl {
                 const std::string& realm);
   virtual ~WSSServerImpl();
   void SetSSLContext(const linear::SSLContext& ssl_context);
-  linear::Error Start(const std::string& hostname, int port);
+  linear::Error Start(const std::string& hostname, int port, linear::EventLoop::ServerEvent* ev);
   linear::Error Stop();
   void OnAccept(tv_stream_t* srv_stream, tv_stream_t* cli_stream, int status);
 

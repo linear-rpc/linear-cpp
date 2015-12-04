@@ -3,39 +3,36 @@
 
 #include "tv.h"
 
+#include "linear/message.h"
 #include "linear/timer.h"
 
+#include "linear/private/observer.h"
+
 #include "event_loop.h"
-#include "handler_delegate.h"
 
 namespace linear {
+
+class HandlerDelegate;
 
 class SocketImpl {
  public:
   class RequestTimer {
    public:
-    RequestTimer(const linear::Request& request, linear::SocketImpl* socket)
-      : request_(request), socket_(socket) {
-    }
+    RequestTimer(const linear::Request& r, const linear::weak_ptr<linear::SocketImpl> s)
+      : request(r), socket(s) {}
     ~RequestTimer() {
       Stop();
     }
     void Start() {
-      timer_.Start(linear::EventLoop::OnRequestTimeout, static_cast<uint64_t>(request_.timeout), this);
+      timer.Start(linear::EventLoop::OnRequestTimeout, static_cast<uint64_t>(request.timeout), this);
     }
     void Stop() {
-      timer_.Stop();
+      timer.Stop();
     }
-    inline const linear::Request& GetRequest() {
-      return request_;
-    }
-    inline linear::SocketImpl* GetSocket() {
-      return socket_;
-    }
-   private:
-    linear::Request request_;
-    linear::SocketImpl* socket_;
-    linear::Timer timer_;
+   public:
+    linear::Request request;
+    linear::weak_ptr<linear::SocketImpl> socket;
+    linear::Timer timer;
   };
   
  public:
@@ -53,48 +50,49 @@ class SocketImpl {
   inline const linear::Addrinfo& GetSelfInfo() { return self_; }
   inline const linear::Addrinfo& GetPeerInfo() { return peer_; }
 
-  void SetMaxBufferSize(size_t max_limit);
-  linear::Error Connect(unsigned int timeout, const linear::Socket& socket);
+  void SetMaxBufferSize(size_t limit);
+  linear::Error Connect(unsigned int timeout, linear::EventLoop::SocketEvent* ev);
   linear::Error Disconnect(bool handshaking = false);
   linear::Error Send(const linear::Message& message, int timeout);
   linear::Error KeepAlive(unsigned int interval, unsigned int retry, Socket::KeepAliveType type);
   linear::Error BindToDevice(const std::string& ifname);
   linear::Error SetSockOpt(int level, int optname, const void* optval, size_t optlen);
+  linear::Error StartRead(linear::EventLoop::SocketEvent* ev);
 
-  virtual void OnConnect(tv_stream_t* handle, int status);
-  void OnHandshakeComplete(tv_stream_t* handle, int status);
-  linear::Socket OnDisconnect();
-  void OnRead(const tv_buf_t *buffer, ssize_t nread);
-  void OnWrite(const linear::Message* message, int status);
-  void OnConnectTimeout();
-  void OnRequestTimeout(const linear::Request& request);
-  void UnrefResources();
+  virtual void OnConnect(const shared_ptr<SocketImpl>& socket, tv_stream_t* handle, int status);
+  void OnHandshakeComplete(const shared_ptr<SocketImpl>& socket, tv_stream_t* handle, int status);
+  void OnDisconnect(const shared_ptr<SocketImpl>& socket);
+  void OnRead(const shared_ptr<SocketImpl>& socket, const tv_buf_t *buffer, ssize_t nread);
+  void OnWrite(const shared_ptr<SocketImpl>& socket, const linear::Message* message, int status);
+  void OnConnectTimeout(const shared_ptr<SocketImpl>& socket);
+  void OnRequestTimeout(const shared_ptr<SocketImpl>& socket, const linear::Request& request);
 
  protected:
   virtual linear::Error Connect() = 0;
 
   linear::Socket::State state_;
   tv_stream_t* stream_;
-  EventLoop::SocketEventData* data_;
+  linear::EventLoop::SocketEvent* ev_;
   linear::Addrinfo self_, peer_;
   std::string bind_ifname_;
   linear::mutex state_mutex_;
 
  private:
   linear::Error _Send(linear::Message* ctx);
-  void _SendPendingMessages();
-  void _DiscardMessages(const linear::Socket& socket);
+  void _SendPendingMessages(const shared_ptr<SocketImpl>& socket);
+  void _DiscardMessages(const shared_ptr<SocketImpl>& socket);
 
   linear::Socket::Type type_;
   int id_;
   bool connectable_;
   bool handshaking_;
   linear::Error last_error_;
-  linear::shared_ptr<linear::Observer<linear::HandlerDelegate> > observer_;
-  std::list<linear::Message*> pending_messages_;
-  std::list<linear::SocketImpl::RequestTimer*> request_timers_;
-  linear::mutex request_timer_mutex_;
+  linear::weak_ptr<linear::Observer<linear::HandlerDelegate> > observer_;
+  int connect_timeout_;
   linear::Timer connect_timer_;
+  std::vector<linear::Message*> pending_messages_;
+  std::vector<linear::SocketImpl::RequestTimer*> request_timers_;
+  linear::mutex request_timer_mutex_;
   size_t max_buffer_size_;
   msgpack::unpacker unpacker_;
 };

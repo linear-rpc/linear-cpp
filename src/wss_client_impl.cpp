@@ -5,13 +5,6 @@ using namespace linear::log;
 
 namespace linear {
 
-WSSClientImpl::WSSClientImpl(const Handler& handler) : ClientImpl(handler, true) {
-}
-
-WSSClientImpl::WSSClientImpl(const Handler& handler, const WSRequestContext& request_context)
-  : ClientImpl(handler, true), request_context_(request_context) {
-}
-
 WSSClientImpl::WSSClientImpl(const Handler& handler,
                              const WSRequestContext& request_context,
                              const linear::SSLContext& ssl_context)
@@ -42,8 +35,7 @@ WSSSocket WSSClientImpl::CreateSocket(const std::string& hostname, int port,
                                       const WSRequestContext& request_context,
                                       const SSLContext& ssl_context) {
   try {
-    WSSSocket socket(shared_ptr<WSSSocketImpl>(new WSSSocketImpl(hostname, port, request_context, ssl_context, *this)));
-    return socket;
+    return WSSSocket(shared_ptr<WSSSocketImpl>(new WSSSocketImpl(hostname, port, request_context, ssl_context, *this)));
   } catch (...) {
     LINEAR_LOG(LOG_ERR, "no memory");
     throw;

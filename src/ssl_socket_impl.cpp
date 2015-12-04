@@ -5,8 +5,6 @@
 #include "event_loop.h"
 #include "ssl_socket_impl.h"
 
-using namespace linear::log;
-
 namespace linear {
 
 SSLSocketImpl::SSLSocketImpl(const std::string& host, int port, const linear::SSLContext& context,
@@ -30,29 +28,22 @@ Error SSLSocketImpl::Connect() {
   int ret = tv_ssl_init(EventLoop::GetDefault().GetHandle(), reinterpret_cast<tv_ssl_t*>(stream_), context_.GetHandle());
   if (ret) {
     free(stream_);
-    stream_ = NULL;
     return Error(ret);
   }
-  data_ = new EventLoop::SocketEventData();
-  data_->Register(this);
-  stream_->data = data_;
-  std::ostringstream port_str;
-  port_str << peer_.port;
   if (!bind_ifname_.empty()) {
     ret = tv_bindtodevice(stream_, bind_ifname_.c_str());
     if (ret != 0) {
-      LINEAR_LOG(LOG_ERR, "SO_BINDTODEVICE failed(%d)", ret);
+      free(stream_);
       return Error(ret);
     }
   }
+  stream_->data = ev_;
+  std::ostringstream port_str;
+  port_str << peer_.port;
   ret = tv_connect(stream_, peer_.addr.c_str(), port_str.str().c_str(), EventLoop::OnConnect);
   if (ret) {
     assert(false); // never reach now
-    delete data_;
-    data_ = NULL;
-    stream_->data = NULL;
     free(stream_);
-    stream_ = NULL;
     return Error(ret);
   }
   return Error(LNR_OK);
@@ -60,7 +51,7 @@ Error SSLSocketImpl::Connect() {
 
 Error SSLSocketImpl::GetVerifyResult() {
   lock_guard<mutex> state_lock(state_mutex_);
-  if (state_ != Socket::CONNECTING && state_ != Socket::CONNECTED) {
+  if (state_ != Socket::CONNECTED) {
     return Error(LNR_ENOTCONN);
   }
   int ret = tv_ssl_get_verify_result(reinterpret_cast<tv_ssl_t*>(stream_));
@@ -73,7 +64,7 @@ Error SSLSocketImpl::GetVerifyResult() {
 
 bool SSLSocketImpl::PresentPeerCertificate() {
   lock_guard<mutex> state_lock(state_mutex_);
-  if (state_ != Socket::CONNECTING && state_ != Socket::CONNECTED) {
+  if (state_ != Socket::CONNECTED) {
     return false;
   }
   X509* xcert = tv_ssl_get_peer_certificate(reinterpret_cast<tv_ssl_t*>(stream_));
@@ -86,7 +77,7 @@ bool SSLSocketImpl::PresentPeerCertificate() {
 
 X509Certificate SSLSocketImpl::GetPeerCertificate() {
   lock_guard<mutex> state_lock(state_mutex_);
-  if (state_ != Socket::CONNECTING && state_ != Socket::CONNECTED) {
+  if (state_ != Socket::CONNECTED) {
     throw std::runtime_error("peer certificate does not exist");
   }
   X509* xcert = tv_ssl_get_peer_certificate(reinterpret_cast<tv_ssl_t*>(stream_));

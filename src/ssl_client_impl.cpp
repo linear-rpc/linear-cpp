@@ -7,9 +7,6 @@ using namespace linear::log;
 
 namespace linear {
 
-SSLClientImpl::SSLClientImpl(const Handler& handler) : ClientImpl(handler, true) {
-}
-
 SSLClientImpl::SSLClientImpl(const Handler& handler, const SSLContext& context)
   : ClientImpl(handler, true), context_(context) {
 }
@@ -28,8 +25,7 @@ SSLSocket SSLClientImpl::CreateSocket(const std::string& hostname, int port) {
 SSLSocket SSLClientImpl::CreateSocket(const std::string& hostname, int port,
                                       const linear::SSLContext& context) {
   try {
-    SSLSocket socket(shared_ptr<SSLSocketImpl>(new SSLSocketImpl(hostname, port, context, *this)));
-    return socket;
+    return SSLSocket(shared_ptr<SSLSocketImpl>(new SSLSocketImpl(hostname, port, context, *this)));
   } catch (...) {
     LINEAR_LOG(LOG_ERR, "no memory");
     throw;

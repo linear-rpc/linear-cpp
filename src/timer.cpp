@@ -1,26 +1,19 @@
 #include "linear/timer.h"
 
-#include "event_loop.h"
 #include "timer_impl.h"
+#include "linear/log.h"
+
+using namespace linear::log;
 
 namespace linear {
 
-static linear::mutex g_id_mutex;
-
-static int Id() {
-  lock_guard<mutex> lock(g_id_mutex);
-  static int id = 0;
-  return id++;
+Timer::Timer() : timer_(new TimerImpl()) {
 }
 
-Timer::Timer() : id_(-1), timer_(new TimerImpl()) {
-}
-
-Timer::Timer(const Timer& timer) : id_(timer.id_), timer_(timer.timer_) {
+Timer::Timer(const Timer& timer) : timer_(timer.timer_) {
 }
 
 Timer& Timer::operator=(const Timer& timer) {
-  id_ = timer.id_;
   timer_ = timer.timer_;
   return *this;
 }
@@ -29,22 +22,33 @@ Timer::~Timer() {
 }
 
 int Timer::GetId() const {
-  return id_;
-}
-
-Error Timer::Start(linear::TimerCallback callback, unsigned int timeout, void* args) {
-  int id = Id();
-  linear::Error err = timer_->Start(id, callback, timeout, args);
-  if (err.Code() == LNR_OK) {
-    id_ = id;
-    EventLoop::AddTimer(*this);
+  if (!timer_) {
+    return -1;
   }
-  return err;
+  return timer_->GetId();
 }
 
-void Timer::Stop() {
-  timer_->Stop();
-  return;
+Error Timer::Start(linear::TimerCallback callback, unsigned int timeout, void* args) const {
+  if (!timer_) {
+    return Error(LNR_EINVAL);
+  }
+  Error e(LNR_ENOMEM);
+  try {
+    EventLoop::TimerEvent* ev = new EventLoop::TimerEvent(timer_);
+    e = timer_->Start(callback, timeout, args, ev);
+    if (e != Error(LNR_OK)) {
+      delete ev;
+    }
+  } catch(...) {
+    LINEAR_LOG(LOG_ERR, "no memory");
+  }
+  return e;
+}
+
+void Timer::Stop() const {
+  if (timer_) {
+    timer_->Stop();
+  }
 }
 
 }  // namespace linear

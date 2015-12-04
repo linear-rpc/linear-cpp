@@ -7,28 +7,31 @@
 #include "linear/mutex.h"
 #include "linear/timer.h"
 
+#include "event_loop.h"
+
 namespace linear {
 
 class TimerImpl {
  public:
   enum State {
-    START,
-    STOP
+    STOP,
+    START
   };
 
   TimerImpl();
   ~TimerImpl();
-
   int GetId();
-  linear::Error Start(int id, TimerCallback callback, unsigned int timeout, void* args);
+  linear::Error Start(TimerCallback callback, unsigned int timeout, void* args,
+                      EventLoop::TimerEvent* ev);
   void Stop();
   void OnTimer();
 
  private:
-  State state_;
-  tv_timer_t* tv_timer_;
+  int id_;
+  linear::TimerImpl::State state_;
   linear::TimerCallback callback_;
   void* args_;
+  tv_timer_t* tv_timer_;
   linear::mutex mutex_;
 };
 

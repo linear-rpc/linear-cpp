@@ -22,8 +22,8 @@ class LINEAR_EXTERN WSSSocket : public Socket {
  public:
   /// @cond hidden
   WSSSocket();
-  WSSSocket(const linear::shared_ptr<linear::SocketImpl>& socket);
-  WSSSocket(const linear::shared_ptr<linear::WSSSocketImpl>& wss_socket);
+  explicit WSSSocket(const linear::shared_ptr<linear::SocketImpl>& socket);
+  explicit WSSSocket(const linear::shared_ptr<linear::WSSSocketImpl>& wss_socket);
   virtual ~WSSSocket();
   /// @endcond
   /**

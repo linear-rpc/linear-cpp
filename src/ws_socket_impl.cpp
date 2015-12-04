@@ -83,34 +83,28 @@ Error WSSocketImpl::Connect() {
     }
   }
   buffer_kv_fin(&kv);
-  stream_ = reinterpret_cast<tv_stream_t*>(handle);
-  data_ = new EventLoop::SocketEventData();
-  data_->Register(this);
-  stream_->data = data_;
-  response_context_.headers.clear(); // clear response context
-  std::ostringstream port_str;
-  port_str << peer_.port;
   if (!bind_ifname_.empty()) {
     ret = tv_bindtodevice(stream_, bind_ifname_.c_str());
-    if (ret != 0) {
-      LINEAR_LOG(LOG_ERR, "SO_BINDTODEVICE failed(%d)", ret);
+    if (ret) {
+      free(handle);
       return Error(ret);
     }
   }
+  stream_ = reinterpret_cast<tv_stream_t*>(handle);
+  stream_->data = ev_;
+  response_context_.headers.clear(); // clear response context
+  std::ostringstream port_str;
+  port_str << peer_.port;
   ret = tv_connect(stream_, peer_.addr.c_str(), port_str.str().c_str(), EventLoop::OnConnect);
   if (ret) {
     assert(false); // never reach now
-    delete data_;
-    data_ = NULL;
-    stream_->data = NULL;
     free(stream_);
-    stream_ = NULL;
     return Error(ret);
   }
   return Error(LNR_OK);
 }
 
-void WSSocketImpl::OnConnect(tv_stream_t* stream, int status) {
+void WSSocketImpl::OnConnect(const shared_ptr<SocketImpl>& socket, tv_stream_t* stream, int status) {
   tv_ws_t* handle = reinterpret_cast<tv_ws_t*>(stream);
 
   response_context_.code = handle->handshake.response.code;
@@ -126,7 +120,7 @@ void WSSocketImpl::OnConnect(tv_stream_t* stream, int status) {
   } else {
     authenticate_context_ = AuthenticateContextImpl();
   }
-  SocketImpl::OnConnect(stream, status);
+  SocketImpl::OnConnect(socket, stream, status);
 }
 
 bool WSSocketImpl::CheckRetryAuth() {

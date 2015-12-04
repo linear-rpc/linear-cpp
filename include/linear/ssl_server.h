@@ -28,14 +28,9 @@ class LINEAR_EXTERN SSLServer : public Server {
   /**
    * SSLServer Constructor
    * @param [in] handler application defined behavior.
+   * @param [in] [context] linear::SSLContext object
    */
-  explicit SSLServer(const linear::Handler& handler);
-  /**
-   * SSLServer Constructor
-   * @param [in] handler application defined behavior.
-   * @param [in] context linear::SSLContext object
-   */
-  SSLServer(const linear::Handler& handler, const linear::SSLContext& context);
+  SSLServer(const linear::Handler& handler, const linear::SSLContext& context = linear::SSLContext());
   /**
    * Set SSLContext into Server Object.
    * If you can not provide handler when construct SSLServer, call this method.

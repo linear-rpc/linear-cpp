@@ -7,6 +7,7 @@
 #define LINEAR_HANDLER_H_
 
 #include "linear/message.h"
+
 #include "linear/private/observer.h"
 
 namespace linear {
@@ -21,9 +22,9 @@ class Socket;
 class LINEAR_EXTERN Handler {
  public:
   /// @cond hidden
-  Handler();
-  virtual ~Handler();
-  shared_ptr<linear::Observer<linear::Handler> > GetObserver() const;
+  Handler() : observer_(new Observer<linear::Handler>(this)) {}
+  virtual ~Handler() { observer_->Terminate(); }
+  linear::weak_ptr<linear::Observer<linear::Handler> > GetObserver() const { return observer_; }
   /// @endcond
 
   /**
@@ -143,7 +144,7 @@ class LINEAR_EXTERN Handler {
   virtual void OnError(const linear::Socket& socket, const linear::Message& message, const linear::Error& error) {}
 
  private:
-  shared_ptr<linear::Observer<linear::Handler> > observer_;
+  linear::shared_ptr<linear::Observer<linear::Handler> > observer_;
 };
 
 }  // namespace linear
