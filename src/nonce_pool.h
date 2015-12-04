@@ -41,8 +41,8 @@ class NoncePool {
     for (std::vector<NoncePool::Nonce>::iterator it = pool_.begin(); it != pool_.end(); it++) {
       it->timer.Stop();
       delete it->ctx;
-      pool_.erase(it);
     }
+    pool_.clear();
   }
   linear::Error Add(const std::string& nonce, int timeout = NONCE_TIMEOUT) {
     linear::lock_guard<linear::mutex> lock(mutex_);
