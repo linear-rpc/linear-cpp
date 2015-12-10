@@ -230,6 +230,38 @@ TEST_F(TCPClientServerConnectionTest, DisconnectFromServerBT) {
   WAIT_TO_FINISH_CALLBACK();
 }
 
+// Reconnect at same socket
+TEST_F(TCPClientServerConnectionTest, Reconnect) {
+  MockHandler ch;
+  TCPClient cl(ch);
+  MockHandler sh;
+  TCPServer sv(sh);
+
+  Error e = sv.Start(TEST_ADDR, TEST_PORT);
+  ASSERT_EQ(LNR_OK, e.Code());
+
+  TCPSocket cs = cl.CreateSocket(TEST_ADDR, TEST_PORT);
+
+  {
+    InSequence dummy;
+    EXPECT_CALL(sh, OnConnectMock(_)).WillOnce(WithArg<0>(Disconnect()));
+    EXPECT_CALL(sh, OnDisconnectMock(Eq(ByRef(sh.s_)), _));
+    EXPECT_CALL(sh, OnConnectMock(_)).WillOnce(WithArg<0>(Disconnect()));
+    EXPECT_CALL(sh, OnDisconnectMock(Eq(ByRef(sh.s_)), _)).WillOnce(Assign(&srv_finished, true));
+  }
+  {
+    InSequence dummy;
+    EXPECT_CALL(ch, OnConnectMock(cs));
+    EXPECT_CALL(ch, OnDisconnectMock(cs, Error(LNR_EOF))).WillOnce(WithArg<0>(Connect()));
+    EXPECT_CALL(ch, OnConnectMock(cs));
+    EXPECT_CALL(ch, OnDisconnectMock(cs, Error(LNR_EOF))).WillOnce(Assign(&cli_finished, true));
+  }
+
+  e = cs.Connect();
+  ASSERT_EQ(LNR_OK, e.Code());
+  WAIT_TO_FINISH_CALLBACK();
+}
+
 namespace global {
 extern linear::Socket gs_;
 }

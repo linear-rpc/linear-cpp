@@ -53,11 +53,9 @@ void EventLoop::OnClose(tv_handle_t* handle) {
     break;
   case SOCKET:
     {
-      SocketEvent* ev = static_cast<SocketEvent*>(handle->data);
-      if (linear::shared_ptr<SocketImpl> socket = ev->socket.lock()) {
+      if (linear::shared_ptr<SocketImpl> socket = static_cast<SocketEvent*>(handle->data)->socket.lock()) {
         socket->OnDisconnect(socket);
       }
-      delete ev;
     }
     break;
   case TIMER:

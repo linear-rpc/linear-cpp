@@ -230,6 +230,82 @@ TEST_F(WSClientServerConnectionTest, DisconnectFromServerBT) {
   WAIT_TO_FINISH_CALLBACK();
 }
 
+// Reconnect at same socket
+TEST_F(WSClientServerConnectionTest, Reconnect) {
+  MockHandler ch;
+  WSClient cl(ch);
+  MockHandler sh;
+  WSServer sv(sh);
+
+  Error e = sv.Start(TEST_ADDR, TEST_PORT);
+  ASSERT_EQ(LNR_OK, e.Code());
+
+  WSSocket cs = cl.CreateSocket(TEST_ADDR, TEST_PORT);
+
+  {
+    InSequence dummy;
+    EXPECT_CALL(sh, OnConnectMock(_)).WillOnce(WithArg<0>(Disconnect()));
+    EXPECT_CALL(sh, OnDisconnectMock(Eq(ByRef(sh.s_)), _));
+    EXPECT_CALL(sh, OnConnectMock(_)).WillOnce(WithArg<0>(Disconnect()));
+    EXPECT_CALL(sh, OnDisconnectMock(Eq(ByRef(sh.s_)), _)).WillOnce(Assign(&srv_finished, true));
+  }
+  {
+    InSequence dummy;
+    // never called OnConnect: fail handshake
+    EXPECT_CALL(ch, OnDisconnectMock(cs, Error(LNR_ECONNRESET))).WillOnce(WithArg<0>(Connect()));
+    // never called OnConnect: fail handshake
+    EXPECT_CALL(ch, OnDisconnectMock(cs, Error(LNR_ECONNRESET))).WillOnce(Assign(&cli_finished, true));
+  }
+
+  e = cs.Connect();
+  ASSERT_EQ(LNR_OK, e.Code());
+  WAIT_TO_FINISH_CALLBACK();
+}
+
+// AutoReconnect with DigestAuthentication
+ACTION(CheckDigestAuthWS) {
+  linear::Socket s = arg0;
+  ASSERT_EQ(s.GetType(), linear::Socket::WS);
+  linear::WSSocket ws = s.as<WSSocket>();
+  linear::AuthorizationContext auth = ws.GetWSRequestContext().authorization;
+  ASSERT_EQ(auth.username, USER_NAME);
+  ASSERT_EQ(linear::AuthorizationContext::VALID,
+            auth.Validate(PASSWORD));
+  linear::WSResponseContext ctx;
+  ctx.code = LNR_WS_OK;
+  ws.SetWSResponseContext(ctx);
+}
+TEST_F(WSClientServerConnectionTest, AutoReconnect) {
+  MockHandler ch;
+  WSClient cl(ch);
+  MockHandler sh;
+  WSServer sv(sh, linear::AuthContext::DIGEST, "realm is here");
+
+  Error e = sv.Start(TEST_ADDR, TEST_PORT);
+  ASSERT_EQ(LNR_OK, e.Code());
+
+  linear::WSRequestContext context;
+  // Digest Auth Validation (username = "user", password = "password")
+  context.authenticate.username = USER_NAME;
+  context.authenticate.password = PASSWORD;
+  WSSocket cs = cl.CreateSocket(TEST_ADDR, TEST_PORT, context);
+
+  {
+    InSequence dummy;
+    EXPECT_CALL(sh, OnConnectMock(_)).WillOnce(WithArg<0>(CheckDigestAuthWS()));
+    EXPECT_CALL(sh, OnDisconnectMock(Eq(ByRef(sh.s_)), _)).WillOnce(Assign(&srv_finished, true));
+  }
+  {
+    InSequence dummy;
+    EXPECT_CALL(ch, OnConnectMock(cs)).WillOnce(WithArg<0>(Disconnect()));
+    EXPECT_CALL(ch, OnDisconnectMock(cs, Error(LNR_OK))).WillOnce(Assign(&cli_finished, true));
+  }
+
+  e = cs.Connect();
+  ASSERT_EQ(LNR_OK, e.Code());
+  WAIT_TO_FINISH_CALLBACK();
+}
+
 namespace global {
 extern linear::Socket gs_;
 }

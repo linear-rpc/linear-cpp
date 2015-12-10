@@ -29,6 +29,9 @@ class LINEAR_EXTERN Observer {
   void Lock() {
     mutex_.lock();
   }
+  bool TryLock() {
+    return mutex_.try_lock();
+  }
   void Unlock() {
     mutex_.unlock();
   }

@@ -192,17 +192,21 @@ Error SocketImpl::Connect(unsigned int timeout, EventLoop::SocketEvent* ev) {
   shared_ptr<Observer<HandlerDelegate> > observer = observer_.lock();
   shared_ptr<SocketImpl> socket = ev_->socket.lock();
   if (observer && socket) {
-    observer->Lock();
+    bool is_locked = observer->TryLock();
     HandlerDelegate* delegate = observer->GetSubject();
     if (delegate) {
       err = delegate->Retain(socket);
       if (err != Error(LNR_OK)) {
         LINEAR_LOG(LOG_ERR, "fail to connect(id = %d): %s", id_, err.Message().c_str());
-        observer->Unlock();
+        if (is_locked) {
+          observer->Unlock();
+        }
         return err;
       }
     }
-    observer->Unlock();
+    if (is_locked) {
+      observer->Unlock();
+    }
   }
   self_ = Addrinfo(); // reset self info
   err = Connect();
@@ -217,12 +221,14 @@ Error SocketImpl::Connect(unsigned int timeout, EventLoop::SocketEvent* ev) {
   } else {
     LINEAR_LOG(LOG_ERR, "fail to connect(id = %d): %s", id_, err.Message().c_str());
     if (observer && socket) {
-      observer->Lock();
+      bool is_locked = observer->TryLock();
       HandlerDelegate* delegate = observer->GetSubject();
       if (delegate) {
         delegate->Release(socket);
       }
-      observer->Unlock();
+      if (is_locked) {
+        observer->Unlock();
+      }
     }
   }
   return err;
@@ -479,6 +485,7 @@ void SocketImpl::OnDisconnect(const shared_ptr<SocketImpl>& socket) {
 
     }
   }
+  delete ev_;
   _DiscardMessages(socket);
   if (observer && !handshaking_) {
     observer->Lock();

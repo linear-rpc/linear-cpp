@@ -333,6 +333,106 @@ TEST_F(WSSClientServerConnectionTest, DisconnectFromServerBT) {
   WAIT_TO_FINISH_CALLBACK();
 }
 
+// Reconnect at same socket
+TEST_F(WSSClientServerConnectionTest, Reconnect) {
+  MockHandler ch;
+  SSLContext context(SSLContext::TLSv1_1);
+  context.SetCertificate(std::string(CLIENT_CERT));
+  context.SetPrivateKey(std::string(CLIENT_PKEY));
+  context.SetCAFile(std::string(CA_CERT));
+  context.SetCiphers(std::string(CIPHER_LIST));
+  context.SetVerifyMode(SSLContext::VERIFY_PEER);
+  WSSClient cl(ch, WSRequestContext(), context);
+  MockHandler sh;
+  SSLContext server_context(SSLContext::TLSv1_1);
+  server_context.SetCertificate(std::string(SERVER_CERT));
+  server_context.SetPrivateKey(std::string(SERVER_PKEY));
+  server_context.SetCAFile(std::string(CA_CERT));
+  server_context.SetCiphers(std::string(CIPHER_LIST));
+  server_context.SetVerifyMode(SSLContext::VERIFY_PEER);
+  WSSServer sv(sh, server_context);
+
+  Error e = sv.Start(TEST_ADDR, TEST_PORT);
+  ASSERT_EQ(LNR_OK, e.Code());
+
+  WSSSocket cs = cl.CreateSocket(TEST_ADDR, TEST_PORT);
+
+  {
+    InSequence dummy;
+    EXPECT_CALL(sh, OnConnectMock(_)).WillOnce(WithArg<0>(Disconnect()));
+    EXPECT_CALL(sh, OnDisconnectMock(Eq(ByRef(sh.s_)), _));
+    EXPECT_CALL(sh, OnConnectMock(_)).WillOnce(WithArg<0>(Disconnect()));
+    EXPECT_CALL(sh, OnDisconnectMock(Eq(ByRef(sh.s_)), _)).WillOnce(Assign(&srv_finished, true));
+  }
+  {
+    InSequence dummy;
+    // never called OnConnect: fail handshake
+    EXPECT_CALL(ch, OnDisconnectMock(cs, Error(LNR_ECONNRESET))).WillOnce(WithArg<0>(Connect()));
+    // never called OnConnect: fail handshake
+    EXPECT_CALL(ch, OnDisconnectMock(cs, Error(LNR_ECONNRESET))).WillOnce(Assign(&cli_finished, true));
+  }
+
+  e = cs.Connect();
+  ASSERT_EQ(LNR_OK, e.Code());
+  WAIT_TO_FINISH_CALLBACK();
+}
+
+// AutoReconnect with DigestAuthentication
+ACTION(CheckDigestAuthWSS) {
+  linear::Socket s = arg0;
+  ASSERT_EQ(s.GetType(), linear::Socket::WSS);
+  linear::WSSSocket wss = s.as<WSSSocket>();
+  linear::AuthorizationContext auth = wss.GetWSRequestContext().authorization;
+  ASSERT_EQ(auth.username, USER_NAME);
+  ASSERT_EQ(linear::AuthorizationContext::VALID,
+            auth.Validate(PASSWORD));
+  linear::WSResponseContext ctx;
+  ctx.code = LNR_WS_OK;
+  wss.SetWSResponseContext(ctx);
+}
+TEST_F(WSSClientServerConnectionTest, AutoReconnect) {
+  MockHandler ch;
+  SSLContext context(SSLContext::TLSv1_1);
+  context.SetCertificate(std::string(CLIENT_CERT));
+  context.SetPrivateKey(std::string(CLIENT_PKEY));
+  context.SetCAFile(std::string(CA_CERT));
+  context.SetCiphers(std::string(CIPHER_LIST));
+  context.SetVerifyMode(SSLContext::VERIFY_PEER);
+  linear::WSRequestContext ws_context;
+  // Digest Auth Validation (username = "user", password = "password")
+  ws_context.authenticate.username = USER_NAME;
+  ws_context.authenticate.password = PASSWORD;
+  WSSClient cl(ch, ws_context, context);
+  MockHandler sh;
+  SSLContext server_context(SSLContext::TLSv1_1);
+  server_context.SetCertificate(std::string(SERVER_CERT));
+  server_context.SetPrivateKey(std::string(SERVER_PKEY));
+  server_context.SetCAFile(std::string(CA_CERT));
+  server_context.SetCiphers(std::string(CIPHER_LIST));
+  server_context.SetVerifyMode(SSLContext::VERIFY_PEER);
+  WSSServer sv(sh, server_context, linear::AuthContext::DIGEST, "realm is here");
+
+  Error e = sv.Start(TEST_ADDR, TEST_PORT);
+  ASSERT_EQ(LNR_OK, e.Code());
+
+  WSSSocket cs = cl.CreateSocket(TEST_ADDR, TEST_PORT);
+
+  {
+    InSequence dummy;
+    EXPECT_CALL(sh, OnConnectMock(_)).WillOnce(WithArg<0>(CheckDigestAuthWSS()));
+    EXPECT_CALL(sh, OnDisconnectMock(Eq(ByRef(sh.s_)), _)).WillOnce(Assign(&srv_finished, true));
+  }
+  {
+    InSequence dummy;
+    EXPECT_CALL(ch, OnConnectMock(cs)).WillOnce(WithArg<0>(Disconnect()));
+    EXPECT_CALL(ch, OnDisconnectMock(cs, Error(LNR_OK))).WillOnce(Assign(&cli_finished, true));
+  }
+
+  e = cs.Connect();
+  ASSERT_EQ(LNR_OK, e.Code());
+  WAIT_TO_FINISH_CALLBACK();
+}
+
 namespace global {
 extern linear::Socket gs_;
 }

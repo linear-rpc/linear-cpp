@@ -22,6 +22,9 @@
 #define METHOD_NAME         "echo"
 #define GROUP_NAME          "test_group"
 
+#define USER_NAME           "user"
+#define PASSWORD            "password"
+
 using namespace linear::log;
 
 /* milliseconds sleep function */
@@ -199,6 +202,10 @@ ACTION(JoinToGroup) {
 ACTION(LeaveFromGroup) {
   linear::Socket s = arg0;
   linear::Group::Leave(GROUP_NAME, s);
+}
+ACTION(Connect) {
+  linear::Socket s = arg0;
+  s.Connect();
 }
 ACTION(Disconnect) {
   linear::Socket s = arg0;
