@@ -42,16 +42,6 @@ void LogFile::Colorize(bool flag) {
 
 void LogFile::Write(bool debug, Level level, const char* file, int line, const char* func, const char* message) {
   linear::lock_guard<linear::mutex> lock(mutex_);
-  std::string fname(file);
-
-#ifdef _WIN32
-# define SEPARATOR '\\'
-#else
-# define SEPARATOR '/'
-#endif
-  std::string::size_type n = fname.find_last_of(SEPARATOR);
-  (void) n;
-#undef SEPARATOR
 
   if (fp_ == NULL) {
     return;
@@ -78,11 +68,28 @@ void LogFile::Write(bool debug, Level level, const char* file, int line, const c
     }
     fprintf(fp_, "\x1b[%dm", col);
   }
+  
+#ifdef _LINEAR_LOG_DEBUG_
+  std::string fname(file);
+
+# ifdef _WIN32
+#  define SEPARATOR '\\'
+# else
+#  define SEPARATOR '/'
+# endif
+  std::string::size_type n = fname.find_last_of(SEPARATOR);
+  (void) n;
+# undef SEPARATOR
+
   fprintf(fp_, "%s: [%s] (%s:%d) %s\n",
           GetDateTime().c_str(),
           strptr,
           (n == std::string::npos) ? fname.c_str() : fname.substr(n + 1).c_str(), line,
           message);
+#else
+  fprintf(fp_, "%s: [%s] %s\n", GetDateTime().c_str(), strptr, message);
+#endif
+
   if (color_) {
     fprintf(fp_, "\x1b[%dm", COLOR_DEFAULT);
     if (debug) {
