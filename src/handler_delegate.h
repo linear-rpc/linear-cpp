@@ -19,7 +19,7 @@ class HandlerDelegate {
   virtual ~HandlerDelegate();
   linear::weak_ptr<linear::Observer<linear::HandlerDelegate> > GetObserver() const;
 
-  virtual void SetMaxLimit(int max_limit);
+  virtual void SetMaxLimit(size_t max_limit);
   virtual linear::Error Retain(const shared_ptr<SocketImpl>& socket);
   virtual void Release(const shared_ptr<SocketImpl>& socket);
   virtual void OnConnect(const shared_ptr<SocketImpl>& socket);

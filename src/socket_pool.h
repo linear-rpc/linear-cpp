@@ -18,7 +18,7 @@ class SocketPool {
   SocketPool() : max_(-1) {
   }
   ~SocketPool() {}
-  void SetMaxLimit(int max) {
+  void SetMaxLimit(size_t max) {
     max_ = max;
   }
   linear::Error Add(const linear::shared_ptr<linear::SocketImpl>& s) {
@@ -69,7 +69,7 @@ class SocketPool {
   }
 
  protected:
-  int max_;
+  size_t max_;
   std::vector<shared_ptr<linear::SocketImpl> > pool_;
   linear::mutex mutex_;
 };

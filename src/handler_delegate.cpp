@@ -49,7 +49,7 @@ weak_ptr<Observer<HandlerDelegate> > HandlerDelegate::GetObserver() const {
   return handler_delegate_observer_;
 }
 
-void HandlerDelegate::SetMaxLimit(int max) {
+void HandlerDelegate::SetMaxLimit(size_t max) {
   pool_.SetMaxLimit(max);
 }
 

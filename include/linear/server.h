@@ -27,10 +27,10 @@ class LINEAR_EXTERN Server {
   /**
    * Set number of clients limit
    * @param [in] max_clients number of clients
-   * default == -1: no limit
+   * default == 0: no limit
    * @return linear::Error object
    */
-  virtual linear::Error SetMaxClients(int max_clients) const;
+  virtual linear::Error SetMaxClients(size_t max_clients) const;
   /**
    * Starts a server with specified parameters.
    * @param [in] hostname IPAddr or FQDN of host

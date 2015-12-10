@@ -7,7 +7,7 @@ using namespace linear::log;
 
 namespace linear {
 
-Error Server::SetMaxClients(int max_clients) const {
+Error Server::SetMaxClients(size_t max_clients) const {
   if (!server_) {
     return Error(LNR_EINVAL);
   }
