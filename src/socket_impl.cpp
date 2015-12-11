@@ -96,62 +96,6 @@ SocketImpl::SocketImpl(tv_stream_t* stream, const HandlerDelegate& delegate,
     LINEAR_LOG(LOG_WARN, "fail to get peerinfo(id = %d) (may disconnected by peer): %s",
                id_, tv_strerror(reinterpret_cast<tv_handle_t*>(stream_), ret));
   }
-  // overwrite peer_
-  if (type == Socket::WS) {
-    tv_ws_t* ws_handle = reinterpret_cast<tv_ws_t*>(stream_);
-    const buffer* val = buffer_kvs_case_find(&ws_handle->handshake.request.headers, CONST_STRING("X-Forwarded-For"));
-    if (val) {
-      peer_.addr = std::string(val->ptr);
-      // store first element
-      std::replace(peer_.addr.begin(), peer_.addr.end(), ',', ' ');
-      std::stringstream ss(peer_.addr);
-      ss >> peer_.addr;
-      if (peer_.addr.find(":", 0) != std::string::npos) {
-        std::replace(peer_.addr.begin(), peer_.addr.end(), ':', ' ');
-        ss.str("");
-        ss.clear(std::stringstream::goodbit);
-        ss << peer_.addr;
-        ss >> peer_.addr >> peer_.port;
-      } else {
-        // overwrite port when X-Forwarded-For exists
-        val = buffer_kvs_case_find(&ws_handle->handshake.request.headers, CONST_STRING("X-Forwarded-Port"));
-        if (val) {
-          peer_.port = atoi(val->ptr);
-        } else {
-          peer_.port = -1;
-        }
-      }
-    }
-
-#ifdef WITH_SSL
-  } else if (type == Socket::WSS) {
-    tv_wss_t* ws_handle = reinterpret_cast<tv_wss_t*>(stream_);
-    const buffer* val = buffer_kvs_case_find(&ws_handle->handshake.request.headers, CONST_STRING("X-Forwarded-For"));
-    if (val) {
-      peer_.addr = std::string(val->ptr);
-      // store first element
-      std::replace(peer_.addr.begin(), peer_.addr.end(), ',', ' ');
-      std::stringstream ss(peer_.addr);
-      ss >> peer_.addr;
-      if (peer_.addr.find(":", 0) != std::string::npos) {
-        std::replace(peer_.addr.begin(), peer_.addr.end(), ':', ' ');
-        ss.str("");
-        ss.clear(std::stringstream::goodbit);
-        ss << peer_.addr;
-        ss >> peer_.addr >> peer_.port;
-      } else {
-        // overwrite port when X-Forwarded-For exists
-        val = buffer_kvs_case_find(&ws_handle->handshake.request.headers, CONST_STRING("X-Forwarded-Port"));
-        if (val) {
-          peer_.port = atoi(val->ptr);
-        } else {
-          peer_.port = -1;
-        }
-      }
-    }
-#endif
-
-  }
   LINEAR_LOG(LOG_DEBUG, "incoming peer(id = %d): %s:%d <-- %s --- %s:%d",
              id_,
              self_.addr.c_str(), self_.port, GetTypeString(type_).c_str(),
