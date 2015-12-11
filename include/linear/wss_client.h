@@ -9,7 +9,6 @@
 #include "linear/client.h"
 #include "linear/handler.h"
 #include "linear/ssl_context.h"
-#include "linear/ws_context.h"
 #include "linear/wss_socket.h"
 
 namespace linear {

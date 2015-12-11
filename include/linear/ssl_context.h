@@ -6,8 +6,6 @@
 #ifndef LINEAR_SSL_CONTEXT_H_
 #define LINEAR_SSL_CONTEXT_H_
 
-#include <string>
-
 #include "linear/memory.h"
 #include "linear/x509_certificate.h"
 
