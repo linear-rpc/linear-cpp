@@ -456,7 +456,17 @@ void SocketImpl::OnDisconnect(const shared_ptr<SocketImpl>& socket) {
     if (type_ == Socket::WS) {
       if (last_error_ == Error(LNR_EWS)) {
         if (dynamic_cast<WSSocketImpl*>(this)->CheckRetryAuth()) {
-          Connect(connect_timeout_, ev_);
+          try {
+            EventLoop::SocketEvent* ev = new EventLoop::SocketEvent(socket);
+            Connect(connect_timeout_, ev);
+          } catch(...) {
+            LINEAR_LOG(LOG_ERR, "no memory");
+            WSResponseContext ctx;
+            ctx.code = LNR_WS_INTERNAL_SERVER_ERROR;
+            try {
+              dynamic_cast<WSSocketImpl*>(this)->SetWSResponseContext(ctx);
+            } catch(...) {}
+          }
           return;
         }
       } else {
@@ -471,7 +481,17 @@ void SocketImpl::OnDisconnect(const shared_ptr<SocketImpl>& socket) {
     } else if (type_ == Socket::WSS) {
       if (last_error_ == Error(LNR_EWS)) {
         if (dynamic_cast<WSSSocketImpl*>(this)->CheckRetryAuth()) {
-          Connect(connect_timeout_, ev_);
+          try {
+            EventLoop::SocketEvent* ev = new EventLoop::SocketEvent(socket);
+            Connect(connect_timeout_, ev);
+          } catch(...) {
+            LINEAR_LOG(LOG_ERR, "no memory");
+            WSResponseContext ctx;
+            ctx.code = LNR_WS_INTERNAL_SERVER_ERROR;
+            try {
+              dynamic_cast<WSSSocketImpl*>(this)->SetWSResponseContext(ctx);
+            } catch(...) {}
+          }
           return;
         }
       } else {
@@ -485,7 +505,6 @@ void SocketImpl::OnDisconnect(const shared_ptr<SocketImpl>& socket) {
 
     }
   }
-  delete ev_;
   _DiscardMessages(socket);
   if (observer && !handshaking_) {
     observer->Lock();
