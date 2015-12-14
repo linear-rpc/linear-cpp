@@ -23,7 +23,7 @@ liblinear_la_SOURCES = \
 	log_file.cpp \
 	log_function.cpp \
 	log_stderr.cpp \
-	event_loop.cpp \
+	event_loop_impl.cpp \
 	timer.cpp \
 	timer_impl.cpp \
 	message.cpp \

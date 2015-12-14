@@ -6,7 +6,7 @@
 
 #include "linear/private/observer.h"
 
-#include "event_loop.h"
+#include "event_loop_impl.h"
 
 namespace linear {
 
@@ -22,7 +22,7 @@ class SocketImpl {
       Stop();
     }
     void Start() {
-      timer.Start(linear::EventLoop::OnRequestTimeout, static_cast<uint64_t>(request.timeout), this);
+      timer.Start(linear::EventLoopImpl::OnRequestTimeout, static_cast<uint64_t>(request.timeout), this);
     }
     void Stop() {
       timer.Stop();
@@ -49,13 +49,13 @@ class SocketImpl {
   inline const linear::Addrinfo& GetPeerInfo() { return peer_; }
 
   void SetMaxBufferSize(size_t limit);
-  linear::Error Connect(unsigned int timeout, linear::EventLoop::SocketEvent* ev);
+  linear::Error Connect(unsigned int timeout, linear::EventLoopImpl::SocketEvent* ev);
   linear::Error Disconnect(bool handshaking = false);
   linear::Error Send(const linear::Message& message, int timeout);
   linear::Error KeepAlive(unsigned int interval, unsigned int retry, Socket::KeepAliveType type);
   linear::Error BindToDevice(const std::string& ifname);
   linear::Error SetSockOpt(int level, int optname, const void* optval, size_t optlen);
-  linear::Error StartRead(linear::EventLoop::SocketEvent* ev);
+  linear::Error StartRead(linear::EventLoopImpl::SocketEvent* ev);
 
   virtual void OnConnect(const shared_ptr<SocketImpl>& socket, tv_stream_t* handle, int status);
   void OnHandshakeComplete(const shared_ptr<SocketImpl>& socket, tv_stream_t* handle, int status);
@@ -70,7 +70,7 @@ class SocketImpl {
 
   linear::Socket::State state_;
   tv_stream_t* stream_;
-  linear::EventLoop::SocketEvent* ev_;
+  linear::EventLoopImpl::SocketEvent* ev_;
   linear::Addrinfo self_, peer_;
   std::string bind_ifname_;
   linear::mutex state_mutex_;

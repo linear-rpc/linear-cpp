@@ -18,7 +18,8 @@ class ServerImpl : public HandlerDelegate {
     : HandlerDelegate(handler, show_ssl_version), state_(STOP) {}
   virtual ~ServerImpl() {}
 
-  virtual linear::Error Start(const std::string& hostname, int port, linear::EventLoop::ServerEvent* ev) = 0;
+  virtual linear::Error Start(const std::string& hostname, int port,
+                              linear::EventLoopImpl::ServerEvent* ev) = 0;
   virtual linear::Error Stop() = 0;
   virtual void Release(const shared_ptr<SocketImpl>& socket) {
     Group::LeaveAll(Socket(socket));

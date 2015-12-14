@@ -4,7 +4,7 @@
 #include "linear/mutex.h"
 #include "linear/timer.h"
 
-#include "event_loop.h"
+#include "event_loop_impl.h"
 
 namespace linear {
 
@@ -19,7 +19,7 @@ class TimerImpl {
   ~TimerImpl();
   int GetId();
   linear::Error Start(TimerCallback callback, unsigned int timeout, void* args,
-                      EventLoop::TimerEvent* ev);
+                      EventLoopImpl::TimerEvent* ev);
   void Stop();
   void OnTimer();
 

@@ -20,7 +20,7 @@ Error Server::Start(const std::string& host, int port) const {
   }
   Error e(LNR_ENOMEM);
   try {
-    EventLoop::ServerEvent* ev = new EventLoop::ServerEvent(server_);
+    EventLoopImpl::ServerEvent* ev = new EventLoopImpl::ServerEvent(server_);
     e = server_->Start(host, port, ev);
     if (e != Error(LNR_OK)) {
       delete ev;

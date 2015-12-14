@@ -22,7 +22,7 @@ Error SSLSocketImpl::Connect() {
   if (stream_ == NULL) {
     return Error(LNR_ENOMEM);
   }
-  int ret = tv_ssl_init(EventLoop::GetDefault().GetHandle(), reinterpret_cast<tv_ssl_t*>(stream_), context_.GetHandle());
+  int ret = tv_ssl_init(EventLoopImpl::GetDefault().GetHandle(), reinterpret_cast<tv_ssl_t*>(stream_), context_.GetHandle());
   if (ret) {
     free(stream_);
     return Error(ret);
@@ -37,7 +37,7 @@ Error SSLSocketImpl::Connect() {
   stream_->data = ev_;
   std::ostringstream port_str;
   port_str << peer_.port;
-  ret = tv_connect(stream_, peer_.addr.c_str(), port_str.str().c_str(), EventLoop::OnConnect);
+  ret = tv_connect(stream_, peer_.addr.c_str(), port_str.str().c_str(), EventLoopImpl::OnConnect);
   if (ret) {
     assert(false); // never reach now
     free(stream_);

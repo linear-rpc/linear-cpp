@@ -67,13 +67,13 @@ SocketImpl::SocketImpl(tv_stream_t* stream, const HandlerDelegate& delegate,
   if (type == Socket::WS) {
     handshaking_ = true;
     state_ = Socket::CONNECTING;
-    reinterpret_cast<tv_ws_t*>(stream_)->handshake_complete_cb = EventLoop::OnAcceptComplete;
+    reinterpret_cast<tv_ws_t*>(stream_)->handshake_complete_cb = EventLoopImpl::OnAcceptComplete;
 
 #ifdef WITH_SSL
   } else if (type == Socket::WSS) {
     handshaking_ = true;
     state_ = Socket::CONNECTING;
-    reinterpret_cast<tv_wss_t*>(stream_)->handshake_complete_cb = EventLoop::OnAcceptComplete;
+    reinterpret_cast<tv_wss_t*>(stream_)->handshake_complete_cb = EventLoopImpl::OnAcceptComplete;
 #endif
 
   } else {
@@ -110,7 +110,7 @@ void SocketImpl::SetMaxBufferSize(size_t limit) {
   max_buffer_size_ = limit;
 }
 
-Error SocketImpl::Connect(unsigned int timeout, EventLoop::SocketEvent* ev) {
+Error SocketImpl::Connect(unsigned int timeout, EventLoopImpl::SocketEvent* ev) {
   lock_guard<mutex> state_lock(state_mutex_);
   if (!connectable_) {
     LINEAR_LOG(LOG_WARN, "this socket(id = %d) is not connectable", id_);
@@ -155,7 +155,7 @@ Error SocketImpl::Connect(unsigned int timeout, EventLoop::SocketEvent* ev) {
     state_ = Socket::CONNECTING;
     if (timeout > 0) {
       connect_timeout_ = timeout;
-      connect_timer_.Start(EventLoop::OnConnectTimeout, connect_timeout_, ev_);
+      connect_timer_.Start(EventLoopImpl::OnConnectTimeout, connect_timeout_, ev_);
     } else {
       connect_timeout_ = 0;
     }
@@ -184,7 +184,7 @@ Error SocketImpl::Disconnect(bool handshaking) {
   connect_timer_.Stop();
   state_ = Socket::DISCONNECTING;
   last_error_ = Error(LNR_OK);
-  tv_close(reinterpret_cast<tv_handle_t*>(stream_), EventLoop::OnClose);
+  tv_close(reinterpret_cast<tv_handle_t*>(stream_), EventLoopImpl::OnClose);
   return Error(LNR_OK);
 }
 
@@ -272,13 +272,13 @@ Error SocketImpl::SetSockOpt(int level, int optname, const void* optval, size_t 
   return Error(LNR_OK);
 }
 
-Error SocketImpl::StartRead(linear::EventLoop::SocketEvent* ev) {
+Error SocketImpl::StartRead(EventLoopImpl::SocketEvent* ev) {
   ev_ = ev;
   stream_->data = ev;
-  int ret = tv_read_start(stream_, EventLoop::OnRead);
+  int ret = tv_read_start(stream_, EventLoopImpl::OnRead);
   if (ret != 0) {
     assert(false); // never reach now
-    tv_close(reinterpret_cast<tv_handle_t*>(stream_), EventLoop::OnClose);
+    tv_close(reinterpret_cast<tv_handle_t*>(stream_), EventLoopImpl::OnClose);
     return Error(ret);
   }
   LINEAR_LOG(LOG_DEBUG, "connected(id = %d): %s:%d <-- %s --> %s:%d",
@@ -321,7 +321,7 @@ void SocketImpl::OnConnect(const shared_ptr<SocketImpl>& socket, tv_stream_t* st
                last_error_.Message().c_str(),
                GetTypeString(type_).c_str(), peer_.addr.c_str(), peer_.port);
     state_lock.unlock();
-    tv_close(reinterpret_cast<tv_handle_t*>(stream_), EventLoop::OnClose);
+    tv_close(reinterpret_cast<tv_handle_t*>(stream_), EventLoopImpl::OnClose);
     return;
   }
   struct sockaddr_storage ss;
@@ -398,7 +398,7 @@ void SocketImpl::OnDisconnect(const shared_ptr<SocketImpl>& socket) {
       if (last_error_ == Error(LNR_EWS)) {
         if (dynamic_cast<WSSocketImpl*>(this)->CheckRetryAuth()) {
           try {
-            EventLoop::SocketEvent* ev = new EventLoop::SocketEvent(socket);
+            EventLoopImpl::SocketEvent* ev = new EventLoopImpl::SocketEvent(socket);
             Connect(connect_timeout_, ev);
           } catch(...) {
             LINEAR_LOG(LOG_ERR, "no memory");
@@ -423,7 +423,7 @@ void SocketImpl::OnDisconnect(const shared_ptr<SocketImpl>& socket) {
       if (last_error_ == Error(LNR_EWS)) {
         if (dynamic_cast<WSSSocketImpl*>(this)->CheckRetryAuth()) {
           try {
-            EventLoop::SocketEvent* ev = new EventLoop::SocketEvent(socket);
+            EventLoopImpl::SocketEvent* ev = new EventLoopImpl::SocketEvent(socket);
             Connect(connect_timeout_, ev);
           } catch(...) {
             LINEAR_LOG(LOG_ERR, "no memory");
@@ -727,7 +727,7 @@ Error SocketImpl::_Send(Message* message) {
       return err;
     }
   }
-  int ret = tv_write(w, stream_, buffer, EventLoop::OnWrite);
+  int ret = tv_write(w, stream_, buffer, EventLoopImpl::OnWrite);
   if (ret) { // EINVAL or ENOMEM
     free(w);
     free(copy_data);

@@ -33,7 +33,7 @@ Error Timer::Start(linear::TimerCallback callback, unsigned int timeout, void* a
   }
   Error e(LNR_ENOMEM);
   try {
-    EventLoop::TimerEvent* ev = new EventLoop::TimerEvent(timer_);
+    EventLoopImpl::TimerEvent* ev = new EventLoopImpl::TimerEvent(timer_);
     e = timer_->Start(callback, timeout, args, ev);
     if (e != Error(LNR_OK)) {
       delete ev;

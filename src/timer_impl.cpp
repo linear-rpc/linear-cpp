@@ -28,7 +28,7 @@ int TimerImpl::GetId() {
 }
 
 Error TimerImpl::Start(TimerCallback callback, unsigned int timeout, void* args,
-                       EventLoop::TimerEvent* ev) {
+                       EventLoopImpl::TimerEvent* ev) {
   lock_guard<mutex> lock(mutex_);
   if (state_ == START) {
     return Error(LNR_EALREADY);
@@ -37,14 +37,14 @@ Error TimerImpl::Start(TimerCallback callback, unsigned int timeout, void* args,
   if (tv_timer_ == NULL) {
     return Error(LNR_ENOMEM);
   }
-  int ret = tv_timer_init(EventLoop::GetDefault().GetHandle(), tv_timer_);
+  int ret = tv_timer_init(EventLoopImpl::GetDefault().GetHandle(), tv_timer_);
   if (ret) {
     LINEAR_LOG(LOG_ERR, "fail to start timer: %s", tv_strerror(reinterpret_cast<tv_handle_t*>(tv_timer_), ret));
     free(tv_timer_);
     return Error(ret);
   }
   tv_timer_->data = ev;
-  ret = tv_timer_start(tv_timer_, EventLoop::OnTimer, static_cast<uint64_t>(timeout), 0);
+  ret = tv_timer_start(tv_timer_, EventLoopImpl::OnTimer, static_cast<uint64_t>(timeout), 0);
   if (ret) {
     LINEAR_LOG(LOG_ERR, "fail to start timer: %s", tv_strerror(reinterpret_cast<tv_handle_t*>(tv_timer_), ret));
     free(tv_timer_);
@@ -64,7 +64,7 @@ void TimerImpl::Stop() {
   }
   state_ = STOP;
   tv_timer_stop(tv_timer_);
-  tv_close(reinterpret_cast<tv_handle_t*>(tv_timer_), EventLoop::OnClose);
+  tv_close(reinterpret_cast<tv_handle_t*>(tv_timer_), EventLoopImpl::OnClose);
 }
 
 void TimerImpl::OnTimer() {

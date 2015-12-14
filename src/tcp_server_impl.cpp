@@ -17,7 +17,7 @@ TCPServerImpl::~TCPServerImpl() {
   Stop();
 }
 
-Error TCPServerImpl::Start(const std::string& hostname, int port, EventLoop::ServerEvent* ev) {
+Error TCPServerImpl::Start(const std::string& hostname, int port, EventLoopImpl::ServerEvent* ev) {
   lock_guard<mutex> lock(mutex_);
   if (state_ == START) {
     return Error(LNR_EALREADY);
@@ -26,7 +26,7 @@ Error TCPServerImpl::Start(const std::string& hostname, int port, EventLoop::Ser
   if (handle_ == NULL) {
     return Error(LNR_ENOMEM);
   }
-  int ret = tv_tcp_init(EventLoop::GetDefault().GetHandle(), handle_);
+  int ret = tv_tcp_init(EventLoopImpl::GetDefault().GetHandle(), handle_);
   if (ret) {
     Error err(ret);
     LINEAR_LOG(LOG_ERR, "fail to start server(%s:%d,TCP): %s",
@@ -38,7 +38,7 @@ Error TCPServerImpl::Start(const std::string& hostname, int port, EventLoop::Ser
   std::ostringstream port_str;
   port_str << port;
   ret = tv_listen(reinterpret_cast<tv_stream_t*>(handle_),
-                  hostname.c_str(), port_str.str().c_str(), ServerImpl::BACKLOG, EventLoop::OnAccept);
+                  hostname.c_str(), port_str.str().c_str(), ServerImpl::BACKLOG, EventLoopImpl::OnAccept);
   if (ret) {
     Error err(ret);
     LINEAR_LOG(LOG_ERR, "fail to start server(%s:%d,TCP): %s",
@@ -59,7 +59,7 @@ Error TCPServerImpl::Stop() {
   }
   LINEAR_LOG(LOG_DEBUG, "stop server: %s:%d,TCP", self_.addr.c_str(), self_.port);
   state_ = STOP;
-  tv_close(reinterpret_cast<tv_handle_t*>(handle_), EventLoop::OnClose);
+  tv_close(reinterpret_cast<tv_handle_t*>(handle_), EventLoopImpl::OnClose);
   pool_.Clear();
   return Error(LNR_OK);
 }
@@ -83,7 +83,7 @@ void TCPServerImpl::OnAccept(tv_stream_t* srv_stream, tv_stream_t* cli_stream, i
   }
   try {
     shared_ptr<TCPSocketImpl> shared = shared_ptr<TCPSocketImpl>(new TCPSocketImpl(cli_stream, *this));
-    EventLoop::SocketEvent* ev = new EventLoop::SocketEvent(shared);
+    EventLoopImpl::SocketEvent* ev = new EventLoopImpl::SocketEvent(shared);
     if (shared->StartRead(ev) != Error(LNR_OK)) {
         throw std::runtime_error("fail to accept");
     }

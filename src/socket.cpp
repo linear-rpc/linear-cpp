@@ -83,7 +83,7 @@ Error Socket::Connect(unsigned int timeout) const {
   }
   Error e(LNR_ENOMEM);
   try {
-    EventLoop::SocketEvent* ev = new EventLoop::SocketEvent(socket_);
+    EventLoopImpl::SocketEvent* ev = new EventLoopImpl::SocketEvent(socket_);
     e = socket_->Connect(timeout, ev);
     if (e != Error(LNR_OK)) {
       delete ev;

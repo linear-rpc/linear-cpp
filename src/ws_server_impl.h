@@ -10,7 +10,8 @@ class WSServerImpl : public ServerImpl {
  public:
   WSServerImpl(const linear::Handler& handler, linear::AuthContext::Type auth_type, const std::string& realm);
   virtual ~WSServerImpl();
-  linear::Error Start(const std::string& hostname, int port, linear::EventLoop::ServerEvent* ev);
+  linear::Error Start(const std::string& hostname, int port,
+                      linear::EventLoopImpl::ServerEvent* ev);
   linear::Error Stop();
   void OnAccept(tv_stream_t* srv_stream, tv_stream_t* cli_stream, int status);
 

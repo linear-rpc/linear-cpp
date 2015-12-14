@@ -28,7 +28,7 @@ Error WSSSocketImpl::Connect() {
   if (handle == NULL) {
     return Error(LNR_ENOMEM);
   }
-  int ret = tv_wss_init(EventLoop::GetDefault().GetHandle(), handle, ssl_context_.GetHandle());
+  int ret = tv_wss_init(EventLoopImpl::GetDefault().GetHandle(), handle, ssl_context_.GetHandle());
   if (ret) {
     free(handle);
     return Error(ret);
@@ -94,7 +94,7 @@ Error WSSSocketImpl::Connect() {
   response_context_.headers.clear(); // clear response context
   std::ostringstream port_str;
   port_str << peer_.port;
-  ret = tv_connect(stream_, peer_.addr.c_str(), port_str.str().c_str(), EventLoop::OnConnect);
+  ret = tv_connect(stream_, peer_.addr.c_str(), port_str.str().c_str(), EventLoopImpl::OnConnect);
   if (ret) {
     assert(false); // never reach now
     free(stream_);

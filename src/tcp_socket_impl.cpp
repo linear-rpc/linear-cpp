@@ -20,7 +20,7 @@ Error TCPSocketImpl::Connect() {
   if (stream_ == NULL) {
     return Error(LNR_ENOMEM);
   }
-  int ret = tv_tcp_init(EventLoop::GetDefault().GetHandle(), reinterpret_cast<tv_tcp_t*>(stream_));
+  int ret = tv_tcp_init(EventLoopImpl::GetDefault().GetHandle(), reinterpret_cast<tv_tcp_t*>(stream_));
   if (ret) {
     free(stream_);
     return Error(ret);
@@ -35,7 +35,7 @@ Error TCPSocketImpl::Connect() {
   stream_->data = ev_;
   std::ostringstream port_str;
   port_str << peer_.port;
-  ret = tv_connect(stream_, peer_.addr.c_str(), port_str.str().c_str(), EventLoop::OnConnect);
+  ret = tv_connect(stream_, peer_.addr.c_str(), port_str.str().c_str(), EventLoopImpl::OnConnect);
   if (ret) {
     assert(false); // never reach now
     free(stream_);
