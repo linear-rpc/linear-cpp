@@ -1,4 +1,5 @@
 #include <cassert>
+#include <cstdlib>
 
 #include "linear/mutex.h"
 
@@ -24,10 +25,11 @@ void mutex::mutex_impl::lock() {
 bool mutex::mutex_impl::try_lock() {
 #if WAIT_UPDATING_LIBUV
   int err;
-  err = pthread_mutex_trylock(&mutex);
+  err = pthread_mutex_trylock(&mutex_);
   if (err) {
-    if (err != EBUSY && err != EAGAIN && err != EDEADLK)
+    if (err != EBUSY && err != EAGAIN && err != EDEADLK) {
       abort();
+    }
     return false;
   }
   return true;
