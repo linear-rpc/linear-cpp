@@ -1,7 +1,7 @@
 branches:
   only:
     - master
-    -develop
+    - develop
 
 language: cpp
 
