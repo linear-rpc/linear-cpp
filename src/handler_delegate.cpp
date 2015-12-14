@@ -18,26 +18,22 @@ namespace linear {
 HandlerDelegate::HandlerDelegate(const Handler& handler, bool show_ssl_version)
   : handler_observer_(handler.GetObserver()),
     handler_delegate_observer_(new Observer<HandlerDelegate>(this)) {
-  static bool shown(false);
 
 #ifndef _WIN32
   signal(SIGPIPE, SIG_IGN);
 #endif
 
-  if (!shown) {
 #ifdef WITH_SSL
-    if (show_ssl_version) {
-      LINEAR_LOG(LOG_DEBUG, "version: %s, sign: %s, %s",
-                 LINEAR_VERSION_ID, LINEAR_COMMIT_ID, SSLeay_version(SSLEAY_VERSION));
-    } else
+  if (show_ssl_version) {
+    LINEAR_LOG(LOG_DEBUG, "version: %s, sign: %s, %s",
+               LINEAR_VERSION_ID, LINEAR_COMMIT_ID, SSLeay_version(SSLEAY_VERSION));
+  } else
 #else
-      (void)(show_ssl_version);
+  {
+    (void)(show_ssl_version);
 #endif
 
-    {
-      LINEAR_LOG(LOG_DEBUG, "version: %s, sign: %s", LINEAR_VERSION_ID, LINEAR_COMMIT_ID);
-    }
-    shown = true;
+    LINEAR_LOG(LOG_DEBUG, "version: %s, sign: %s", LINEAR_VERSION_ID, LINEAR_COMMIT_ID);
   }
 }
 
