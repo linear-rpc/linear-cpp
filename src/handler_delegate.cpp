@@ -28,10 +28,10 @@ HandlerDelegate::HandlerDelegate(const Handler& handler, bool show_ssl_version)
                LINEAR_VERSION_ID, LINEAR_COMMIT_ID, SSLeay_version(SSLEAY_VERSION));
   } else
 #else
-  {
-    (void)(show_ssl_version);
+  (void)(show_ssl_version);
 #endif
 
+  {
     LINEAR_LOG(LOG_DEBUG, "version: %s, sign: %s", LINEAR_VERSION_ID, LINEAR_COMMIT_ID);
   }
 }
