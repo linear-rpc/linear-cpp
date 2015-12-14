@@ -1,6 +1,3 @@
-#include <stdexcept>
-
-#include "linear/log.h"
 #include "linear/ws_client.h"
 
 #include "ws_client_impl.h"

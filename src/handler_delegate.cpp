@@ -6,7 +6,6 @@
 # include <openssl/crypto.h>
 #endif
 
-#include "linear/log.h"
 #include "linear/version.h"
 
 #include "handler_delegate.h"

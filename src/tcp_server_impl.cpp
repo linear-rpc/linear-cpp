@@ -1,10 +1,8 @@
 #include <cstdlib>
 #include <sstream>
 
-#include "linear/log.h"
 #include "linear/tcp_socket.h"
 
-#include "socket_pool.h"
 #include "tcp_server_impl.h"
 #include "tcp_socket_impl.h"
 

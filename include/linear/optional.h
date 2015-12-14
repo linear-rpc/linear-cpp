@@ -7,10 +7,13 @@
 #define LINEAR_TYPE_OPTIONAL_H_
 
 #include <cassert>
+#include <cstring>
 #include <functional>
 #include <stdexcept>
 
 #include "linear/nil.h"
+
+#include "linear/private/extern.h"
 
 namespace linear {
 
@@ -23,7 +26,7 @@ namespace type {
  * @warning this class can not be stored reference object.
  */
 template <typename T>
-class optional {
+class LINEAR_EXTERN optional {
  public:
   optional() : initialized_(false) {
   }

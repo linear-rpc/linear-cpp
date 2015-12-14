@@ -6,12 +6,8 @@
 #ifndef LINEAR_TYPE_ANY_H_
 #define LINEAR_TYPE_ANY_H_
 
-#include <cstring>
-#include <string>
-
-#include "linear/nil.h"
-
-#include "linear/private/extern.h"
+#include "linear/binary.h"
+#include "linear/optional.h"
 
 namespace linear {
 

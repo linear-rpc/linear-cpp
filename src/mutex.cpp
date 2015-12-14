@@ -1,11 +1,7 @@
 #include <cassert>
 #include <cstdlib>
 
-#include "linear/mutex.h"
-
 #include "mutex_impl.h"
-
-#include "uv.h"
 
 namespace linear {
 

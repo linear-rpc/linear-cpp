@@ -1,5 +1,4 @@
 #include "linear/log.h"
-#include "linear/socket.h"
 
 #include "socket_impl.h"
 

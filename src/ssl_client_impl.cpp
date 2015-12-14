@@ -1,5 +1,3 @@
-#include "linear/ssl_socket.h"
-
 #include "ssl_client_impl.h"
 #include "ssl_socket_impl.h"
 

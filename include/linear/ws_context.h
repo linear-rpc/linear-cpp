@@ -6,9 +6,6 @@
 #ifndef LINEAR_WS_CONTEXT_H_
 #define LINEAR_WS_CONTEXT_H_
 
-#include <map>
-#include <string>
-
 #include "linear/auth_context.h"
 
 //! 101 Switching Protocols

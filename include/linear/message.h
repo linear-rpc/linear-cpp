@@ -11,8 +11,6 @@
 #include <stdint.h>
 
 #include "linear/any.h"
-#include "linear/binary.h"
-#include "linear/optional.h"
 #include "linear/socket.h"
 
 #define LINEAR_PACK(...) MSGPACK_DEFINE(__VA_ARGS__)

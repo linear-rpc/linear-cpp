@@ -1,12 +1,8 @@
 #include <stdarg.h>
-#include <stdio.h>
 #include <time.h>
 
-#include "log.h"
 #include "log_stderr.h"
-#include "log_file.h"
 #include "log_function.h"
-#include "linear/mutex.h"
 
 #ifdef _WIN32
 # include <stdlib.h>

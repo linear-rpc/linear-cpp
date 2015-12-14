@@ -1,6 +1,3 @@
-#include <stdexcept>
-
-#include "linear/log.h"
 #include "linear/tcp_client.h"
 
 #include "tcp_client_impl.h"

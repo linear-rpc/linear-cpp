@@ -1,13 +1,7 @@
 #ifndef LINEAR_HANDLER_DELEGATE_H_
 #define LINEAR_HANDLER_DELEGATE_H_
 
-#include "linear/error.h"
 #include "linear/handler.h"
-#include "linear/memory.h"
-#include "linear/message.h"
-#include "linear/socket.h"
-
-#include "linear/private/observer.h"
 
 #include "socket_pool.h"
 

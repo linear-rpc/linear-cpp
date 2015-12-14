@@ -1,8 +1,5 @@
-#include <assert.h>
-
 #include <sstream>
 
-#include "event_loop.h"
 #include "ssl_socket_impl.h"
 
 namespace linear {

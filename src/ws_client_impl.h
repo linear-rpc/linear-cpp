@@ -2,7 +2,6 @@
 #define LINEAR_WS_CLIENT_IMPL_H_
 
 #include "linear/ws_socket.h"
-#include "linear/ws_context.h"
 
 #include "client_impl.h"
 

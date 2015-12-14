@@ -6,6 +6,7 @@
 #ifndef LINEAR_TYPE_BINARY_H_
 #define LINEAR_TYPE_BINARY_H_
 
+#include <cstring>
 #include <string>
 
 #include "linear/msgpack_inc.h"

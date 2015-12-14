@@ -1,10 +1,8 @@
 #include <cstdlib>
 #include <sstream>
 
-#include "linear/log.h"
 #include "linear/ssl_socket.h"
 
-#include "socket_pool.h"
 #include "ssl_server_impl.h"
 #include "ssl_socket_impl.h"
 

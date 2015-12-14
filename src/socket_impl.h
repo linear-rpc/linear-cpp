@@ -1,8 +1,6 @@
 #ifndef LINEAR_SOCKET_IMPL_H_
 #define LINEAR_SOCKET_IMPL_H_
 
-#include "tv.h"
-
 #include "linear/message.h"
 #include "linear/timer.h"
 

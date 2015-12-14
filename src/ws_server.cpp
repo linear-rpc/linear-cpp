@@ -1,4 +1,3 @@
-#include "linear/log.h"
 #include "linear/ws_server.h"
 
 #include "ws_server_impl.h"

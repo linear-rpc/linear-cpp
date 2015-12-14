@@ -1,6 +1,3 @@
-#include <stdexcept>
-
-#include "linear/log.h"
 #include "linear/ssl_client.h"
 
 #include "ssl_client_impl.h"

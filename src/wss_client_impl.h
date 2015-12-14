@@ -2,7 +2,6 @@
 #define LINEAR_WSS_CLIENT_IMPL_H_
 
 #include "linear/wss_socket.h"
-#include "linear/ws_context.h"
 #include "linear/ssl_context.h"
 
 #include "client_impl.h"

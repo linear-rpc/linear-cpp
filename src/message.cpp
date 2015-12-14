@@ -1,9 +1,7 @@
-#include <string>
-
+#include "linear/log.h"
 #include "linear/mutex.h"
 #include "linear/message.h"
 #include "linear/group.h"
-#include "linear/log.h"
 
 using namespace linear::log;
 

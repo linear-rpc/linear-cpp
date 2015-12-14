@@ -1,7 +1,6 @@
 #ifndef LINEAR_NONCE_POOL_H_
 #define LINEAR_NONCE_POOL_H_
 
-#include <string>
 #include <vector>
 
 #include "linear/log.h"

@@ -1,4 +1,3 @@
-#include "linear/log.h"
 #include "linear/server.h"
 
 #include "server_impl.h"

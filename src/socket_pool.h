@@ -1,10 +1,6 @@
 #ifndef LINEAR_SOCKET_POOL_H_
 #define LINEAR_SOCKET_POOL_H_
 
-#include <assert.h>
-
-#include <list>
-
 #include "linear/log.h"
 #include "linear/mutex.h"
 #include "linear/group.h"

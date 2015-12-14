@@ -1,9 +1,7 @@
-#include <assert.h>
-
 #include <sstream>
 
 #include "linear/log.h"
-#include "event_loop.h"
+
 #include "wss_socket_impl.h"
 
 using namespace linear::log;

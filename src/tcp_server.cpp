@@ -1,4 +1,3 @@
-#include "linear/log.h"
 #include "linear/tcp_server.h"
 
 #include "tcp_server_impl.h"

@@ -1,7 +1,6 @@
-#include "linear/timer.h"
+#include "linear/log.h"
 
 #include "timer_impl.h"
-#include "linear/log.h"
 
 using namespace linear::log;
 

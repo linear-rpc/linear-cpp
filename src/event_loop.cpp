@@ -1,11 +1,6 @@
-#include <cassert>
 #include <cstdlib>
 
-#include "linear/log.h"
-
-#include "event_loop.h"
 #include "server_impl.h"
-#include "socket_impl.h"
 #include "timer_impl.h"
 
 using namespace linear::log;

@@ -1,5 +1,3 @@
-#include "linear/ws_socket.h"
-
 #include "ws_client_impl.h"
 #include "ws_socket_impl.h"
 

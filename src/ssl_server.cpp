@@ -1,4 +1,3 @@
-#include "linear/log.h"
 #include "linear/ssl_server.h"
 
 #include "ssl_server_impl.h"

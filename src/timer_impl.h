@@ -1,9 +1,6 @@
 #ifndef LINEAR_TIMER_IMPL_H_
 #define LINEAR_TIMER_IMPL_H_
 
-#include "tv.h"
-
-#include "linear/error.h"
 #include "linear/mutex.h"
 #include "linear/timer.h"
 

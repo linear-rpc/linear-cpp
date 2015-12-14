@@ -1,13 +1,10 @@
 #include <cstdlib>
 #include <sstream>
 
-#include "linear/log.h"
 #include "linear/ws_socket.h"
 
-#include "socket_pool.h"
 #include "ws_server_impl.h"
 #include "ws_socket_impl.h"
-#include "auth_context_impl.h"
 
 using namespace linear::log;
 

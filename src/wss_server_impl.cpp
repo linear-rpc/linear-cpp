@@ -1,10 +1,8 @@
 #include <cstdlib>
 #include <sstream>
 
-#include "linear/log.h"
 #include "linear/wss_socket.h"
 
-#include "socket_pool.h"
 #include "wss_server_impl.h"
 #include "wss_socket_impl.h"
 

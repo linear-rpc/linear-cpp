@@ -1,11 +1,8 @@
-#include <assert.h>
-
 #include <sstream>
 
 #include "linear/log.h"
-#include "event_loop.h"
+
 #include "ws_socket_impl.h"
-#include "auth_context_impl.h"
 
 using namespace linear::log;
 

@@ -1,10 +1,7 @@
 #include <sstream>
 
-#include "linear/log.h"
-#include "linear/group.h"
 #include "linear/ws_socket.h"
 
-#include "socket_impl.h"
 #include "ws_socket_impl.h"
 #include "handler_delegate.h"
 
