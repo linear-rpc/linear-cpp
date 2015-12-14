@@ -24,7 +24,7 @@ void mutex::mutex_impl::lock() {
 bool mutex::mutex_impl::try_lock() {
 #if WAIT_UPDATING_LIBUV
   int err;
-  err = pthread_mutex_trylock(mutex);
+  err = pthread_mutex_trylock(&mutex);
   if (err) {
     if (err != EBUSY && err != EAGAIN && err != EDEADLK)
       abort();
@@ -38,6 +38,7 @@ bool mutex::mutex_impl::try_lock() {
   return true;
 #endif
 }
+#undef WAIT_UPDATING_LIBUV
 void mutex::mutex_impl::unlock() {
   uv_mutex_unlock(&mutex_);
 }

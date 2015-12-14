@@ -1,4 +1,4 @@
-# Linear C++ [![Build Status](https://travis-ci.org/linear-rpc/linear-cpp.svg)](https://travis-ci.org/linear-rpc/linear-cpp)
+# Linear C++ [![Build Status](https://travis-ci.org/linear-rpc/linear-cpp.svg?branch=master)](https://travis-ci.org/linear-rpc/linear-cpp)
 
 ## Overview
 
