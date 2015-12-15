@@ -162,17 +162,17 @@ if not defined prefix (
    set prefix=".\linear-package"
    if exist %prefix% rmdir /S /Q %prefix% > nul
 )
-mkdir %prefix%\include > nul
+mkdir %prefix%\include > nul 2>&1
 
 @rem copy msgpack headers
 for %%f in (%msgpack_headers%) do copy /Y %%f %prefix%\include > nul
-mkdir %prefix%\include\msgpack > nul
+mkdir %prefix%\include\msgpack > nul 2>&1
 xcopy /e /q /y deps\msgpack\include\msgpack %prefix%\include\msgpack\ > nul
 
 @rem copy linear headers (without ssl)
-mkdir %prefix%\include\linear > nul
+mkdir %prefix%\include\linear > nul 2>&1
 for %%f in (%linear_headers_nossl%) do copy /Y %%f %prefix%\include\linear > nul
-mkdir %prefix%\include\linear\private > nul
+mkdir %prefix%\include\linear\private > nul 2>&1
 for %%f in (%linear_headers_private%) do copy /Y %%f %prefix%\include\linear\private > nul
 
 @rem copy uv headers if needed
@@ -210,9 +210,9 @@ set linear_headers_ssl=^
 for %%f in (%linear_headers_ssl%) do copy /Y %%f %prefix%\include\linear > nul
 
 :deploy-lib
-mkdir %prefix%\lib > nul
-mkdir %prefix%\lib\Debug > nul
-mkdir %prefix%\lib\Release > nul
+mkdir %prefix%\lib > nul 2>&1
+mkdir %prefix%\lib\Debug > nul 2>&1
+mkdir %prefix%\lib\Release > nul 2>&1
 
 if defined shared (
    copy /Y Debug\*.lib %prefix%\lib\Debug\ > nul
@@ -225,7 +225,7 @@ if defined shared (
 )
 
 :deploy-sample
-mkdir %prefix%\sample > nul
+mkdir %prefix%\sample > nul 2>&1
 copy /Y sample\common.gypi %prefix%\sample > nul
 copy /Y sample\linear-sample.gyp %prefix%\sample > nul
 copy /Y sample\configure.py %prefix%\sample > nul
@@ -257,7 +257,7 @@ if errorlevel 1 (
    cd ..\
    goto post-deploy
 )
-mkdir ..\%prefix%\doc > nul
+mkdir ..\%prefix%\doc > nul 2>&1
 xcopy /e /q /y html ..\%prefix%\doc\ > nul
 cd ..
 
