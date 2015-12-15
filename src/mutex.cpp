@@ -19,7 +19,7 @@ void mutex::mutex_impl::lock() {
 }
 #define WAIT_UPDATING_LIBUV (1) // https://github.com/linear-rpc/linear-cpp/issues/1
 bool mutex::mutex_impl::try_lock() {
-#if WAIT_UPDATING_LIBUV
+#if WAIT_UPDATING_LIBUV && ! defined(_WIN32)
   int err;
   err = pthread_mutex_trylock(&mutex_);
   if (err) {

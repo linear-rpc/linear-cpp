@@ -71,7 +71,6 @@
         'src/error.cpp',
         'src/event_loop.cpp',
         'src/group.cpp',
-        'src/handler.cpp',
         'src/handler_delegate.cpp',
         'src/log.cpp',
         'src/log_file.cpp',
