@@ -29,6 +29,7 @@ class LINEAR_EXTERN SSLServer : public Server {
    * SSLServer Constructor
    * @param [in] handler application defined behavior.
    * @param [in] [context] linear::SSLContext object
+   * @param [in] [loop] eventloop(thread) object.
    */
   SSLServer(const linear::Handler& handler,
             const linear::SSLContext& context = linear::SSLContext(),
