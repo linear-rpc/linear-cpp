@@ -136,6 +136,7 @@ set linear_headers_nossl=^
   "include\linear\client.h" ^
   "include\linear\condition_variable.h" ^
   "include\linear\error.h" ^
+  "include\linear\event_loop.h" ^
   "include\linear\group.h" ^
   "include\linear\handler.h" ^
   "include\linear\log.h" ^
