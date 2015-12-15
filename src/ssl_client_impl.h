@@ -10,9 +10,13 @@ namespace linear {
 
 class SSLClientImpl : public ClientImpl {
  public:
-  SSLClientImpl(const linear::Handler& handler, const linear::SSLContext& context);
-  virtual ~SSLClientImpl();
-  void SetContext(const linear::SSLContext& context);
+  SSLClientImpl(const linear::Handler& handler,
+                const linear::SSLContext& context,
+                const linear::EventLoop& loop);
+  virtual ~SSLClientImpl() {}
+  void SetSSLContext(const linear::SSLContext& context) {
+    context_ = context;
+  }
   linear::SSLSocket CreateSocket(const std::string& hostname, int port);
   linear::SSLSocket CreateSocket(const std::string& hostname, int port,
                                  const linear::SSLContext& context);

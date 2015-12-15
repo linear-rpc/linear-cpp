@@ -10,16 +10,15 @@ using namespace linear::log;
 
 namespace linear {
 
-SSLServerImpl::SSLServerImpl(const Handler& handler, const SSLContext& context)
-  : ServerImpl(handler, true), handle_(NULL), context_(context) {
+SSLServerImpl::SSLServerImpl(const Handler& handler,
+                             const SSLContext& context,
+                             const linear::EventLoop& loop)
+  : ServerImpl(handler, loop, true),
+    context_(context), handle_(NULL) {
 }
 
 SSLServerImpl::~SSLServerImpl() {
   Stop();
-}
-
-void SSLServerImpl::SetContext(const SSLContext& context) {
-  context_ = context;
 }
 
 Error SSLServerImpl::Start(const std::string& hostname, int port, EventLoopImpl::ServerEvent* ev) {
@@ -31,7 +30,7 @@ Error SSLServerImpl::Start(const std::string& hostname, int port, EventLoopImpl:
   if (handle_ == NULL) {
     return Error(LNR_ENOMEM);
   }
-  int ret = tv_ssl_init(EventLoopImpl::GetDefault().GetHandle(), handle_, context_.GetHandle());
+  int ret = tv_ssl_init(loop_->GetHandle(), handle_, context_.GetHandle());
   if (ret) {
     Error err(ret);
     LINEAR_LOG(LOG_ERR, "fail to start server(%s:%d,SSL): %s",
@@ -87,7 +86,7 @@ void SSLServerImpl::OnAccept(tv_stream_t* srv_stream, tv_stream_t* cli_stream, i
     return;
   }
   try {
-    shared_ptr<SSLSocketImpl> shared = shared_ptr<SSLSocketImpl>(new SSLSocketImpl(cli_stream, context_, *this));
+    shared_ptr<SSLSocketImpl> shared = shared_ptr<SSLSocketImpl>(new SSLSocketImpl(cli_stream, context_, loop_, *this));
     EventLoopImpl::SocketEvent* ev = new EventLoopImpl::SocketEvent(shared);
     if (shared->StartRead(ev) != Error(LNR_OK)) {
         throw std::runtime_error("fail to accept");

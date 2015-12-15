@@ -6,16 +6,13 @@ using namespace linear::log;
 
 namespace linear {
 
-TCPServer::TCPServer(const Handler& handler) {
+TCPServer::TCPServer(const linear::Handler& handler, const linear::EventLoop& loop) {
   try {
-    server_ = shared_ptr<ServerImpl>(new TCPServerImpl(handler));
+    server_ = shared_ptr<ServerImpl>(new TCPServerImpl(handler, loop));
   } catch(...) {
     LINEAR_LOG(LOG_ERR, "no memory");
     throw;
   }
-}
-
-TCPServer::~TCPServer() {
 }
 
 }  // namespace linear

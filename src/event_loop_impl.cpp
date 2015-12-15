@@ -7,12 +7,6 @@ using namespace linear::log;
 
 namespace linear {
 
-// -fthreadsafe-statics
-const EventLoopImpl& EventLoopImpl::GetDefault() {
-  static EventLoopImpl g_loop;
-  return g_loop;
-}
-
 void EventLoopImpl::OnAccept(tv_stream_t* srv_stream, tv_stream_t* cli_stream, int status) {
   assert(srv_stream != NULL && srv_stream->data != NULL);
   ServerEvent* ev = static_cast<ServerEvent*>(srv_stream->data);
@@ -116,6 +110,7 @@ void EventLoopImpl::OnRequestTimeout(void* args) {
 }
 
 EventLoopImpl::EventLoopImpl() : handle_(tv_loop_new()) {
+  LINEAR_DEBUG(LOG_DEBUG, "%s: %p", __PRETTY_FUNCTION__, handle_);
   assert(handle_ != NULL);
 }
 
@@ -128,6 +123,7 @@ EventLoopImpl& EventLoopImpl::operator=(const EventLoopImpl& loop) {
 }
 
 EventLoopImpl::~EventLoopImpl() {
+  LINEAR_DEBUG(LOG_DEBUG, "%s: %p", __PRETTY_FUNCTION__, handle_);
   tv_loop_delete(handle_);
 }
 

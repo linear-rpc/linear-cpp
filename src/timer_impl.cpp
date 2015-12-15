@@ -1,5 +1,6 @@
 #include <stdint.h>
 
+#include "linear/event_loop.h"
 #include "linear/log.h"
 
 #include "timer_impl.h"
@@ -37,7 +38,7 @@ Error TimerImpl::Start(TimerCallback callback, unsigned int timeout, void* args,
   if (tv_timer_ == NULL) {
     return Error(LNR_ENOMEM);
   }
-  int ret = tv_timer_init(EventLoopImpl::GetDefault().GetHandle(), tv_timer_);
+  int ret = tv_timer_init(EventLoop::GetDefault().GetImpl()->GetHandle(), tv_timer_);
   if (ret) {
     LINEAR_LOG(LOG_ERR, "fail to start timer: %s", tv_strerror(reinterpret_cast<tv_handle_t*>(tv_timer_), ret));
     free(tv_timer_);

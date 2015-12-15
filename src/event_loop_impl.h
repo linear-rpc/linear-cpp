@@ -50,8 +50,6 @@ class EventLoopImpl {
   EventLoopImpl& operator=(const EventLoopImpl& loop);
   ~EventLoopImpl();
 
-  static const EventLoopImpl& GetDefault();
-
   static void OnAccept(tv_stream_t* server, tv_stream_t* client, int status);
   static void OnAcceptComplete(tv_stream_t* stream, int status);
   static void OnConnect(tv_stream_t* handle, int status);

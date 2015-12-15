@@ -6,9 +6,7 @@
 #ifndef LINEAR_CLIENT_H_
 #define LINEAR_CLIENT_H_
 
-#include "linear/memory.h"
-
-#include "linear/private/extern.h"
+#include "linear/event_loop.h"
 
 namespace linear {
 

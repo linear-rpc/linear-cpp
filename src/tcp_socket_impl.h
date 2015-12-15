@@ -8,9 +8,13 @@ namespace linear {
 class TCPSocketImpl : public linear::SocketImpl {
  public:
   // Client Socket
-  TCPSocketImpl(const std::string& host, int port, const linear::HandlerDelegate& delegate);
+  TCPSocketImpl(const std::string& host, int port,
+                const linear::shared_ptr<linear::EventLoopImpl>& loop,
+                const linear::HandlerDelegate& delegate);
   // Server Socket
-  TCPSocketImpl(tv_stream_t* stream, const linear::HandlerDelegate& delegate);
+  TCPSocketImpl(tv_stream_t* stream,
+                const linear::shared_ptr<linear::EventLoopImpl>& loop,
+                const linear::HandlerDelegate& delegate);
   virtual ~TCPSocketImpl();
   linear::Error Connect();
 };

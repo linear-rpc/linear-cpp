@@ -9,8 +9,8 @@ namespace linear {
 
 class TCPClientImpl : public ClientImpl {
  public:
-  explicit TCPClientImpl(const linear::Handler& handler);
-  virtual ~TCPClientImpl();
+  TCPClientImpl(const linear::Handler& handler, const linear::EventLoop& loop);
+  virtual ~TCPClientImpl() {}
   linear::TCPSocket CreateSocket(const std::string& hostname, int port);
 };
 

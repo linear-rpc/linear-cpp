@@ -10,16 +10,17 @@ using namespace linear::log;
 
 namespace linear {
 
-WSSServerImpl::WSSServerImpl(const linear::Handler& handler, const linear::SSLContext& ssl_context, linear::AuthContext::Type auth_type, const std::string& realm)
-  : ServerImpl(handler, true), auth_type_(auth_type), realm_(realm), ssl_context_(ssl_context), handle_(NULL) {
+WSSServerImpl::WSSServerImpl(const linear::Handler& handler,
+                             const linear::SSLContext& ssl_context,
+                             linear::AuthContext::Type auth_type,
+                             const std::string& realm,
+                             const linear::EventLoop& loop)
+  : ServerImpl(handler, loop, true),
+    auth_type_(auth_type), realm_(realm), ssl_context_(ssl_context), handle_(NULL) {
 }
 
 WSSServerImpl::~WSSServerImpl() {
   Stop();
-}
-
-void WSSServerImpl::SetSSLContext(const SSLContext& ssl_context) {
-  ssl_context_ = ssl_context;
 }
 
 Error WSSServerImpl::Start(const std::string& hostname, int port, EventLoopImpl::ServerEvent* ev) {
@@ -31,7 +32,7 @@ Error WSSServerImpl::Start(const std::string& hostname, int port, EventLoopImpl:
   if (handle_ == NULL) {
     return Error(LNR_ENOMEM);
   }
-  int ret = tv_wss_init(EventLoopImpl::GetDefault().GetHandle(), handle_, ssl_context_.GetHandle());
+  int ret = tv_wss_init(loop_->GetHandle(), handle_, ssl_context_.GetHandle());
   if (ret) {
     Error err(ret);
     LINEAR_LOG(LOG_ERR, "fail to start server(%s:%d,WSS): %s",
@@ -88,7 +89,7 @@ void WSSServerImpl::OnAccept(tv_stream_t* srv_stream, tv_stream_t* cli_stream, i
   }
   try {
     linear::WSRequestContext request_context_;
-    shared_ptr<WSSSocketImpl> shared = shared_ptr<WSSSocketImpl>(new WSSSocketImpl(cli_stream, request_context_, ssl_context_, *this));
+    shared_ptr<WSSSocketImpl> shared = shared_ptr<WSSSocketImpl>(new WSSSocketImpl(cli_stream, request_context_, ssl_context_, loop_, *this));
     EventLoopImpl::SocketEvent* ev = new EventLoopImpl::SocketEvent(shared);
     if (shared->StartRead(ev) != Error(LNR_OK)) {
         throw std::runtime_error("fail to accept");

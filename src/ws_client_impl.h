@@ -9,9 +9,13 @@ namespace linear {
 
 class WSClientImpl : public ClientImpl {
  public:
-  WSClientImpl(const linear::Handler& handler, const linear::WSRequestContext& request_context);
-  virtual ~WSClientImpl();
-  void SetWSRequestContext(const linear::WSRequestContext& request_context);
+  WSClientImpl(const linear::Handler& handler,
+               const linear::WSRequestContext& request_context,
+               const linear::EventLoop& loop);
+  virtual ~WSClientImpl() {}
+  void SetWSRequestContext(const linear::WSRequestContext& request_context) {
+    request_context_ = request_context;
+  }
   linear::WSSocket CreateSocket(const std::string& hostname, int port);
   linear::WSSocket CreateSocket(const std::string& hostname, int port,
                                 const linear::WSRequestContext& request_context);

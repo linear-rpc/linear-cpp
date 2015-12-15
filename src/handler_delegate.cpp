@@ -14,8 +14,9 @@ using namespace linear::log;
 
 namespace linear {
 
-HandlerDelegate::HandlerDelegate(const Handler& handler, bool show_ssl_version)
-  : handler_observer_(handler.GetObserver()),
+HandlerDelegate::HandlerDelegate(const Handler& handler, const linear::EventLoop& loop, bool show_ssl_version)
+  : loop_(loop.GetImpl()),
+    handler_observer_(handler.GetObserver()),
     handler_delegate_observer_(new Observer<HandlerDelegate>(this)) {
 
 #ifndef _WIN32

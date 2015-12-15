@@ -22,13 +22,14 @@ class LINEAR_EXTERN TCPServer : public Server {
  public:
   /// @cond hidden
   TCPServer() : Server() {}
-  ~TCPServer();
+  ~TCPServer() {}
   /// @endcond
   /**
    * TCPServer Constructor
    * @param [in] handler application defined behavior.
+   * @param [in] [loop] eventloop(thread) object.
    */
-  explicit TCPServer(const linear::Handler& handler);
+  TCPServer(const linear::Handler& handler, const linear::EventLoop& loop = linear::EventLoop::GetDefault());
 };
 
 }  // namespace linear

@@ -12,13 +12,16 @@ class WSSClientImpl : public ClientImpl {
  public:
   WSSClientImpl(const linear::Handler& handler,
                 const linear::WSRequestContext& request_context,
-                const linear::SSLContext& ssl_context);
+                const linear::SSLContext& ssl_context,
+                const linear::EventLoop& loop);
   virtual ~WSSClientImpl();
   void SetWSRequestContext(const linear::WSRequestContext& request_context);
   void SetSSLContext(const linear::SSLContext& ssl_context);
   linear::WSSSocket CreateSocket(const std::string& hostname, int port);
   linear::WSSSocket CreateSocket(const std::string& hostname, int port,
                                  const linear::WSRequestContext& request_context);
+  linear::WSSSocket CreateSocket(const std::string& hostname, int port,
+                                 const linear::SSLContext& ssl_context);
   linear::WSSSocket CreateSocket(const std::string& hostname, int port,
                                  const linear::WSRequestContext& request_context,
                                  const linear::SSLContext& ssl_context);

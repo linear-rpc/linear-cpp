@@ -4,14 +4,20 @@
 
 namespace linear {
 
-SSLSocketImpl::SSLSocketImpl(const std::string& host, int port, const linear::SSLContext& context,
+SSLSocketImpl::SSLSocketImpl(const std::string& host, int port,
+                             const linear::SSLContext& context,
+                             const linear::shared_ptr<linear::EventLoopImpl>& loop,
                              const linear::HandlerDelegate& delegate)
-  : SocketImpl(host, port, delegate, Socket::SSL), context_(context) {
+  : SocketImpl(host, port, loop, delegate, Socket::SSL),
+    context_(context) {
 }
 
-SSLSocketImpl::SSLSocketImpl(tv_stream_t* stream, const SSLContext& context,
+SSLSocketImpl::SSLSocketImpl(tv_stream_t* stream,
+                             const SSLContext& context,
+                             const linear::shared_ptr<linear::EventLoopImpl>& loop,
                              const linear::HandlerDelegate& delegate)
-  : SocketImpl(stream, delegate, Socket::SSL), context_(context) {
+  : SocketImpl(stream, loop, delegate, Socket::SSL),
+    context_(context) {
 }
 
 SSLSocketImpl::~SSLSocketImpl() {
@@ -22,7 +28,7 @@ Error SSLSocketImpl::Connect() {
   if (stream_ == NULL) {
     return Error(LNR_ENOMEM);
   }
-  int ret = tv_ssl_init(EventLoopImpl::GetDefault().GetHandle(), reinterpret_cast<tv_ssl_t*>(stream_), context_.GetHandle());
+  int ret = tv_ssl_init(loop_->GetHandle(), reinterpret_cast<tv_ssl_t*>(stream_), context_.GetHandle());
   if (ret) {
     free(stream_);
     return Error(ret);

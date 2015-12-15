@@ -35,10 +35,14 @@ class SocketImpl {
   
  public:
   // Client Socket
-  SocketImpl(const std::string& host, int port, const linear::HandlerDelegate& delegate,
+  SocketImpl(const std::string& host, int port,
+             const linear::shared_ptr<linear::EventLoopImpl>& loop,
+             const linear::HandlerDelegate& delegate,
              linear::Socket::Type type);
   // Server Socket
-  SocketImpl(tv_stream_t* stream, const linear::HandlerDelegate& delegate,
+  SocketImpl(tv_stream_t* stream,
+             const linear::shared_ptr<linear::EventLoopImpl>& loop,
+             const linear::HandlerDelegate& delegate,
              linear::Socket::Type type);
   virtual ~SocketImpl();
 
@@ -74,6 +78,7 @@ class SocketImpl {
   linear::Addrinfo self_, peer_;
   std::string bind_ifname_;
   linear::mutex state_mutex_;
+  linear::shared_ptr<linear::EventLoopImpl> loop_;
 
  private:
   linear::Error _Send(linear::Message* ctx);

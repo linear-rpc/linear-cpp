@@ -3,6 +3,7 @@
 
 #include "linear/tcp_socket.h"
 
+#include "event_loop_impl.h"
 #include "tcp_server_impl.h"
 #include "tcp_socket_impl.h"
 
@@ -10,7 +11,9 @@ using namespace linear::log;
 
 namespace linear {
 
-TCPServerImpl::TCPServerImpl(const Handler& handler) : ServerImpl(handler), handle_(NULL) {
+TCPServerImpl::TCPServerImpl(const Handler& handler, const linear::EventLoop& loop)
+  : ServerImpl(handler, loop),
+    handle_(NULL) {
 }
 
 TCPServerImpl::~TCPServerImpl() {
@@ -26,7 +29,7 @@ Error TCPServerImpl::Start(const std::string& hostname, int port, EventLoopImpl:
   if (handle_ == NULL) {
     return Error(LNR_ENOMEM);
   }
-  int ret = tv_tcp_init(EventLoopImpl::GetDefault().GetHandle(), handle_);
+  int ret = tv_tcp_init(loop_->GetHandle(), handle_);
   if (ret) {
     Error err(ret);
     LINEAR_LOG(LOG_ERR, "fail to start server(%s:%d,TCP): %s",
@@ -82,7 +85,7 @@ void TCPServerImpl::OnAccept(tv_stream_t* srv_stream, tv_stream_t* cli_stream, i
     return;
   }
   try {
-    shared_ptr<TCPSocketImpl> shared = shared_ptr<TCPSocketImpl>(new TCPSocketImpl(cli_stream, *this));
+    shared_ptr<TCPSocketImpl> shared = shared_ptr<TCPSocketImpl>(new TCPSocketImpl(cli_stream, loop_, *this));
     EventLoopImpl::SocketEvent* ev = new EventLoopImpl::SocketEvent(shared);
     if (shared->StartRead(ev) != Error(LNR_OK)) {
         throw std::runtime_error("fail to accept");

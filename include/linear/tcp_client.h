@@ -21,13 +21,15 @@ class LINEAR_EXTERN TCPClient : public Client {
  public:
   /// @cond hidden
   TCPClient() : Client() {}
-  virtual ~TCPClient();
+  virtual ~TCPClient() {}
   /// @endcond
   /**
    * Constructor
    * @param [in] handler application defined behavior.
+   * @param [in] [loop] eventloop(thread) object
    */
-  explicit TCPClient(const linear::Handler& handler);
+  TCPClient(const linear::Handler& handler,
+            const linear::EventLoop& loop = linear::EventLoop::GetDefault());
   /**
    * Create new TCPSocket Object.
    * @param [in] hostname hostname or IPAddr of a target server.

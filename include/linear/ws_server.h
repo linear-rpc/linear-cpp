@@ -22,18 +22,33 @@ class LINEAR_EXTERN WSServer : public Server {
  public:
   /// @cond hidden
   WSServer() : Server() {}
-  ~WSServer();
+  ~WSServer() {}
   /// @endcond
   /**
    * WSServer Constructor
    * @param [in] handler application defined behavior.
+   * @param [in] [auth_type] authentication type
+   * @param [in] [realm] authentication realm
+   * @see linear::AuthContext
+   * @param [in] [loop] eventloop(thread) object
+   */
+  WSServer(const linear::Handler& handler,
+           linear::AuthContext::Type auth_type = linear::AuthContext::UNUSED,
+           const std::string& realm = "Authorization Required",
+           const linear::EventLoop& loop = linear::EventLoop::GetDefault());
+  /**
+   * WSServer Constructor
+   * @param [in] handler application defined behavior.
+   * @param [in] [loop] eventloop(thread) object
+   */
+  WSServer(const linear::Handler& handler, const linear::EventLoop& loop);
+  /**
+   * Use Basic/Digest Authentication
    * @param [in] auth_type authentication type
    * @param [in] realm authentication realm
    * @see linear::AuthContext
    */
-  WSServer(const linear::Handler& handler,
-           linear::AuthContext::Type auth_type = linear::AuthContext::UNUSED,
-           const std::string& realm = "Authorization Required");
+  void UseAuthentication(linear::AuthContext::Type auth_type, const std::string& realm);
 };
 
 }  // namespace linear

@@ -7,7 +7,7 @@ namespace linear {
 
 class TCPServerImpl : public ServerImpl {
  public:
-  explicit TCPServerImpl(const linear::Handler& handler);
+  TCPServerImpl(const linear::Handler& handler, const linear::EventLoop& loop);
   virtual ~TCPServerImpl();
   linear::Error Start(const std::string& hostname, int port,
                       linear::EventLoopImpl::ServerEvent* ev);

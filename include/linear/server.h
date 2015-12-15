@@ -7,7 +7,7 @@
 #define LINEAR_SERVER_H_
 
 #include "linear/error.h"
-#include "linear/memory.h"
+#include "linear/event_loop.h"
 
 namespace linear {
 

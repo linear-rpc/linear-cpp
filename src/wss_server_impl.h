@@ -13,13 +13,20 @@ class WSSServerImpl : public ServerImpl {
   WSSServerImpl(const linear::Handler& handler,
                 const linear::SSLContext& ssl_context,
                 linear::AuthContext::Type auth_type,
-                const std::string& realm);
+                const std::string& realm,
+                const linear::EventLoop& loop);
   virtual ~WSSServerImpl();
-  void SetSSLContext(const linear::SSLContext& ssl_context);
   linear::Error Start(const std::string& hostname, int port,
                       linear::EventLoopImpl::ServerEvent* ev);
   linear::Error Stop();
   void OnAccept(tv_stream_t* srv_stream, tv_stream_t* cli_stream, int status);
+  void SetSSLContext(const linear::SSLContext& ssl_context) {
+    ssl_context_ = ssl_context;
+  }
+  void UseAuthentication(linear::AuthContext::Type auth_type, const std::string& realm) {
+    auth_type_ = auth_type;
+    realm_ = realm;
+  }
 
  private:
   void CreateAuthenticationHeader(tv_wss_t* handle);

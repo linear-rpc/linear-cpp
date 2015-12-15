@@ -8,14 +8,19 @@ using namespace linear::log;
 
 namespace linear {
 
-WSSocketImpl::WSSocketImpl(const std::string& host, int port, const WSRequestContext& request_context,
+WSSocketImpl::WSSocketImpl(const std::string& host, int port,
+                           const WSRequestContext& request_context,
+                           const linear::shared_ptr<linear::EventLoopImpl>& loop,
                            const HandlerDelegate& delegate)
-  : SocketImpl(host, port, delegate, Socket::WS), request_context_(request_context) {
+  : SocketImpl(host, port, loop, delegate, Socket::WS),
+    request_context_(request_context) {
 }
 
 WSSocketImpl::WSSocketImpl(tv_stream_t* stream, const WSRequestContext& response_context,
+                           const linear::shared_ptr<linear::EventLoopImpl>& loop,
                            const HandlerDelegate& delegate)
-  : SocketImpl(stream, delegate, Socket::WS), request_context_(response_context) {
+  : SocketImpl(stream, loop, delegate, Socket::WS),
+    request_context_(response_context) {
 }
 
 WSSocketImpl::~WSSocketImpl() {
@@ -26,7 +31,7 @@ Error WSSocketImpl::Connect() {
   if (handle == NULL) {
     return Error(LNR_ENOMEM);
   }
-  int ret = tv_ws_init(EventLoopImpl::GetDefault().GetHandle(), handle);
+  int ret = tv_ws_init(loop_->GetHandle(), handle);
   if (ret) {
     free(handle);
     return Error(ret);

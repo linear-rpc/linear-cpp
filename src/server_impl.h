@@ -14,8 +14,8 @@ class ServerImpl : public HandlerDelegate {
   };
 
  public:
-  ServerImpl(const linear::Handler& handler, bool show_ssl_version = false)
-    : HandlerDelegate(handler, show_ssl_version), state_(STOP) {}
+  ServerImpl(const linear::Handler& handler, const linear::EventLoop& loop, bool show_ssl_version = false)
+    : HandlerDelegate(handler, loop, show_ssl_version), state_(STOP) {}
   virtual ~ServerImpl() {}
 
   virtual linear::Error Start(const std::string& hostname, int port,

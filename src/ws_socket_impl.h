@@ -11,10 +11,13 @@ namespace linear {
 class WSSocketImpl : public linear::SocketImpl {
  public:
   // Client Socket
-  WSSocketImpl(const std::string& host, int port, const linear::WSRequestContext& request_context,
+  WSSocketImpl(const std::string& host, int port,
+               const linear::WSRequestContext& request_context,
+               const linear::shared_ptr<linear::EventLoopImpl>& loop,
                const linear::HandlerDelegate& delegate);
   // Server Socket
   WSSocketImpl(tv_stream_t* stream, const linear::WSRequestContext& response_context,
+               const linear::shared_ptr<linear::EventLoopImpl>& loop,
                const linear::HandlerDelegate& delegate);
   virtual ~WSSocketImpl();
   linear::Error Connect();

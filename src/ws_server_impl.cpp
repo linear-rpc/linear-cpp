@@ -10,8 +10,12 @@ using namespace linear::log;
 
 namespace linear {
 
-WSServerImpl::WSServerImpl(const Handler& handler, linear::AuthContext::Type auth_type, const std::string& realm)
-  : ServerImpl(handler), auth_type_(auth_type), realm_(realm), handle_(NULL) {
+WSServerImpl::WSServerImpl(const Handler& handler,
+                           linear::AuthContext::Type auth_type,
+                           const std::string& realm,
+                           const linear::EventLoop& loop)
+  : ServerImpl(handler, loop),
+    auth_type_(auth_type), realm_(realm), handle_(NULL) {
 }
 
 WSServerImpl::~WSServerImpl() {
@@ -27,7 +31,7 @@ Error WSServerImpl::Start(const std::string& hostname, int port, EventLoopImpl::
   if (handle_ == NULL) {
     return Error(LNR_ENOMEM);
   }
-  int ret = tv_ws_init(EventLoopImpl::GetDefault().GetHandle(), handle_);
+  int ret = tv_ws_init(loop_->GetHandle(), handle_);
   if (ret) {
     Error err(ret);
     LINEAR_LOG(LOG_ERR, "fail to start server(%s:%d,WS): %s",
@@ -84,7 +88,7 @@ void WSServerImpl::OnAccept(tv_stream_t* srv_stream, tv_stream_t* cli_stream, in
   }
   try {
     linear::WSRequestContext request_context_;
-    shared_ptr<WSSocketImpl> shared = shared_ptr<WSSocketImpl>(new WSSocketImpl(cli_stream, request_context_, *this));
+    shared_ptr<WSSocketImpl> shared = shared_ptr<WSSocketImpl>(new WSSocketImpl(cli_stream, request_context_, loop_, *this));
     EventLoopImpl::SocketEvent* ev = new EventLoopImpl::SocketEvent(shared);
     if (shared->StartRead(ev) != Error(LNR_OK)) {
         throw std::runtime_error("fail to accept");

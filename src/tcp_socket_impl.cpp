@@ -4,12 +4,16 @@
 
 namespace linear {
 
-TCPSocketImpl::TCPSocketImpl(const std::string& host, int port, const HandlerDelegate& delegate)
-  : SocketImpl(host, port, delegate, Socket::TCP) {
+TCPSocketImpl::TCPSocketImpl(const std::string& host, int port,
+                             const linear::shared_ptr<linear::EventLoopImpl>& loop,
+                             const HandlerDelegate& delegate)
+  : SocketImpl(host, port, loop, delegate, Socket::TCP) {
 }
 
-TCPSocketImpl::TCPSocketImpl(tv_stream_t* stream, const HandlerDelegate& delegate)
-  : SocketImpl(stream, delegate, Socket::TCP) {
+TCPSocketImpl::TCPSocketImpl(tv_stream_t* stream,
+                             const linear::shared_ptr<linear::EventLoopImpl>& loop,
+                             const HandlerDelegate& delegate)
+  : SocketImpl(stream, loop, delegate, Socket::TCP) {
 }
 
 TCPSocketImpl::~TCPSocketImpl() {
@@ -20,7 +24,7 @@ Error TCPSocketImpl::Connect() {
   if (stream_ == NULL) {
     return Error(LNR_ENOMEM);
   }
-  int ret = tv_tcp_init(EventLoopImpl::GetDefault().GetHandle(), reinterpret_cast<tv_tcp_t*>(stream_));
+  int ret = tv_tcp_init(loop_->GetHandle(), reinterpret_cast<tv_tcp_t*>(stream_));
   if (ret) {
     free(stream_);
     return Error(ret);

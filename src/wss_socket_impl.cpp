@@ -9,15 +9,23 @@ using namespace linear::log;
 namespace linear {
 
 WSSSocketImpl::WSSSocketImpl(const std::string& host, int port,
-                             const WSRequestContext& ws_context, const SSLContext& ssl_context,
+                             const WSRequestContext& ws_context,
+                             const SSLContext& ssl_context,
+                             const linear::shared_ptr<linear::EventLoopImpl>& loop,
                              const HandlerDelegate& delegate)
-  : SocketImpl(host, port, delegate, Socket::WSS), request_context_(ws_context), ssl_context_(ssl_context) {
+  : SocketImpl(host, port, loop, delegate, Socket::WSS),
+    request_context_(ws_context),
+    ssl_context_(ssl_context) {
 }
 
 WSSSocketImpl::WSSSocketImpl(tv_stream_t* stream,
-                             const WSRequestContext& ws_context, const SSLContext& ssl_context,
+                             const WSRequestContext& ws_context,
+                             const SSLContext& ssl_context,
+                             const linear::shared_ptr<linear::EventLoopImpl>& loop,
                              const HandlerDelegate& delegate)
-  : SocketImpl(stream, delegate, Socket::WSS), request_context_(ws_context), ssl_context_(ssl_context) {
+  : SocketImpl(stream, loop, delegate, Socket::WSS),
+    request_context_(ws_context),
+    ssl_context_(ssl_context) {
 }
 
 WSSSocketImpl::~WSSSocketImpl() {
@@ -28,7 +36,7 @@ Error WSSSocketImpl::Connect() {
   if (handle == NULL) {
     return Error(LNR_ENOMEM);
   }
-  int ret = tv_wss_init(EventLoopImpl::GetDefault().GetHandle(), handle, ssl_context_.GetHandle());
+  int ret = tv_wss_init(loop_->GetHandle(), handle, ssl_context_.GetHandle());
   if (ret) {
     free(handle);
     return Error(ret);

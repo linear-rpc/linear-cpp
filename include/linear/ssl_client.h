@@ -22,20 +22,29 @@ class LINEAR_EXTERN SSLClient : public Client {
  public:
   /// @cond hidden
   SSLClient() : Client() {}
-  virtual ~SSLClient();
+  virtual ~SSLClient() {}
   /// @endcond
   /**
    * Constructor
    * @param [in] handler application defined behavior.
    * @param [in] [context] common linear::SSLContext object
+   * @param [in] [loop] eventloop(thread) object
    */
-  SSLClient(const linear::Handler& handler, const linear::SSLContext& context = linear::SSLContext());
+  SSLClient(const linear::Handler& handler,
+            const linear::SSLContext& context = linear::SSLContext(),
+            const linear::EventLoop& loop = linear::EventLoop::GetDefault());
+  /**
+   * Constructor
+   * @param [in] handler application defined behavior.
+   * @param [in] [loop] eventloop(thread) object
+   */
+  SSLClient(const linear::Handler& handler, const linear::EventLoop& loop);
   /**
    * Set common linear::SSLContext into Client Object.
    * If you can not provide linear::SSLContext when construct SSLClient, call this method.
    * @param [in] context linear::SSLContext object
    */
-  void SetContext(const linear::SSLContext& context);
+  void SetSSLContext(const linear::SSLContext& context);
   /**
    * Create new linear::SSLSocket Object with common context
    * @param [in] hostname hostname or IPAddr of a target server.

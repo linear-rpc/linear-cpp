@@ -9,17 +9,21 @@ namespace linear {
 
 class SSLServerImpl : public ServerImpl {
  public:
-  SSLServerImpl(const linear::Handler& handler, const linear::SSLContext& context);
+  SSLServerImpl(const linear::Handler& handler,
+                const linear::SSLContext& context,
+                const linear::EventLoop& loop);
   virtual ~SSLServerImpl();
-  void SetContext(const linear::SSLContext& context);
   linear::Error Start(const std::string& hostname, int port,
                       linear::EventLoopImpl::ServerEvent* ev);
   linear::Error Stop();
   void OnAccept(tv_stream_t* srv_stream, tv_stream_t* cli_stream, int status);
+  void SetSSLContext(const linear::SSLContext& context) {
+    context_ = context;
+  }
 
  private:
-  tv_ssl_t* handle_;
   linear::SSLContext context_;
+  tv_ssl_t* handle_;
 };
 
 }  // namespace linear

@@ -45,10 +45,12 @@ static std::string GetTypeString(Socket::Type type) {
 }
 
 // Client Socket
-SocketImpl::SocketImpl(const std::string& host, int port, const HandlerDelegate& delegate,
+SocketImpl::SocketImpl(const std::string& host, int port,
+                       const linear::shared_ptr<linear::EventLoopImpl>& loop,
+                       const HandlerDelegate& delegate,
                        Socket::Type type)
   : state_(Socket::DISCONNECTED),
-    stream_(NULL), ev_(NULL), peer_(Addrinfo(host, port)), type_(type), id_(Id()),
+    stream_(NULL), ev_(NULL), peer_(Addrinfo(host, port)), loop_(loop), type_(type), id_(Id()),
     connectable_(true), handshaking_(false), last_error_(LNR_OK), observer_(delegate.GetObserver()),
     connect_timeout_(0),
     max_buffer_size_(Socket::DEFAULT_MAX_BUFFER_SIZE) {
@@ -57,9 +59,11 @@ SocketImpl::SocketImpl(const std::string& host, int port, const HandlerDelegate&
 }
 
 // Server Socket
-SocketImpl::SocketImpl(tv_stream_t* stream, const HandlerDelegate& delegate,
+SocketImpl::SocketImpl(tv_stream_t* stream,
+                       const linear::shared_ptr<linear::EventLoopImpl>& loop,
+                       const HandlerDelegate& delegate,
                        Socket::Type type)
-  : stream_(stream), ev_(NULL), type_(type), id_(Id()),
+  : stream_(stream), ev_(NULL), loop_(loop), type_(type), id_(Id()),
     connectable_(false), last_error_(LNR_OK), observer_(delegate.GetObserver()),
     max_buffer_size_(Socket::DEFAULT_MAX_BUFFER_SIZE) {
   LINEAR_LOG(LOG_DEBUG, "socket(id = %d, type = %s, not connectable) is created",
