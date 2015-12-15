@@ -6,8 +6,6 @@
 #ifndef LINEAR_CONDITION_VARIABLE_H_
 #define LINEAR_CONDITION_VARIABLE_H_
 
-#include "linear/private/extern.h"
-
 #include "linear/mutex.h"
 
 namespace linear {
