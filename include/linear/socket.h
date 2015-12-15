@@ -73,7 +73,7 @@ class LINEAR_EXTERN Socket {
   }
   /**
    * set max message buffer size.
-   * @param [in] max_limit max limit of message size (byte)
+   * @param [in] limit max limit of message size (byte)
    * @return linear::Error object
    * @see linaer::Socket::DEFAULT_MAX_BUFFER_SIZE
    */
