@@ -125,8 +125,7 @@ set msgpack_headers=^
 
 set linear_headers_private=^
   "include\linear\private\extern.h" ^
-  "include\linear\private\message_priv.h" ^
-  "include\linear\private\observer.h"
+  "include\linear\private\message_priv.h"
 
 set linear_headers_nossl=^
   "include\linear\addrinfo.h" ^
