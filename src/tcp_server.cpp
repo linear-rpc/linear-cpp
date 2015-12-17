@@ -2,17 +2,12 @@
 
 #include "tcp_server_impl.h"
 
-using namespace linear::log;
-
 namespace linear {
 
-TCPServer::TCPServer(const linear::Handler& handler, const linear::EventLoop& loop) {
-  try {
-    server_ = shared_ptr<ServerImpl>(new TCPServerImpl(handler, loop));
-  } catch(...) {
-    LINEAR_LOG(LOG_ERR, "no memory");
-    throw;
-  }
+TCPServer::TCPServer(const shared_ptr<Handler>& handler,
+                     const EventLoop& loop) {
+  // TODO: we cannot use make_shared now...
+  server_ = shared_ptr<ServerImpl>(new TCPServerImpl(handler, loop));
 }
 
 }  // namespace linear

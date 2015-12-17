@@ -288,18 +288,18 @@ int main(int argc, char* argv[]) {
     switch(mode) {
     case RECEIVER:
       {
-        receiver::Handler h;
+        linear::shared_ptr<receiver::Handler> h = linear::shared_ptr<receiver::Handler>(new receiver::Handler());
         linear::TCPClient c(h);
         linear::TCPSocket s = c.CreateSocket(host, port);
         s.Connect();
-        while (!h.Confirm()) {
+        while (!h->Confirm()) {
           usleep(10);
         }
         if (s.GetState() == linear::Socket::CONNECTED) {
           std::cout << "Run as a client to receive a request" << std::endl;
           std::cout << "--- Conditions ---" << std::endl;
           std::cout << "Target server: " << host << ":" << port << std::endl;
-          while (h.Running()) {
+          while (h->Running()) {
             usleep(10);
           }
         } else {
@@ -313,15 +313,15 @@ int main(int argc, char* argv[]) {
         std::cout << "--- Conditions ---" << std::endl;
         std::cout << "Target: " << host << ":" << port
                   << ", Num of try: " << num << ", Message size: " << msiz << "bytes" << std::endl;
-        sender::Handler h(num, msiz);
+        linear::shared_ptr<sender::Handler> h = linear::shared_ptr<sender::Handler>(new sender::Handler(num, msiz));
         linear::TCPClient c(h);
         linear::TCPSocket s = c.CreateSocket(host, port);
         s.Connect();
-        while (h.Running()) {
+        while (h->Running()) {
           usleep(10);
         }
         s.Disconnect();
-        h.ShowResult();
+        h->ShowResult();
         break;
       }
     default:
@@ -331,13 +331,13 @@ int main(int argc, char* argv[]) {
     switch (mode) {
     case RECEIVER:
       {
-        receiver::Handler h;
+        linear::shared_ptr<receiver::Handler> h = linear::shared_ptr<receiver::Handler>(new receiver::Handler());
         linear::TCPServer s(h);
         s.Start(host, port);
         std::cout << "Run as a server to receive a request" << std::endl;
         std::cout << "--- Conditions ---" << std::endl;
         std::cout << "Server started: " << host << ":" << port << std::endl;
-        while (h.Running()) {
+        while (h->Running()) {
           usleep(10);
         }
         break;
@@ -348,13 +348,13 @@ int main(int argc, char* argv[]) {
         std::cout << "--- Conditions ---" << std::endl;
         std::cout << "Server started: " << host << ":" << port
                   << ", Num of try: " << num << ", Message size: " << msiz << "bytes" << std::endl;
-        sender::Handler h(num, msiz);
+        linear::shared_ptr<sender::Handler> h = linear::shared_ptr<sender::Handler>(new sender::Handler(num, msiz));
         linear::TCPServer s(h);
         s.Start(host, port);
-        while (h.Running()) {
+        while (h->Running()) {
           usleep(10);
         }
-        h.ShowResult();
+        h->ShowResult();
         break;
       }
     default:

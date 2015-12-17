@@ -26,7 +26,7 @@ typedef LinearTest WSSClientServerConnectionTest;
 
 // Refuse
 TEST_F(WSSClientServerConnectionTest, ConnectRefuse) {
-  MockHandler ch;
+  linear::shared_ptr<MockHandler> ch = linear::shared_ptr<MockHandler>(new MockHandler());
   SSLContext context(SSLContext::TLSv1_1);
   context.SetCertificate(std::string(CLIENT_CERT));
   context.SetPrivateKey(std::string(CLIENT_PKEY));
@@ -36,8 +36,8 @@ TEST_F(WSSClientServerConnectionTest, ConnectRefuse) {
   WSSClient cl(ch, WSRequestContext(), context);
   WSSSocket cs = cl.CreateSocket(TEST_ADDR, TEST_PORT);
 
-  EXPECT_CALL(ch, OnConnectMock(_)).Times(0);
-  EXPECT_CALL(ch, OnDisconnectMock(cs, Error(LNR_ECONNREFUSED))).WillOnce(DoAll(Assign(&srv_finished, true), Assign(&cli_finished, true)));
+  EXPECT_CALL(*ch, OnConnectMock(_)).Times(0);
+  EXPECT_CALL(*ch, OnDisconnectMock(cs, Error(LNR_ECONNREFUSED))).WillOnce(DoAll(Assign(&srv_finished, true), Assign(&cli_finished, true)));
 
   Error e = cs.Connect();
   ASSERT_EQ(LNR_OK, e.Code());
@@ -46,7 +46,7 @@ TEST_F(WSSClientServerConnectionTest, ConnectRefuse) {
 
 // Timeout
 TEST_F(WSSClientServerConnectionTest, ConnectTimeout) {
-  MockHandler ch;
+  linear::shared_ptr<MockHandler> ch = linear::shared_ptr<MockHandler>(new MockHandler());
   SSLContext context(SSLContext::TLSv1_1);
   context.SetCertificate(std::string(CLIENT_CERT));
   context.SetPrivateKey(std::string(CLIENT_PKEY));
@@ -56,8 +56,8 @@ TEST_F(WSSClientServerConnectionTest, ConnectTimeout) {
   WSSClient cl(ch, WSRequestContext(), context);
   WSSSocket cs = cl.CreateSocket(TEST_ADDR_4_TIMEOUT, TEST_PORT);
 
-  EXPECT_CALL(ch, OnConnectMock(_)).Times(0);
-  EXPECT_CALL(ch, OnDisconnectMock(cs, Error(LNR_ETIMEDOUT))).WillOnce(DoAll(Assign(&srv_finished, true), Assign(&cli_finished, true)));
+  EXPECT_CALL(*ch, OnConnectMock(_)).Times(0);
+  EXPECT_CALL(*ch, OnDisconnectMock(cs, Error(LNR_ETIMEDOUT))).WillOnce(DoAll(Assign(&srv_finished, true), Assign(&cli_finished, true)));
 
   Error e = cs.Connect(1);
   ASSERT_EQ(LNR_OK, e.Code());
@@ -66,7 +66,7 @@ TEST_F(WSSClientServerConnectionTest, ConnectTimeout) {
 
 // Cancel
 TEST_F(WSSClientServerConnectionTest, ConnectCancel) {
-  MockHandler ch;
+  linear::shared_ptr<MockHandler> ch = linear::shared_ptr<MockHandler>(new MockHandler());
   SSLContext context(SSLContext::TLSv1_1);
   context.SetCertificate(std::string(CLIENT_CERT));
   context.SetPrivateKey(std::string(CLIENT_PKEY));
@@ -76,8 +76,8 @@ TEST_F(WSSClientServerConnectionTest, ConnectCancel) {
   WSSClient cl(ch, WSRequestContext(), context);
   WSSSocket cs = cl.CreateSocket("127.0.0.2", TEST_PORT);
 
-  EXPECT_CALL(ch, OnConnectMock(_)).Times(0);
-  EXPECT_CALL(ch, OnDisconnectMock(_, _)).WillOnce(DoAll(Assign(&srv_finished, true), Assign(&cli_finished, true)));
+  EXPECT_CALL(*ch, OnConnectMock(_)).Times(0);
+  EXPECT_CALL(*ch, OnDisconnectMock(_, _)).WillOnce(DoAll(Assign(&srv_finished, true), Assign(&cli_finished, true)));
 
   Error e = cs.Connect();
   ASSERT_EQ(LNR_OK, e.Code());
@@ -87,7 +87,7 @@ TEST_F(WSSClientServerConnectionTest, ConnectCancel) {
 
 // Disconnect EALREADY
 TEST_F(WSSClientServerConnectionTest, DisconnectEalready) {
-  MockHandler ch;
+  linear::shared_ptr<MockHandler> ch = linear::shared_ptr<MockHandler>(new MockHandler());
   SSLContext context(SSLContext::TLSv1_1);
   context.SetCertificate(std::string(CLIENT_CERT));
   context.SetPrivateKey(std::string(CLIENT_PKEY));
@@ -97,8 +97,8 @@ TEST_F(WSSClientServerConnectionTest, DisconnectEalready) {
   WSSClient cl(ch, WSRequestContext(), context);
   WSSSocket cs = cl.CreateSocket(TEST_ADDR, TEST_PORT);
 
-  EXPECT_CALL(ch, OnConnectMock(_)).Times(0);
-  EXPECT_CALL(ch, OnDisconnectMock(_, _)).Times(0);
+  EXPECT_CALL(*ch, OnConnectMock(_)).Times(0);
+  EXPECT_CALL(*ch, OnDisconnectMock(_, _)).Times(0);
 
   Error e = cs.Disconnect();
   ASSERT_EQ(LNR_EALREADY, e.Code());
@@ -107,7 +107,7 @@ TEST_F(WSSClientServerConnectionTest, DisconnectEalready) {
 
 // Connect EALREADY
 TEST_F(WSSClientServerConnectionTest, ConnectEalready) {
-  MockHandler ch;
+  linear::shared_ptr<MockHandler> ch = linear::shared_ptr<MockHandler>(new MockHandler());
   SSLContext context(SSLContext::TLSv1_1);
   context.SetCertificate(std::string(CLIENT_CERT));
   context.SetPrivateKey(std::string(CLIENT_PKEY));
@@ -115,7 +115,7 @@ TEST_F(WSSClientServerConnectionTest, ConnectEalready) {
   context.SetCiphers(std::string(CIPHER_LIST));
   context.SetVerifyMode(SSLContext::VERIFY_PEER);
   WSSClient cl(ch, WSRequestContext(), context);
-  MockHandler sh;
+  linear::shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
   SSLContext server_context(SSLContext::TLSv1_1);
   server_context.SetCertificate(std::string(SERVER_CERT));
   server_context.SetPrivateKey(std::string(SERVER_PKEY));
@@ -129,8 +129,8 @@ TEST_F(WSSClientServerConnectionTest, ConnectEalready) {
 
   WSSSocket cs = cl.CreateSocket(TEST_ADDR, TEST_PORT);
 
-  EXPECT_CALL(sh, OnConnectMock(_)).WillOnce(Assign(&srv_finished, true));
-  EXPECT_CALL(ch, OnConnectMock(cs)).WillOnce(Assign(&cli_finished, true));
+  EXPECT_CALL(*sh, OnConnectMock(_)).WillOnce(Assign(&srv_finished, true));
+  EXPECT_CALL(*ch, OnConnectMock(cs)).WillOnce(Assign(&cli_finished, true));
 
   e = cs.Connect();
   ASSERT_EQ(LNR_OK, e.Code());
@@ -142,7 +142,7 @@ TEST_F(WSSClientServerConnectionTest, ConnectEalready) {
 
 // Connect EINVAL
 TEST_F(WSSClientServerConnectionTest, ConnectEinval) {
-  MockHandler ch;
+  linear::shared_ptr<MockHandler> ch = linear::shared_ptr<MockHandler>(new MockHandler());
   SSLContext context(SSLContext::TLSv1_1);
   context.SetCertificate(std::string(CLIENT_CERT));
   context.SetPrivateKey(std::string(CLIENT_PKEY));
@@ -150,7 +150,7 @@ TEST_F(WSSClientServerConnectionTest, ConnectEinval) {
   context.SetCiphers(std::string(CIPHER_LIST));
   context.SetVerifyMode(SSLContext::VERIFY_PEER);
   WSSClient cl(ch, WSRequestContext(), context);
-  MockHandler sh;
+  linear::shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
   SSLContext server_context(SSLContext::TLSv1_1);
   server_context.SetCertificate(std::string(SERVER_CERT));
   server_context.SetPrivateKey(std::string(SERVER_PKEY));
@@ -164,20 +164,20 @@ TEST_F(WSSClientServerConnectionTest, ConnectEinval) {
 
   WSSSocket cs = cl.CreateSocket(TEST_ADDR, TEST_PORT);
 
-  EXPECT_CALL(sh, OnConnectMock(_)).WillOnce(Assign(&srv_finished, true));
-  EXPECT_CALL(ch, OnConnectMock(cs)).WillOnce(Assign(&cli_finished, true));
+  EXPECT_CALL(*sh, OnConnectMock(_)).WillOnce(Assign(&srv_finished, true));
+  EXPECT_CALL(*ch, OnConnectMock(cs)).WillOnce(Assign(&cli_finished, true));
 
   e = cs.Connect();
   ASSERT_EQ(LNR_OK, e.Code());
   WAIT_TO_FINISH_CALLBACK();
 
-  e = sh.s_.Connect();
+  e = sh->s_.Connect();
   ASSERT_EQ(LNR_EINVAL, e.Code());
 }
 
 // Connect - Disconnect from Client in front thread
 TEST_F(WSSClientServerConnectionTest, DisconnectFromClientFT) {
-  MockHandler ch;
+  linear::shared_ptr<MockHandler> ch = linear::shared_ptr<MockHandler>(new MockHandler());
   SSLContext context(SSLContext::TLSv1_1);
   context.SetCertificate(std::string(CLIENT_CERT));
   context.SetPrivateKey(std::string(CLIENT_PKEY));
@@ -185,7 +185,7 @@ TEST_F(WSSClientServerConnectionTest, DisconnectFromClientFT) {
   context.SetCiphers(std::string(CIPHER_LIST));
   context.SetVerifyMode(SSLContext::VERIFY_PEER);
   WSSClient cl(ch, WSRequestContext(), context);
-  MockHandler sh;
+  linear::shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
   SSLContext server_context(SSLContext::TLSv1_1);
   server_context.SetCertificate(std::string(SERVER_CERT));
   server_context.SetPrivateKey(std::string(SERVER_PKEY));
@@ -199,15 +199,15 @@ TEST_F(WSSClientServerConnectionTest, DisconnectFromClientFT) {
 
   WSSSocket cs = cl.CreateSocket(TEST_ADDR, TEST_PORT);
 
-  EXPECT_CALL(sh, OnConnectMock(_)).WillOnce(Assign(&srv_finished, true));
-  EXPECT_CALL(ch, OnConnectMock(cs)).WillOnce(Assign(&cli_finished, true));
+  EXPECT_CALL(*sh, OnConnectMock(_)).WillOnce(Assign(&srv_finished, true));
+  EXPECT_CALL(*ch, OnConnectMock(cs)).WillOnce(Assign(&cli_finished, true));
 
   e = cs.Connect();
   ASSERT_EQ(LNR_OK, e.Code());
   WAIT_TO_FINISH_CALLBACK();
 
-  EXPECT_CALL(sh, OnDisconnectMock(sh.s_, Error(LNR_ECONNRESET))).WillOnce(Assign(&srv_finished, true));
-  EXPECT_CALL(ch, OnDisconnectMock(cs, Error(LNR_OK))).WillOnce(Assign(&cli_finished, true));
+  EXPECT_CALL(*sh, OnDisconnectMock(sh->s_, Error(LNR_ECONNRESET))).WillOnce(Assign(&srv_finished, true));
+  EXPECT_CALL(*ch, OnDisconnectMock(cs, Error(LNR_OK))).WillOnce(Assign(&cli_finished, true));
 
   e = cs.Disconnect();
   ASSERT_EQ(LNR_OK, e.Code());
@@ -216,7 +216,7 @@ TEST_F(WSSClientServerConnectionTest, DisconnectFromClientFT) {
 
 // Connect - Disconnect from Server in front thread
 TEST_F(WSSClientServerConnectionTest, DisconnectFromServerFT) {
-  MockHandler ch;
+  linear::shared_ptr<MockHandler> ch = linear::shared_ptr<MockHandler>(new MockHandler());
   SSLContext context(SSLContext::TLSv1_1);
   context.SetCertificate(std::string(CLIENT_CERT));
   context.SetPrivateKey(std::string(CLIENT_PKEY));
@@ -224,7 +224,7 @@ TEST_F(WSSClientServerConnectionTest, DisconnectFromServerFT) {
   context.SetCiphers(std::string(CIPHER_LIST));
   context.SetVerifyMode(SSLContext::VERIFY_PEER);
   WSSClient cl(ch, WSRequestContext(), context);
-  MockHandler sh;
+  linear::shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
   SSLContext server_context(SSLContext::TLSv1_1);
   server_context.SetCertificate(std::string(SERVER_CERT));
   server_context.SetPrivateKey(std::string(SERVER_PKEY));
@@ -238,23 +238,23 @@ TEST_F(WSSClientServerConnectionTest, DisconnectFromServerFT) {
 
   WSSSocket cs = cl.CreateSocket(TEST_ADDR, TEST_PORT);
 
-  EXPECT_CALL(sh, OnConnectMock(_)).WillOnce(Assign(&srv_finished, true));
-  EXPECT_CALL(ch, OnConnectMock(cs)).WillOnce(Assign(&cli_finished, true));
+  EXPECT_CALL(*sh, OnConnectMock(_)).WillOnce(Assign(&srv_finished, true));
+  EXPECT_CALL(*ch, OnConnectMock(cs)).WillOnce(Assign(&cli_finished, true));
 
   e = cs.Connect();
   ASSERT_EQ(LNR_OK, e.Code());
   WAIT_TO_FINISH_CALLBACK();
 
-  EXPECT_CALL(sh, OnDisconnectMock(sh.s_, Error(LNR_OK))).WillOnce(Assign(&srv_finished, true));
-  EXPECT_CALL(ch, OnDisconnectMock(cs, Error(LNR_ECONNRESET))).WillOnce(Assign(&cli_finished, true));
+  EXPECT_CALL(*sh, OnDisconnectMock(sh->s_, Error(LNR_OK))).WillOnce(Assign(&srv_finished, true));
+  EXPECT_CALL(*ch, OnDisconnectMock(cs, Error(LNR_ECONNRESET))).WillOnce(Assign(&cli_finished, true));
 
-  sh.s_.Disconnect();
+  sh->s_.Disconnect();
   WAIT_TO_FINISH_CALLBACK();
 }
 
 // Connect - Disconnect from Client in back thread
 TEST_F(WSSClientServerConnectionTest, DisconnectFromClientBT) {
-  MockHandler ch;
+  linear::shared_ptr<MockHandler> ch = linear::shared_ptr<MockHandler>(new MockHandler());
   SSLContext context(SSLContext::TLSv1_1);
   context.SetCertificate(std::string(CLIENT_CERT));
   context.SetPrivateKey(std::string(CLIENT_PKEY));
@@ -262,7 +262,7 @@ TEST_F(WSSClientServerConnectionTest, DisconnectFromClientBT) {
   context.SetCiphers(std::string(CIPHER_LIST));
   context.SetVerifyMode(SSLContext::VERIFY_PEER);
   WSSClient cl(ch, WSRequestContext(), context);
-  MockHandler sh;
+  linear::shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
   SSLContext server_context(SSLContext::TLSv1_1);
   server_context.SetCertificate(std::string(SERVER_CERT));
   server_context.SetPrivateKey(std::string(SERVER_PKEY));
@@ -278,13 +278,13 @@ TEST_F(WSSClientServerConnectionTest, DisconnectFromClientBT) {
 
   {
     InSequence dummy;
-    EXPECT_CALL(sh, OnConnectMock(_));
-    EXPECT_CALL(sh, OnDisconnectMock(Eq(ByRef(sh.s_)), Error(LNR_ECONNRESET))).WillOnce(Assign(&srv_finished, true));;
+    EXPECT_CALL(*sh, OnConnectMock(_));
+    EXPECT_CALL(*sh, OnDisconnectMock(Eq(ByRef(sh->s_)), Error(LNR_ECONNRESET))).WillOnce(Assign(&srv_finished, true));;
   }
   {
     InSequence dummy;
-    EXPECT_CALL(ch, OnConnectMock(cs)).WillOnce(WithArg<0>(Disconnect()));
-    EXPECT_CALL(ch, OnDisconnectMock(cs, Error(LNR_OK))).WillOnce(Assign(&cli_finished, true));;
+    EXPECT_CALL(*ch, OnConnectMock(cs)).WillOnce(WithArg<0>(Disconnect()));
+    EXPECT_CALL(*ch, OnDisconnectMock(cs, Error(LNR_OK))).WillOnce(Assign(&cli_finished, true));;
   }
 
   e = cs.Connect();
@@ -294,7 +294,7 @@ TEST_F(WSSClientServerConnectionTest, DisconnectFromClientBT) {
 
 // Connect - Disconnect from Server in back thread
 TEST_F(WSSClientServerConnectionTest, DisconnectFromServerBT) {
-  MockHandler ch;
+  linear::shared_ptr<MockHandler> ch = linear::shared_ptr<MockHandler>(new MockHandler());
   SSLContext context(SSLContext::TLSv1_1);
   context.SetCertificate(std::string(CLIENT_CERT));
   context.SetPrivateKey(std::string(CLIENT_PKEY));
@@ -302,7 +302,7 @@ TEST_F(WSSClientServerConnectionTest, DisconnectFromServerBT) {
   context.SetCiphers(std::string(CIPHER_LIST));
   context.SetVerifyMode(SSLContext::VERIFY_PEER);
   WSSClient cl(ch, WSRequestContext(), context);
-  MockHandler sh;
+  linear::shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
   SSLContext server_context(SSLContext::TLSv1_1);
   server_context.SetCertificate(std::string(SERVER_CERT));
   server_context.SetPrivateKey(std::string(SERVER_PKEY));
@@ -319,13 +319,13 @@ TEST_F(WSSClientServerConnectionTest, DisconnectFromServerBT) {
 
   {
     InSequence dummy;
-    EXPECT_CALL(sh, OnConnectMock(_)).WillOnce(WithArg<0>(Disconnect()));
-    EXPECT_CALL(sh, OnDisconnectMock(Eq(ByRef(sh.s_)), Error(LNR_OK))).WillOnce(Assign(&srv_finished, true));
+    EXPECT_CALL(*sh, OnConnectMock(_)).WillOnce(WithArg<0>(Disconnect()));
+    EXPECT_CALL(*sh, OnDisconnectMock(Eq(ByRef(sh->s_)), Error(LNR_OK))).WillOnce(Assign(&srv_finished, true));
   }
   {
     InSequence dummy;
     // never called OnConnect: fail handshake
-    EXPECT_CALL(ch, OnDisconnectMock(cs, Error(LNR_ECONNRESET))).WillOnce(Assign(&cli_finished, true));;
+    EXPECT_CALL(*ch, OnDisconnectMock(cs, Error(LNR_ECONNRESET))).WillOnce(Assign(&cli_finished, true));;
   }
 
   e = cs.Connect();
@@ -335,7 +335,7 @@ TEST_F(WSSClientServerConnectionTest, DisconnectFromServerBT) {
 
 // Reconnect at same socket
 TEST_F(WSSClientServerConnectionTest, Reconnect) {
-  MockHandler ch;
+  linear::shared_ptr<MockHandler> ch = linear::shared_ptr<MockHandler>(new MockHandler());
   SSLContext context(SSLContext::TLSv1_1);
   context.SetCertificate(std::string(CLIENT_CERT));
   context.SetPrivateKey(std::string(CLIENT_PKEY));
@@ -343,7 +343,7 @@ TEST_F(WSSClientServerConnectionTest, Reconnect) {
   context.SetCiphers(std::string(CIPHER_LIST));
   context.SetVerifyMode(SSLContext::VERIFY_PEER);
   WSSClient cl(ch, WSRequestContext(), context);
-  MockHandler sh;
+  linear::shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
   SSLContext server_context(SSLContext::TLSv1_1);
   server_context.SetCertificate(std::string(SERVER_CERT));
   server_context.SetPrivateKey(std::string(SERVER_PKEY));
@@ -359,17 +359,17 @@ TEST_F(WSSClientServerConnectionTest, Reconnect) {
 
   {
     InSequence dummy;
-    EXPECT_CALL(sh, OnConnectMock(_)).WillOnce(WithArg<0>(Disconnect()));
-    EXPECT_CALL(sh, OnDisconnectMock(Eq(ByRef(sh.s_)), _));
-    EXPECT_CALL(sh, OnConnectMock(_)).WillOnce(WithArg<0>(Disconnect()));
-    EXPECT_CALL(sh, OnDisconnectMock(Eq(ByRef(sh.s_)), _)).WillOnce(Assign(&srv_finished, true));
+    EXPECT_CALL(*sh, OnConnectMock(_)).WillOnce(WithArg<0>(Disconnect()));
+    EXPECT_CALL(*sh, OnDisconnectMock(Eq(ByRef(sh->s_)), _));
+    EXPECT_CALL(*sh, OnConnectMock(_)).WillOnce(WithArg<0>(Disconnect()));
+    EXPECT_CALL(*sh, OnDisconnectMock(Eq(ByRef(sh->s_)), _)).WillOnce(Assign(&srv_finished, true));
   }
   {
     InSequence dummy;
     // never called OnConnect: fail handshake
-    EXPECT_CALL(ch, OnDisconnectMock(cs, Error(LNR_ECONNRESET))).WillOnce(WithArg<0>(Connect()));
+    EXPECT_CALL(*ch, OnDisconnectMock(cs, Error(LNR_ECONNRESET))).WillOnce(WithArg<0>(Connect()));
     // never called OnConnect: fail handshake
-    EXPECT_CALL(ch, OnDisconnectMock(cs, Error(LNR_ECONNRESET))).WillOnce(Assign(&cli_finished, true));
+    EXPECT_CALL(*ch, OnDisconnectMock(cs, Error(LNR_ECONNRESET))).WillOnce(Assign(&cli_finished, true));
   }
 
   e = cs.Connect();
@@ -391,7 +391,7 @@ ACTION(CheckDigestAuthWSS) {
   wss.SetWSResponseContext(ctx);
 }
 TEST_F(WSSClientServerConnectionTest, AutoReconnect) {
-  MockHandler ch;
+  linear::shared_ptr<MockHandler> ch = linear::shared_ptr<MockHandler>(new MockHandler());
   SSLContext context(SSLContext::TLSv1_1);
   context.SetCertificate(std::string(CLIENT_CERT));
   context.SetPrivateKey(std::string(CLIENT_PKEY));
@@ -403,7 +403,7 @@ TEST_F(WSSClientServerConnectionTest, AutoReconnect) {
   ws_context.authenticate.username = USER_NAME;
   ws_context.authenticate.password = PASSWORD;
   WSSClient cl(ch, ws_context, context);
-  MockHandler sh;
+  linear::shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
   SSLContext server_context(SSLContext::TLSv1_1);
   server_context.SetCertificate(std::string(SERVER_CERT));
   server_context.SetPrivateKey(std::string(SERVER_PKEY));
@@ -419,13 +419,13 @@ TEST_F(WSSClientServerConnectionTest, AutoReconnect) {
 
   {
     InSequence dummy;
-    EXPECT_CALL(sh, OnConnectMock(_)).WillOnce(WithArg<0>(CheckDigestAuthWSS()));
-    EXPECT_CALL(sh, OnDisconnectMock(Eq(ByRef(sh.s_)), _)).WillOnce(Assign(&srv_finished, true));
+    EXPECT_CALL(*sh, OnConnectMock(_)).WillOnce(WithArg<0>(CheckDigestAuthWSS()));
+    EXPECT_CALL(*sh, OnDisconnectMock(Eq(ByRef(sh->s_)), _)).WillOnce(Assign(&srv_finished, true));
   }
   {
     InSequence dummy;
-    EXPECT_CALL(ch, OnConnectMock(cs)).WillOnce(WithArg<0>(Disconnect()));
-    EXPECT_CALL(ch, OnDisconnectMock(cs, Error(LNR_OK))).WillOnce(Assign(&cli_finished, true));
+    EXPECT_CALL(*ch, OnConnectMock(cs)).WillOnce(WithArg<0>(Disconnect()));
+    EXPECT_CALL(*ch, OnDisconnectMock(cs, Error(LNR_OK))).WillOnce(Assign(&cli_finished, true));
   }
 
   e = cs.Connect();
@@ -439,7 +439,7 @@ extern linear::Socket gs_;
 
 // Connect - Disconnect delayed Socket Destruct: must not SEGV
 TEST_F(WSSClientServerConnectionTest, DelayedSocketDestruct) {
-  DelayedMockHandler ch;
+  linear::shared_ptr<DelayedMockHandler> ch = linear::shared_ptr<DelayedMockHandler>(new DelayedMockHandler());
   SSLContext context(SSLContext::TLSv1_1);
   context.SetCertificate(std::string(CLIENT_CERT));
   context.SetPrivateKey(std::string(CLIENT_PKEY));
@@ -447,7 +447,7 @@ TEST_F(WSSClientServerConnectionTest, DelayedSocketDestruct) {
   context.SetCiphers(std::string(CIPHER_LIST));
   context.SetVerifyMode(SSLContext::VERIFY_PEER);
   WSSClient cl(ch, WSRequestContext(), context);
-  MockHandler sh;
+  linear::shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
   SSLContext server_context(SSLContext::TLSv1_1);
   server_context.SetCertificate(std::string(SERVER_CERT));
   server_context.SetPrivateKey(std::string(SERVER_PKEY));
@@ -458,8 +458,8 @@ TEST_F(WSSClientServerConnectionTest, DelayedSocketDestruct) {
 
   {
     InSequence dummy;
-    EXPECT_CALL(sh, OnConnectMock(_)).WillOnce(WithArg<0>(Disconnect()));
-    EXPECT_CALL(sh, OnDisconnectMock(Eq(ByRef(sh.s_)), Error(LNR_OK))).WillOnce(Assign(&srv_finished, true));
+    EXPECT_CALL(*sh, OnConnectMock(_)).WillOnce(WithArg<0>(Disconnect()));
+    EXPECT_CALL(*sh, OnDisconnectMock(Eq(ByRef(sh->s_)), Error(LNR_OK))).WillOnce(Assign(&srv_finished, true));
   }
 
   Error e = sv.Start(TEST_ADDR, TEST_PORT);
@@ -469,7 +469,7 @@ TEST_F(WSSClientServerConnectionTest, DelayedSocketDestruct) {
   {
     InSequence dummy;
     // never called OnConnect: fail handshake
-    EXPECT_CALL(ch, OnDisconnectMock(cs, Error(LNR_ECONNRESET))).WillOnce(Assign(&cli_finished, true));
+    EXPECT_CALL(*ch, OnDisconnectMock(cs, Error(LNR_ECONNRESET))).WillOnce(Assign(&cli_finished, true));
   }
 
   e = cs.Connect();
@@ -479,16 +479,16 @@ TEST_F(WSSClientServerConnectionTest, DelayedSocketDestruct) {
 
   cs = cl.CreateSocket(TEST_ADDR, TEST_PORT);
 
-  EXPECT_CALL(sh, OnConnectMock(_)).WillOnce(Assign(&srv_finished, true));
-  EXPECT_CALL(ch, OnConnectMock(cs)).WillOnce(Assign(&cli_finished, true));
+  EXPECT_CALL(*sh, OnConnectMock(_)).WillOnce(Assign(&srv_finished, true));
+  EXPECT_CALL(*ch, OnConnectMock(cs)).WillOnce(Assign(&cli_finished, true));
 
   e = cs.Connect();
   ASSERT_EQ(LNR_OK, e.Code());
   WAIT_TO_FINISH_CALLBACK();
   ASSERT_NE(global::gs_, cs);
 
-  EXPECT_CALL(sh, OnDisconnectMock(_, _)).Times(::testing::AtLeast(0));
-  EXPECT_CALL(ch, OnDisconnectMock(_, _)).Times(::testing::AtLeast(0));
+  EXPECT_CALL(*sh, OnDisconnectMock(_, _)).Times(::testing::AtLeast(0));
+  EXPECT_CALL(*ch, OnDisconnectMock(_, _)).Times(::testing::AtLeast(0));
 }
 
 static void* call_from_thread(void* param) {
@@ -509,7 +509,7 @@ ACTION(DisconnectFromOtherThread_WSS) {
 
 // Connect - Disconnect from other thread, and check certificate: must not SEGV
 TEST_F(WSSClientServerConnectionTest, OnConnectAndDisconnectFromOtherTherad) {
-  ThreadMockHandler ch;
+  linear::shared_ptr<ThreadMockHandler> ch = linear::shared_ptr<ThreadMockHandler>(new ThreadMockHandler());
   SSLContext context(SSLContext::TLSv1_1);
   context.SetCertificate(std::string(CLIENT_CERT));
   context.SetPrivateKey(std::string(CLIENT_PKEY));
@@ -517,7 +517,7 @@ TEST_F(WSSClientServerConnectionTest, OnConnectAndDisconnectFromOtherTherad) {
   context.SetCiphers(std::string(CIPHER_LIST));
   context.SetVerifyMode(SSLContext::VERIFY_PEER);
   WSSClient cl(ch, linear::WSRequestContext(), context);
-  MockHandler sh;
+  linear::shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
   SSLContext server_context(SSLContext::TLSv1_1);
   server_context.SetCertificate(std::string(SERVER_CERT));
   server_context.SetPrivateKey(std::string(SERVER_PKEY));
@@ -528,8 +528,8 @@ TEST_F(WSSClientServerConnectionTest, OnConnectAndDisconnectFromOtherTherad) {
 
   {
     InSequence dummy;
-    EXPECT_CALL(sh, OnConnectMock(_));
-    EXPECT_CALL(sh, OnDisconnectMock(Eq(ByRef(sh.s_)), Error(LNR_ECONNRESET))).WillOnce(Assign(&srv_finished, true));
+    EXPECT_CALL(*sh, OnConnectMock(_));
+    EXPECT_CALL(*sh, OnDisconnectMock(Eq(ByRef(sh->s_)), Error(LNR_ECONNRESET))).WillOnce(Assign(&srv_finished, true));
   }
 
   Error e = sv.Start(TEST_ADDR, TEST_PORT);
@@ -538,8 +538,8 @@ TEST_F(WSSClientServerConnectionTest, OnConnectAndDisconnectFromOtherTherad) {
 
   {
     InSequence dummy;
-    EXPECT_CALL(ch, OnConnectMock(cs)).WillOnce(WithArg<0>(DisconnectFromOtherThread_WSS()));
-    EXPECT_CALL(ch, OnDisconnectMock(cs, Error(LNR_OK))).WillOnce(Assign(&cli_finished, true));
+    EXPECT_CALL(*ch, OnConnectMock(cs)).WillOnce(WithArg<0>(DisconnectFromOtherThread_WSS()));
+    EXPECT_CALL(*ch, OnDisconnectMock(cs, Error(LNR_OK))).WillOnce(Assign(&cli_finished, true));
   }
 
   e = cs.Connect();
@@ -547,6 +547,6 @@ TEST_F(WSSClientServerConnectionTest, OnConnectAndDisconnectFromOtherTherad) {
   WAIT_TO_FINISH_CALLBACK();
   ASSERT_NE(global::gs_, cs);
 
-  EXPECT_CALL(sh, OnDisconnectMock(_, _)).Times(::testing::AtLeast(0));
-  EXPECT_CALL(ch, OnDisconnectMock(_, _)).Times(::testing::AtLeast(0));
+  EXPECT_CALL(*sh, OnDisconnectMock(_, _)).Times(::testing::AtLeast(0));
+  EXPECT_CALL(*ch, OnDisconnectMock(_, _)).Times(::testing::AtLeast(0));
 }

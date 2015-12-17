@@ -11,9 +11,8 @@ using namespace linear::log;
 
 namespace linear {
 
-TCPServerImpl::TCPServerImpl(const Handler& handler, const linear::EventLoop& loop)
-  : ServerImpl(handler, loop),
-    handle_(NULL) {
+TCPServerImpl::TCPServerImpl(const weak_ptr<Handler>& handler, const EventLoop& loop)
+  : ServerImpl(handler, loop) {
 }
 
 TCPServerImpl::~TCPServerImpl() {
@@ -85,7 +84,8 @@ void TCPServerImpl::OnAccept(tv_stream_t* srv_stream, tv_stream_t* cli_stream, i
     return;
   }
   try {
-    shared_ptr<TCPSocketImpl> shared = shared_ptr<TCPSocketImpl>(new TCPSocketImpl(cli_stream, loop_, *this));
+    weak_ptr<HandlerDelegate> self = reinterpret_cast<EventLoopImpl::ServerEvent*>(handle_->data)->server;
+    shared_ptr<TCPSocketImpl> shared = shared_ptr<TCPSocketImpl>(new TCPSocketImpl(cli_stream, loop_, self));
     EventLoopImpl::SocketEvent* ev = new EventLoopImpl::SocketEvent(shared);
     if (shared->StartRead(ev) != Error(LNR_OK)) {
         throw std::runtime_error("fail to accept");

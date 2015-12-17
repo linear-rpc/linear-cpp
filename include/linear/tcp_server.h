@@ -29,7 +29,8 @@ class LINEAR_EXTERN TCPServer : public Server {
    * @param [in] handler application defined behavior.
    * @param [in] [loop] eventloop(thread) object.
    */
-  TCPServer(const linear::Handler& handler, const linear::EventLoop& loop = linear::EventLoop::GetDefault());
+  TCPServer(const linear::shared_ptr<linear::Handler>& handler,
+            const linear::EventLoop& loop = linear::EventLoop::GetDefault());
 };
 
 }  // namespace linear

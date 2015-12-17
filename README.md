@@ -4,6 +4,14 @@
 
 a msgpack-rpc + α implementation for C++ language.
 
+## Important Notice
+### v2.9.0 -> v.3.0.0
+* Constructor's var args are changed<br>
+<pre class="fragment">
+const linear::Handler& -&gt; const linear::shared_ptr&lt;linear::Handler&gt;&
+</pre>
+at TCPClient, TCPServer, SSLClient, SSLServer, WSClient, WSServer, WSSClient, WSSServer
+
 ## Build Instructions
 ### Required tools and Dependencies
 * xNix
@@ -86,7 +94,7 @@ You can create an application that supports muliti protocols like follows.
 * minor<br>
   APIs are changed only slightly,
   so you need to rewrite applications if using appropriate APIs.
-* revision<br>
+* patch<br>
   Bug fixes and security fixes etc.
 
 ## License
@@ -94,4 +102,3 @@ The MIT License (MIT)
 See LICENSE for details.  
 
 And see some submodule LICENSEs(exist at deps dir).
-

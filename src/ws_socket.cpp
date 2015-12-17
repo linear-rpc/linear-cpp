@@ -23,7 +23,7 @@ WSSocket::WSSocket(const shared_ptr<WSSocketImpl>& ws_socket) : Socket(ws_socket
 WSSocket::~WSSocket() {
 }
 
-const linear::WSRequestContext& WSSocket::GetWSRequestContext() const {
+const WSRequestContext& WSSocket::GetWSRequestContext() const {
   if (!socket_) {
     static WSRequestContext context;
     return context;
@@ -38,7 +38,7 @@ void WSSocket::SetWSRequestContext(const WSRequestContext& request_context) cons
   return dynamic_pointer_cast<WSSocketImpl>(socket_)->SetWSRequestContext(request_context);
 }
 
-const linear::WSResponseContext& WSSocket::GetWSResponseContext() const {
+const WSResponseContext& WSSocket::GetWSResponseContext() const {
   if (!socket_) {
     static WSResponseContext context;
     return context;

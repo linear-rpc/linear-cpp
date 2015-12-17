@@ -259,7 +259,7 @@ int main(int argc, char* argv[]) {
   }
   ssl_context.SetVerifyMode(linear::SSLContext::VERIFY_PEER);
 
-  ApplicationHandler handler;
+  linear::shared_ptr<ApplicationHandler> handler = linear::shared_ptr<ApplicationHandler>(new ApplicationHandler());
   linear::SSLClient client = linear::SSLClient(handler, ssl_context);
   linear::SSLSocket socket = client.CreateSocket(host, port);;
 
@@ -268,13 +268,13 @@ int main(int argc, char* argv[]) {
   std::getline(std::cin, cmd);
   while (true) {
     if (cmd == "connect") {
-      handler.SetNumOfRetry(3);
+      handler->SetNumOfRetry(3);
       linear::Error err = socket.Connect();
       if (err.Code() != linear::LNR_OK) {
         std::cout << err.Message() << std::endl;
       }
     } else if (cmd == "disconnect") {
-      handler.SetNumOfRetry(0);
+      handler->SetNumOfRetry(0);
       linear::Error err = socket.Disconnect();
       if (err.Code() != linear::LNR_OK) {
         std::cout << err.Message() << std::endl;

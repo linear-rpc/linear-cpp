@@ -31,15 +31,16 @@ class LINEAR_EXTERN SSLServer : public Server {
    * @param [in] [context] linear::SSLContext object
    * @param [in] [loop] eventloop(thread) object.
    */
-  SSLServer(const linear::Handler& handler,
+  SSLServer(const linear::shared_ptr<linear::Handler>& handler,
             const linear::SSLContext& context = linear::SSLContext(),
             const linear::EventLoop& loop = linear::EventLoop::GetDefault());
   /**
    * SSLServer Constructor
    * @param [in] handler application defined behavior.
-   * @param [in] [loop] eventloop(thread) object.
+   * @param [in] loop eventloop(thread) object.
    */
-  SSLServer(const linear::Handler& handler, const linear::EventLoop& loop);
+  SSLServer(const linear::shared_ptr<linear::Handler>& handler,
+            const linear::EventLoop& loop);
   /**
    * Set SSLContext into Server Object.
    * If you can not provide handler when construct SSLServer, call this method.

@@ -14,16 +14,17 @@ class ServerImpl : public HandlerDelegate {
   };
 
  public:
-  ServerImpl(const linear::Handler& handler, const linear::EventLoop& loop, bool show_ssl_version = false)
+  ServerImpl(const linear::weak_ptr<linear::Handler>& handler,
+             const linear::EventLoop& loop,
+             bool show_ssl_version = false)
     : HandlerDelegate(handler, loop, show_ssl_version), state_(STOP) {}
   virtual ~ServerImpl() {}
-
   virtual linear::Error Start(const std::string& hostname, int port,
                               linear::EventLoopImpl::ServerEvent* ev) = 0;
   virtual linear::Error Stop() = 0;
-  virtual void Release(const shared_ptr<SocketImpl>& socket) {
+  virtual void Release(const linear::shared_ptr<linear::SocketImpl>& socket) {
     Group::LeaveAll(Socket(socket));
-    this->HandlerDelegate::Release(socket);
+    HandlerDelegate::Release(socket);
   }
   virtual void OnAccept(tv_stream_t* srv_stream, tv_stream_t* cli_stream, int status) = 0;
 

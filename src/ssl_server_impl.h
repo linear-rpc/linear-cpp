@@ -9,7 +9,7 @@ namespace linear {
 
 class SSLServerImpl : public ServerImpl {
  public:
-  SSLServerImpl(const linear::Handler& handler,
+  SSLServerImpl(const linear::weak_ptr<linear::Handler>& handler,
                 const linear::SSLContext& context,
                 const linear::EventLoop& loop);
   virtual ~SSLServerImpl();

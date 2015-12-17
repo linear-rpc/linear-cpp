@@ -29,15 +29,16 @@ class LINEAR_EXTERN WSClient : public Client {
    * @param [in] [request_context] common linear::WSRequestContext object
    * @param [in] [loop] eventloop(thread) object
    */
-  WSClient(const linear::Handler& handler,
+  WSClient(const linear::shared_ptr<linear::Handler>& handler,
            const linear::WSRequestContext& request_context = linear::WSRequestContext(),
            const linear::EventLoop& loop = linear::EventLoop::GetDefault());
   /**
    * Constructor
    * @param [in] handler application defined behavior.
-   * @param [in] [loop] eventloop(thread) object
+   * @param [in] loop eventloop(thread) object
    */
-  WSClient(const linear::Handler& handler, const linear::EventLoop& loop);
+  WSClient(const linear::shared_ptr<linear::Handler>& handler,
+           const linear::EventLoop& loop);
   /**
    * Set common linear::WSRequestContext into Client Object.
    * If you can not provide linear::WSRequestContext when construct WSClient, call this method.
@@ -56,7 +57,8 @@ class LINEAR_EXTERN WSClient : public Client {
    * @param [in] port port number of a target server.
    * @param [in] request_context request context for websocket.
    */
-  linear::WSSocket CreateSocket(const std::string& hostname, int port, const linear::WSRequestContext& request_context);
+  linear::WSSocket CreateSocket(const std::string& hostname, int port,
+                                const linear::WSRequestContext& request_context);
 };
 
 }  // namespace linear

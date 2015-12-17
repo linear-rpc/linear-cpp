@@ -28,7 +28,7 @@ class LINEAR_EXTERN TCPClient : public Client {
    * @param [in] handler application defined behavior.
    * @param [in] [loop] eventloop(thread) object
    */
-  TCPClient(const linear::Handler& handler,
+  TCPClient(const linear::shared_ptr<linear::Handler>& handler,
             const linear::EventLoop& loop = linear::EventLoop::GetDefault());
   /**
    * Create new TCPSocket Object.

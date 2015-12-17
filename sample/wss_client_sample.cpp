@@ -237,7 +237,7 @@ int main(int argc, char* argv[]) {
   int port = (argc >= 2) ? atoi(argv[1]) : 37800;
 #endif
 
-  ApplicationHandler handler;
+  linear::shared_ptr<ApplicationHandler> handler = linear::shared_ptr<ApplicationHandler>(new ApplicationHandler());
   linear::WSSClient client = linear::WSSClient(handler);
   linear::SSLContext ssl_context(linear::SSLContext::TLSv1_1_client);
   ssl_context.SetVerifyMode(linear::SSLContext::VERIFY_NONE);
@@ -254,13 +254,13 @@ int main(int argc, char* argv[]) {
   std::getline(std::cin, cmd);
   while (true) {
     if (cmd == "connect") {
-      handler.SetNumOfRetry(3);
+      handler->SetNumOfRetry(3);
       linear::Error err = socket.Connect();
       if (err.Code() != linear::LNR_OK) {
         std::cout << err.Message() << std::endl;
       }
     } else if (cmd == "disconnect") {
-      handler.SetNumOfRetry(0);
+      handler->SetNumOfRetry(0);
       linear::Error err = socket.Disconnect();
       if (err.Code() != linear::LNR_OK) {
         std::cout << err.Message() << std::endl;

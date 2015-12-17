@@ -2,28 +2,19 @@
 
 #include "ssl_server_impl.h"
 
-using namespace linear::log;
-
 namespace linear {
 
-SSLServer::SSLServer(const Handler& handler,
+SSLServer::SSLServer(const shared_ptr<Handler>& handler,
                      const SSLContext& context,
-                     const linear::EventLoop& loop) {
-  try {
-    server_ = shared_ptr<ServerImpl>(new SSLServerImpl(handler, context, loop));
-  } catch(...) {
-    LINEAR_LOG(LOG_ERR, "no memory");
-    throw;
-  }
+                     const EventLoop& loop) {
+  // TODO: we cannot use make_shared, delegating constructors now...
+  server_ = shared_ptr<ServerImpl>(new SSLServerImpl(handler, context, loop));
 }
 
-SSLServer::SSLServer(const Handler& handler, const linear::EventLoop& loop) {
-  try {
-    server_ = shared_ptr<ServerImpl>(new SSLServerImpl(handler, linear::SSLContext(), loop));
-  } catch(...) {
-    LINEAR_LOG(LOG_ERR, "no memory");
-    throw;
-  }
+SSLServer::SSLServer(const shared_ptr<Handler>& handler,
+                     const EventLoop& loop) {
+  // TODO: we cannot use make_shared, delegating constructors now...
+  server_ = shared_ptr<ServerImpl>(new SSLServerImpl(handler, SSLContext(), loop));
 }
 
 void SSLServer::SetSSLContext(const SSLContext& context) {

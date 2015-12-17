@@ -5,14 +5,14 @@
 namespace linear {
 
 TCPSocketImpl::TCPSocketImpl(const std::string& host, int port,
-                             const linear::shared_ptr<linear::EventLoopImpl>& loop,
-                             const HandlerDelegate& delegate)
+                             const shared_ptr<EventLoopImpl>& loop,
+                             const weak_ptr<HandlerDelegate>& delegate)
   : SocketImpl(host, port, loop, delegate, Socket::TCP) {
 }
 
 TCPSocketImpl::TCPSocketImpl(tv_stream_t* stream,
-                             const linear::shared_ptr<linear::EventLoopImpl>& loop,
-                             const HandlerDelegate& delegate)
+                             const shared_ptr<EventLoopImpl>& loop,
+                             const weak_ptr<HandlerDelegate>& delegate)
   : SocketImpl(stream, loop, delegate, Socket::TCP) {
 }
 

@@ -31,7 +31,7 @@ class LINEAR_EXTERN WSSClient : public Client {
    * @param [in] [ssl_context] common linear::SSLContext object
    * @param [in] [loop] eventloop(thread) object
    */
-  WSSClient(const linear::Handler& handler,
+  WSSClient(const linear::shared_ptr<linear::Handler>& handler,
             const linear::WSRequestContext& request_context = linear::WSRequestContext(),
             const linear::SSLContext& ssl_context = linear::SSLContext(),
             const linear::EventLoop& loop = linear::EventLoop::GetDefault());
@@ -41,7 +41,7 @@ class LINEAR_EXTERN WSSClient : public Client {
    * @param [in] request_context common linear::WSRequestContext object
    * @param [in] loop eventloop(thread) object
    */
-  WSSClient(const linear::Handler& handler,
+  WSSClient(const linear::shared_ptr<linear::Handler>& handler,
             const linear::WSRequestContext& request_context,
             const linear::EventLoop& loop);
   /**
@@ -50,7 +50,7 @@ class LINEAR_EXTERN WSSClient : public Client {
    * @param [in] ssl_context common linear::SSLContext object
    * @param [in] [loop] eventloop(thread) object
    */
-  WSSClient(const linear::Handler& handler,
+  WSSClient(const linear::shared_ptr<linear::Handler>& handler,
             const linear::SSLContext& ssl_context,
             const linear::EventLoop& loop = linear::EventLoop::GetDefault());
   /**
@@ -58,7 +58,7 @@ class LINEAR_EXTERN WSSClient : public Client {
    * @param [in] handler application defined behavior.
    * @param [in] loop eventloop(thread) object
    */
-  WSSClient(const linear::Handler& handler, const linear::EventLoop& loop);
+  WSSClient(const linear::shared_ptr<linear::Handler>& handler, const linear::EventLoop& loop);
   /**
    * Set common linear::WSRequestContext into Client Object.
    * If you can not provide linear::WSRequestContext when construct WSSClient, call this method.

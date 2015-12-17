@@ -8,8 +8,6 @@
 
 #include "linear/message.h"
 
-#include "linear/private/observer.h"
-
 namespace linear {
 
 class Socket;
@@ -22,11 +20,9 @@ class Socket;
 class LINEAR_EXTERN Handler {
  public:
   /// @cond hidden
-  Handler() : observer_(new Observer<linear::Handler>(this)) {}
-  virtual ~Handler() { observer_->Terminate(); }
-  linear::weak_ptr<linear::Observer<linear::Handler> > GetObserver() const { return observer_; }
+  Handler() {}
+  virtual ~Handler() {}
   /// @endcond
-
   /**
    * Callback function called when socket is connected
    * @param socket connected socket
@@ -142,9 +138,6 @@ class LINEAR_EXTERN Handler {
    @endcode
    */
   virtual void OnError(const linear::Socket& socket, const linear::Message& message, const linear::Error& error) {}
-
- private:
-  linear::shared_ptr<linear::Observer<linear::Handler> > observer_;
 };
 
 }  // namespace linear

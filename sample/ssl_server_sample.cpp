@@ -240,7 +240,7 @@ int main(int argc, char* argv[]) {
   }
   ssl_context.SetVerifyMode(linear::SSLContext::VERIFY_PEER);
 
-  ApplicationHandler handler;
+  linear::shared_ptr<ApplicationHandler> handler = linear::shared_ptr<ApplicationHandler>(new ApplicationHandler());
   linear::SSLServer server(handler, ssl_context);
   server.SetMaxClients(5); // limit 5 clients
   server.Start(host, port);

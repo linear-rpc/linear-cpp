@@ -13,12 +13,12 @@ class SSLSocketImpl : public linear::SocketImpl {
   SSLSocketImpl(const std::string& host, int port,
                 const linear::SSLContext& context,
                 const linear::shared_ptr<linear::EventLoopImpl>& loop,
-                const linear::HandlerDelegate& delegate);
+                const linear::weak_ptr<linear::HandlerDelegate>& delegate);
   // Server Socket
   SSLSocketImpl(tv_stream_t* stream,
                 const SSLContext& context,
                 const linear::shared_ptr<linear::EventLoopImpl>& loop,
-                const linear::HandlerDelegate& delegate);
+                const linear::weak_ptr<linear::HandlerDelegate>& delegate);
   virtual ~SSLSocketImpl();
   linear::Error Connect();
   linear::Error GetVerifyResult();

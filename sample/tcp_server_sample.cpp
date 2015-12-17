@@ -198,7 +198,7 @@ int main(int argc, char* argv[]) {
   int port = (argc >= 2) ? atoi(argv[1]) : 37800;
 #endif
 
-  ApplicationHandler handler;
+  linear::shared_ptr<ApplicationHandler> handler = linear::shared_ptr<ApplicationHandler>(new ApplicationHandler());
   linear::TCPServer server(handler);
   server.SetMaxClients(5); // limit 5 clients
   server.Start(host, port);

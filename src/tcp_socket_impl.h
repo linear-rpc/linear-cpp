@@ -10,11 +10,11 @@ class TCPSocketImpl : public linear::SocketImpl {
   // Client Socket
   TCPSocketImpl(const std::string& host, int port,
                 const linear::shared_ptr<linear::EventLoopImpl>& loop,
-                const linear::HandlerDelegate& delegate);
+                const linear::weak_ptr<linear::HandlerDelegate>& delegate);
   // Server Socket
   TCPSocketImpl(tv_stream_t* stream,
                 const linear::shared_ptr<linear::EventLoopImpl>& loop,
-                const linear::HandlerDelegate& delegate);
+                const linear::weak_ptr<linear::HandlerDelegate>& delegate);
   virtual ~TCPSocketImpl();
   linear::Error Connect();
 };

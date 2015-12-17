@@ -259,7 +259,7 @@ int main(int argc, char* argv[]) {
   }
   ssl_context.SetVerifyMode(linear::SSLContext::VERIFY_NONE);
 
-  ApplicationHandler handler;
+  linear::shared_ptr<ApplicationHandler> handler = linear::shared_ptr<ApplicationHandler>(new ApplicationHandler());
   linear::WSSServer server(handler, ssl_context, linear::AuthContext::DIGEST, "realm is here");
   server.SetMaxClients(5); // limit 5 clients
   server.Start(host, port);

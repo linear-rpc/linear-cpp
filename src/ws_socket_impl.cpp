@@ -10,15 +10,15 @@ namespace linear {
 
 WSSocketImpl::WSSocketImpl(const std::string& host, int port,
                            const WSRequestContext& request_context,
-                           const linear::shared_ptr<linear::EventLoopImpl>& loop,
-                           const HandlerDelegate& delegate)
+                           const shared_ptr<EventLoopImpl>& loop,
+                           const weak_ptr<HandlerDelegate>& delegate)
   : SocketImpl(host, port, loop, delegate, Socket::WS),
     request_context_(request_context) {
 }
 
 WSSocketImpl::WSSocketImpl(tv_stream_t* stream, const WSRequestContext& response_context,
-                           const linear::shared_ptr<linear::EventLoopImpl>& loop,
-                           const HandlerDelegate& delegate)
+                           const shared_ptr<EventLoopImpl>& loop,
+                           const weak_ptr<HandlerDelegate>& delegate)
   : SocketImpl(stream, loop, delegate, Socket::WS),
     request_context_(response_context) {
 }
@@ -130,7 +130,7 @@ bool WSSocketImpl::CheckRetryAuth() {
           authenticate_context_.type == AuthContext::DIGEST && authenticate_context_.nc < 2);
 }
 
-const linear::WSRequestContext& WSSocketImpl::GetWSRequestContext() {
+const WSRequestContext& WSSocketImpl::GetWSRequestContext() {
   return request_context_;
 }
 
@@ -138,7 +138,7 @@ void WSSocketImpl::SetWSRequestContext(const WSRequestContext& context) {
   request_context_ = context;
 }
 
-const linear::WSResponseContext& WSSocketImpl::GetWSResponseContext() {
+const WSResponseContext& WSSocketImpl::GetWSResponseContext() {
   return response_context_;
 }
 

@@ -47,11 +47,11 @@ static std::string GetTypeString(Socket::Type type) {
 // Client Socket
 SocketImpl::SocketImpl(const std::string& host, int port,
                        const linear::shared_ptr<linear::EventLoopImpl>& loop,
-                       const HandlerDelegate& delegate,
+                       const weak_ptr<HandlerDelegate>& delegate,
                        Socket::Type type)
   : state_(Socket::DISCONNECTED),
     stream_(NULL), ev_(NULL), peer_(Addrinfo(host, port)), loop_(loop), type_(type), id_(Id()),
-    connectable_(true), handshaking_(false), last_error_(LNR_OK), observer_(delegate.GetObserver()),
+    connectable_(true), handshaking_(false), last_error_(LNR_OK), delegate_(delegate),
     connect_timeout_(0),
     max_buffer_size_(Socket::DEFAULT_MAX_BUFFER_SIZE) {
   LINEAR_LOG(LOG_DEBUG, "socket(id = %d, type = %s, connectable) is created",
@@ -61,10 +61,10 @@ SocketImpl::SocketImpl(const std::string& host, int port,
 // Server Socket
 SocketImpl::SocketImpl(tv_stream_t* stream,
                        const linear::shared_ptr<linear::EventLoopImpl>& loop,
-                       const HandlerDelegate& delegate,
+                       const weak_ptr<HandlerDelegate>& delegate,
                        Socket::Type type)
   : stream_(stream), ev_(NULL), loop_(loop), type_(type), id_(Id()),
-    connectable_(false), last_error_(LNR_OK), observer_(delegate.GetObserver()),
+    connectable_(false), last_error_(LNR_OK), delegate_(delegate),
     max_buffer_size_(Socket::DEFAULT_MAX_BUFFER_SIZE) {
   LINEAR_LOG(LOG_DEBUG, "socket(id = %d, type = %s, not connectable) is created",
              id_, GetTypeString(type_).c_str());
@@ -134,23 +134,13 @@ Error SocketImpl::Connect(unsigned int timeout, EventLoopImpl::SocketEvent* ev) 
              GetTypeString(type_).c_str(), peer_.addr.c_str(), peer_.port);
   ev_ = ev;
   Error err;
-  shared_ptr<Observer<HandlerDelegate> > observer = observer_.lock();
+  shared_ptr<HandlerDelegate> delegate = delegate_.lock();
   shared_ptr<SocketImpl> socket = ev_->socket.lock();
-  if (observer && socket) {
-    bool is_locked = observer->TryLock();
-    HandlerDelegate* delegate = observer->GetSubject();
-    if (delegate) {
-      err = delegate->Retain(socket);
-      if (err != Error(LNR_OK)) {
-        LINEAR_LOG(LOG_ERR, "fail to connect(id = %d): %s", id_, err.Message().c_str());
-        if (is_locked) {
-          observer->Unlock();
-        }
-        return err;
-      }
-    }
-    if (is_locked) {
-      observer->Unlock();
+  if (delegate && socket) {
+    err = delegate->Retain(socket);
+    if (err != Error(LNR_OK)) {
+      LINEAR_LOG(LOG_ERR, "fail to connect(id = %d): %s", id_, err.Message().c_str());
+      return err;
     }
   }
   self_ = Addrinfo(); // reset self info
@@ -165,15 +155,8 @@ Error SocketImpl::Connect(unsigned int timeout, EventLoopImpl::SocketEvent* ev) 
     }
   } else {
     LINEAR_LOG(LOG_ERR, "fail to connect(id = %d): %s", id_, err.Message().c_str());
-    if (observer && socket) {
-      bool is_locked = observer->TryLock();
-      HandlerDelegate* delegate = observer->GetSubject();
-      if (delegate) {
-        delegate->Release(socket);
-      }
-      if (is_locked) {
-        observer->Unlock();
-      }
+    if (delegate && socket) {
+      delegate->Release(socket);
     }
   }
   return err;
@@ -346,13 +329,8 @@ void SocketImpl::OnConnect(const shared_ptr<SocketImpl>& socket, tv_stream_t* st
   }
   state_lock.unlock();
   // call OnConnect
-  if (shared_ptr<Observer<HandlerDelegate> > observer = observer_.lock()) {
-    observer->Lock();
-    HandlerDelegate* delegate = observer->GetSubject();
-    if (delegate) {
-      delegate->OnConnect(socket);
-    }
-    observer->Unlock();
+  if (shared_ptr<HandlerDelegate> delegate = delegate_.lock()) {
+    delegate->OnConnect(socket);
   }
   state_lock.lock();
   if (state_ == Socket::CONNECTING) {
@@ -387,14 +365,11 @@ void SocketImpl::OnDisconnect(const shared_ptr<SocketImpl>& socket) {
              peer_.addr.c_str(), peer_.port);
   state_ = Socket::DISCONNECTED;
   state_lock.unlock();
-  shared_ptr<Observer<HandlerDelegate> > observer = observer_.lock();
-  if (observer) {
-    observer->Lock();
-    HandlerDelegate* delegate = observer->GetSubject();
-    if (delegate) {
-      delegate->Release(socket);
-    }
-    observer->Unlock();
+  shared_ptr<HandlerDelegate> delegate = delegate_.lock();
+  if (delegate) {
+    LINEAR_LOG(LOG_DEBUG, "to call delegate->Release");
+    delegate->Release(socket);
+    LINEAR_LOG(LOG_DEBUG, "called delegate->Release");
   }
   // retry to connect for WebSocket DigestAuth
   if (connectable_) {
@@ -451,13 +426,10 @@ void SocketImpl::OnDisconnect(const shared_ptr<SocketImpl>& socket) {
     }
   }
   _DiscardMessages(socket);
-  if (observer && !handshaking_) {
-    observer->Lock();
-    HandlerDelegate* delegate = observer->GetSubject();
-    if (delegate) {
-      delegate->OnDisconnect(socket, last_error_);
-    }
-    observer->Unlock();
+  if (delegate && !handshaking_) {
+    LINEAR_LOG(LOG_DEBUG, "to call delegate->OnDisconnect");
+    delegate->OnDisconnect(socket, last_error_);
+    LINEAR_LOG(LOG_DEBUG, "to call delegate->OnDisconnect");
   }
   self_ = Addrinfo(); // reset self info
   return;
@@ -507,12 +479,7 @@ void SocketImpl::OnRead(const shared_ptr<SocketImpl>& socket, const tv_buf_t* bu
   memcpy(unpacker_.buffer(), buffer->base, nread);
   free(buffer->base);
   unpacker_.buffer_consumed(nread);
-  HandlerDelegate* delegate = NULL;
-  shared_ptr<Observer<HandlerDelegate> > observer = observer_.lock();
-  if (observer) {
-    observer->Lock();
-    delegate = observer->GetSubject();
-  }
+  shared_ptr<HandlerDelegate> delegate = delegate_.lock();
   try {
     msgpack::unpacked result;
     while (unpacker_.next(&result)) {
@@ -590,9 +557,6 @@ void SocketImpl::OnRead(const shared_ptr<SocketImpl>& socket, const tv_buf_t* bu
                peer_.addr.c_str(), peer_.port);
     Disconnect();
   }
-  if (observer) {
-    observer->Unlock();
-  }
 }
 
 void SocketImpl::OnWrite(const shared_ptr<SocketImpl>& socket, const Message* message, int status) {
@@ -601,13 +565,7 @@ void SocketImpl::OnWrite(const shared_ptr<SocketImpl>& socket, const Message* me
     LINEAR_LOG(LOG_ERR, "fail to send message(id = %d): %s",
                id_,
                tv_strerror(reinterpret_cast<tv_handle_t*>(stream_), status));
-    HandlerDelegate* delegate = NULL;
-    shared_ptr<Observer<HandlerDelegate> > observer = observer_.lock();
-    if (observer) {
-      observer->Lock();
-      delegate = observer->GetSubject();
-    }
-    if (delegate) {
+    if (shared_ptr<HandlerDelegate> delegate = delegate_.lock()) {
       switch(message->type) {
       case REQUEST:
         delegate->OnError(socket, *(dynamic_cast<const Request*>(message)), Error(status));
@@ -622,9 +580,6 @@ void SocketImpl::OnWrite(const shared_ptr<SocketImpl>& socket, const Message* me
         LINEAR_LOG(LOG_ERR, "BUG: invalid type of message");
         assert(false);
       }
-    }
-    if (observer) {
-      observer->Unlock();
     }
   }
 }
@@ -646,13 +601,8 @@ void SocketImpl::OnRequestTimeout(const shared_ptr<SocketImpl>& socket, const Re
     }
   }
   request_timer_lock.unlock();
-  if (shared_ptr<Observer<HandlerDelegate> > observer = observer_.lock()) {
-    observer->Lock();
-    HandlerDelegate* delegate = observer->GetSubject();
-    if (delegate) {
-      delegate->OnError(socket, request, Error(LNR_ETIMEDOUT));
-    }
-    observer->Unlock();
+  if (shared_ptr<HandlerDelegate> delegate = delegate_.lock()) {
+    delegate->OnError(socket, request, Error(LNR_ETIMEDOUT));
   }
 }
 
@@ -761,13 +711,8 @@ void SocketImpl::_SendPendingMessages(const shared_ptr<SocketImpl>& socket) {
   std::vector<Message*>().swap(pending_messages_);
   state_lock.unlock();
   // call OnError when fail to send pending messages
-  HandlerDelegate* delegate = NULL;
-  shared_ptr<Observer<HandlerDelegate> > observer = observer_.lock();
-  if (observer) {
-    observer->Lock();
-    delegate = observer->GetSubject();
-  }
   Error pending_err = Error(LNR_ECANCELED);
+  shared_ptr<HandlerDelegate> delegate = delegate_.lock();
   for (std::vector<Message*>::iterator it = fail_to_send.begin();
        it != fail_to_send.end(); it++) {
     Message* message = *it;
@@ -789,19 +734,11 @@ void SocketImpl::_SendPendingMessages(const shared_ptr<SocketImpl>& socket) {
     }
     delete message;
   }
-  if (observer) {
-    observer->Unlock();
-  }
 }
 
 void SocketImpl::_DiscardMessages(const shared_ptr<SocketImpl>& socket) {
-  HandlerDelegate* delegate = NULL;
-  shared_ptr<Observer<HandlerDelegate> > observer = observer_.lock();
-  if (observer) {
-    observer->Lock();
-    delegate = observer->GetSubject();
-  }
   Error err = Error(LNR_ECANCELED);
+  shared_ptr<HandlerDelegate> delegate = delegate_.lock();
   std::vector<Message*> fail_to_send;
   fail_to_send.swap(pending_messages_);
   for (std::vector<Message*>::iterator it = fail_to_send.begin();
@@ -836,9 +773,6 @@ void SocketImpl::_DiscardMessages(const shared_ptr<SocketImpl>& socket) {
       delegate->OnError(socket, (*it)->request, err);
     }
     delete *it;
-  }
-  if (observer) {
-    observer->Unlock();
   }
 }
 

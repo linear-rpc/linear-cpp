@@ -176,6 +176,8 @@ void usage(char* name) {
   std::cout << "Usage: " << std::string(name) << " [Host := 127.0.0.1] [Port := 37800]" << std::endl;
 }
 
+linear::EventLoop loop;
+
 int main(int argc, char* argv[]) {
 
 #if _WIN32
@@ -216,8 +218,8 @@ int main(int argc, char* argv[]) {
   int port = (argc >= 2) ? atoi(argv[1]) : 37800;
 #endif
 
-  ApplicationHandler handler;
-  linear::TCPClient client = linear::TCPClient(handler);
+  linear::shared_ptr<ApplicationHandler> handler = linear::shared_ptr<ApplicationHandler>(new ApplicationHandler());
+  linear::TCPClient client = linear::TCPClient(handler, loop);
   linear::TCPSocket socket = client.CreateSocket(host, port);
 
   std::string cmd;
@@ -226,13 +228,13 @@ int main(int argc, char* argv[]) {
 
   while (true) {
     if (cmd == "connect") {
-      handler.SetNumOfRetry(3);
+      handler->SetNumOfRetry(3);
       linear::Error err = socket.Connect();
       if (err.Code() != linear::LNR_OK) {
         std::cout << err.Message() << std::endl;
       }
     } else if (cmd == "disconnect") {
-      handler.SetNumOfRetry(0);
+      handler->SetNumOfRetry(0);
       linear::Error err = socket.Disconnect();
       if (err.Code() != linear::LNR_OK) {
         std::cout << err.Message() << std::endl;

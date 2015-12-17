@@ -2,9 +2,8 @@
 #define LINEAR_SOCKET_IMPL_H_
 
 #include "linear/message.h"
+#include "linear/mutex.h"
 #include "linear/timer.h"
-
-#include "linear/private/observer.h"
 
 #include "event_loop_impl.h"
 
@@ -37,12 +36,12 @@ class SocketImpl {
   // Client Socket
   SocketImpl(const std::string& host, int port,
              const linear::shared_ptr<linear::EventLoopImpl>& loop,
-             const linear::HandlerDelegate& delegate,
+             const linear::weak_ptr<linear::HandlerDelegate>& delegate,
              linear::Socket::Type type);
   // Server Socket
   SocketImpl(tv_stream_t* stream,
              const linear::shared_ptr<linear::EventLoopImpl>& loop,
-             const linear::HandlerDelegate& delegate,
+             const linear::weak_ptr<linear::HandlerDelegate>& delegate,
              linear::Socket::Type type);
   virtual ~SocketImpl();
 
@@ -90,7 +89,7 @@ class SocketImpl {
   bool connectable_;
   bool handshaking_;
   linear::Error last_error_;
-  linear::weak_ptr<linear::Observer<linear::HandlerDelegate> > observer_;
+  linear::weak_ptr<linear::HandlerDelegate> delegate_;
   int connect_timeout_;
   linear::Timer connect_timer_;
   std::vector<linear::Message*> pending_messages_;

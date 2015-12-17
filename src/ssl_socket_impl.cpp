@@ -5,17 +5,17 @@
 namespace linear {
 
 SSLSocketImpl::SSLSocketImpl(const std::string& host, int port,
-                             const linear::SSLContext& context,
-                             const linear::shared_ptr<linear::EventLoopImpl>& loop,
-                             const linear::HandlerDelegate& delegate)
+                             const SSLContext& context,
+                             const shared_ptr<EventLoopImpl>& loop,
+                             const weak_ptr<HandlerDelegate>& delegate)
   : SocketImpl(host, port, loop, delegate, Socket::SSL),
     context_(context) {
 }
 
 SSLSocketImpl::SSLSocketImpl(tv_stream_t* stream,
                              const SSLContext& context,
-                             const linear::shared_ptr<linear::EventLoopImpl>& loop,
-                             const linear::HandlerDelegate& delegate)
+                             const shared_ptr<EventLoopImpl>& loop,
+                             const weak_ptr<HandlerDelegate>& delegate)
   : SocketImpl(stream, loop, delegate, Socket::SSL),
     context_(context) {
 }

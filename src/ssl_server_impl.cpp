@@ -10,9 +10,9 @@ using namespace linear::log;
 
 namespace linear {
 
-SSLServerImpl::SSLServerImpl(const Handler& handler,
+SSLServerImpl::SSLServerImpl(const weak_ptr<Handler>& handler,
                              const SSLContext& context,
-                             const linear::EventLoop& loop)
+                             const EventLoop& loop)
   : ServerImpl(handler, loop, true),
     context_(context), handle_(NULL) {
 }
@@ -86,7 +86,8 @@ void SSLServerImpl::OnAccept(tv_stream_t* srv_stream, tv_stream_t* cli_stream, i
     return;
   }
   try {
-    shared_ptr<SSLSocketImpl> shared = shared_ptr<SSLSocketImpl>(new SSLSocketImpl(cli_stream, context_, loop_, *this));
+    weak_ptr<HandlerDelegate> self = reinterpret_cast<EventLoopImpl::ServerEvent*>(handle_->data)->server;
+    shared_ptr<SSLSocketImpl> shared = shared_ptr<SSLSocketImpl>(new SSLSocketImpl(cli_stream, context_, loop_, self));
     EventLoopImpl::SocketEvent* ev = new EventLoopImpl::SocketEvent(shared);
     if (shared->StartRead(ev) != Error(LNR_OK)) {
         throw std::runtime_error("fail to accept");

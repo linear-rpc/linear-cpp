@@ -38,13 +38,11 @@ liblinear_la_SOURCES = \
 	tcp_server.cpp \
 	tcp_server_impl.cpp \
 	tcp_client.cpp \
-	tcp_client_impl.cpp \
 	ws_socket.cpp \
 	ws_socket_impl.cpp \
 	ws_server.cpp \
 	ws_server_impl.cpp \
-	ws_client.cpp \
-	ws_client_impl.cpp
+	ws_client.cpp
 
 if WITH_SSL
 liblinear_la_SOURCES += \
@@ -55,13 +53,11 @@ liblinear_la_SOURCES += \
 	ssl_server.cpp \
 	ssl_server_impl.cpp \
 	ssl_client.cpp \
-	ssl_client_impl.cpp \
 	wss_socket.cpp \
 	wss_socket_impl.cpp \
 	wss_server.cpp \
 	wss_server_impl.cpp \
-	wss_client.cpp \
-	wss_client_impl.cpp
+	wss_client.cpp
 endif
 
 clean-local:

@@ -8,7 +8,7 @@ namespace linear {
 
 class WSServerImpl : public ServerImpl {
  public:
-  WSServerImpl(const linear::Handler& handler,
+  WSServerImpl(const linear::weak_ptr<linear::Handler>& handler,
                linear::AuthContext::Type auth_type,
                const std::string& realm,
                const linear::EventLoop& loop);

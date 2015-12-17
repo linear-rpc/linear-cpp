@@ -30,15 +30,16 @@ class LINEAR_EXTERN SSLClient : public Client {
    * @param [in] [context] common linear::SSLContext object
    * @param [in] [loop] eventloop(thread) object
    */
-  SSLClient(const linear::Handler& handler,
+  SSLClient(const linear::shared_ptr<linear::Handler>& handler,
             const linear::SSLContext& context = linear::SSLContext(),
             const linear::EventLoop& loop = linear::EventLoop::GetDefault());
   /**
    * Constructor
    * @param [in] handler application defined behavior.
-   * @param [in] [loop] eventloop(thread) object
+   * @param [in] loop eventloop(thread) object
    */
-  SSLClient(const linear::Handler& handler, const linear::EventLoop& loop);
+  SSLClient(const linear::shared_ptr<linear::Handler>& handler,
+            const linear::EventLoop& loop);
   /**
    * Set common linear::SSLContext into Client Object.
    * If you can not provide linear::SSLContext when construct SSLClient, call this method.

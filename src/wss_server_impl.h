@@ -10,7 +10,7 @@ namespace linear {
 
 class WSSServerImpl : public ServerImpl {
  public:
-  WSSServerImpl(const linear::Handler& handler,
+  WSSServerImpl(const linear::weak_ptr<linear::Handler>& handler,
                 const linear::SSLContext& ssl_context,
                 linear::AuthContext::Type auth_type,
                 const std::string& realm,

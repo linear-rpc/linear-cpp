@@ -24,7 +24,7 @@ typedef LinearTest SSLClientServerSendRecvTest;
 
 // Send Request from Client in front thread and Send Response from Server in back thread
 TEST_F(SSLClientServerSendRecvTest, RequestFromClientFTResponseFromServerBT) {
-  MockHandler ch;
+  linear::shared_ptr<MockHandler> ch = linear::shared_ptr<MockHandler>(new MockHandler());
   SSLContext context(SSLContext::TLSv1_1);
   context.SetCertificate(std::string(CLIENT_CERT));
   context.SetPrivateKey(std::string(CLIENT_PKEY));
@@ -32,7 +32,7 @@ TEST_F(SSLClientServerSendRecvTest, RequestFromClientFTResponseFromServerBT) {
   context.SetCiphers(std::string(CIPHER_LIST));
   context.SetVerifyMode(SSLContext::VERIFY_PEER);
   SSLClient cl(ch, context);
-  MockHandler sh;
+  linear::shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
   SSLContext server_context(SSLContext::TLSv1_1);
   server_context.SetCertificate(std::string(SERVER_CERT));
   server_context.SetPrivateKey(std::string(SERVER_PKEY));
@@ -48,15 +48,15 @@ TEST_F(SSLClientServerSendRecvTest, RequestFromClientFTResponseFromServerBT) {
 
   {
     InSequence dummy;
-    EXPECT_CALL(sh, OnConnectMock(_));
-    EXPECT_CALL(sh, OnMessageMock(Eq(ByRef(sh.s_)), _)).WillOnce(DoAll(WithArgs<0, 1>(SendResponse()), Assign(&srv_finished, true)));
-    EXPECT_CALL(sh, OnDisconnectMock(_, _)).Times(::testing::AtLeast(0));
+    EXPECT_CALL(*sh, OnConnectMock(_));
+    EXPECT_CALL(*sh, OnMessageMock(Eq(ByRef(sh->s_)), _)).WillOnce(DoAll(WithArgs<0, 1>(SendResponse()), Assign(&srv_finished, true)));
+    EXPECT_CALL(*sh, OnDisconnectMock(_, _)).Times(::testing::AtLeast(0));
   }
   {
     InSequence dummy;
-    EXPECT_CALL(ch, OnConnectMock(cs));
-    EXPECT_CALL(ch, OnMessageMock(cs, _)).WillOnce(Assign(&cli_finished, true));
-    EXPECT_CALL(ch, OnDisconnectMock(_, _)).Times(::testing::AtLeast(0));
+    EXPECT_CALL(*ch, OnConnectMock(cs));
+    EXPECT_CALL(*ch, OnMessageMock(cs, _)).WillOnce(Assign(&cli_finished, true));
+    EXPECT_CALL(*ch, OnDisconnectMock(_, _)).Times(::testing::AtLeast(0));
   }
 
   e = cs.Connect();
@@ -69,14 +69,14 @@ TEST_F(SSLClientServerSendRecvTest, RequestFromClientFTResponseFromServerBT) {
   WAIT_TO_FINISH_CALLBACK();
 
   // check message in server side
-  ASSERT_TRUE(sh.m_ != NULL);
-  ASSERT_EQ(REQUEST, sh.m_->type);
-  Request recv_req = sh.m_->as<Request>();
+  ASSERT_TRUE(sh->m_ != NULL);
+  ASSERT_EQ(REQUEST, sh->m_->type);
+  Request recv_req = sh->m_->as<Request>();
   ASSERT_EQ(req.msgid, recv_req.msgid);
   // check message in client side
-  ASSERT_TRUE(ch.m_ != NULL);
-  ASSERT_EQ(RESPONSE, ch.m_->type);
-  Response resp = ch.m_->as<Response>();
+  ASSERT_TRUE(ch->m_ != NULL);
+  ASSERT_EQ(RESPONSE, ch->m_->type);
+  Response resp = ch->m_->as<Response>();
   ASSERT_EQ(req.msgid, resp.msgid);
   ASSERT_EQ(req.params, resp.result);
   ASSERT_TRUE(resp.error.is_nil());
@@ -84,7 +84,7 @@ TEST_F(SSLClientServerSendRecvTest, RequestFromClientFTResponseFromServerBT) {
 
 // Send Request from Server in front thread and Send Response from Client in back thread
 TEST_F(SSLClientServerSendRecvTest, RequestFromServerFTResponseFromClientBT) {
-  MockHandler ch;
+  linear::shared_ptr<MockHandler> ch = linear::shared_ptr<MockHandler>(new MockHandler());
   SSLContext context(SSLContext::TLSv1_1);
   context.SetCertificate(std::string(CLIENT_CERT));
   context.SetPrivateKey(std::string(CLIENT_PKEY));
@@ -92,7 +92,7 @@ TEST_F(SSLClientServerSendRecvTest, RequestFromServerFTResponseFromClientBT) {
   context.SetCiphers(std::string(CIPHER_LIST));
   context.SetVerifyMode(SSLContext::VERIFY_PEER);
   SSLClient cl(ch, context);
-  MockHandler sh;
+  linear::shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
   SSLContext server_context(SSLContext::TLSv1_1);
   server_context.SetCertificate(std::string(SERVER_CERT));
   server_context.SetPrivateKey(std::string(SERVER_PKEY));
@@ -106,33 +106,33 @@ TEST_F(SSLClientServerSendRecvTest, RequestFromServerFTResponseFromClientBT) {
 
   SSLSocket cs = cl.CreateSocket(TEST_ADDR, TEST_PORT);
 
-  EXPECT_CALL(sh, OnConnectMock(_)).WillOnce(Assign(&srv_finished, true));
-  EXPECT_CALL(ch, OnConnectMock(cs)).WillOnce(Assign(&cli_finished, true));
+  EXPECT_CALL(*sh, OnConnectMock(_)).WillOnce(Assign(&srv_finished, true));
+  EXPECT_CALL(*ch, OnConnectMock(cs)).WillOnce(Assign(&cli_finished, true));
 
   e = cs.Connect();
   ASSERT_EQ(LNR_OK, e.Code());
   WAIT_TO_FINISH_CALLBACK();
 
-  EXPECT_CALL(sh, OnMessageMock(Eq(ByRef(sh.s_)), _)).WillOnce(Assign(&srv_finished, true));
-  EXPECT_CALL(ch, OnMessageMock(cs, _)).WillOnce(DoAll(WithArgs<0, 1>(SendResponse()), Assign(&cli_finished, true)));
-  EXPECT_CALL(sh, OnDisconnectMock(_, _)).Times(::testing::AtLeast(0));
-  EXPECT_CALL(ch, OnDisconnectMock(_, _)).Times(::testing::AtLeast(0));
+  EXPECT_CALL(*sh, OnMessageMock(Eq(ByRef(sh->s_)), _)).WillOnce(Assign(&srv_finished, true));
+  EXPECT_CALL(*ch, OnMessageMock(cs, _)).WillOnce(DoAll(WithArgs<0, 1>(SendResponse()), Assign(&cli_finished, true)));
+  EXPECT_CALL(*sh, OnDisconnectMock(_, _)).Times(::testing::AtLeast(0));
+  EXPECT_CALL(*ch, OnDisconnectMock(_, _)).Times(::testing::AtLeast(0));
 
   Params msg;
   Request req(std::string(METHOD_NAME), msg);
-  e = req.Send(sh.s_);
+  e = req.Send(sh->s_);
   ASSERT_EQ(LNR_OK, e.Code());
   WAIT_TO_FINISH_CALLBACK();
 
   // check message in client side
-  ASSERT_TRUE(ch.m_ != NULL);
-  ASSERT_EQ(REQUEST, ch.m_->type);
-  Request recv_req = ch.m_->as<Request>();
+  ASSERT_TRUE(ch->m_ != NULL);
+  ASSERT_EQ(REQUEST, ch->m_->type);
+  Request recv_req = ch->m_->as<Request>();
   ASSERT_EQ(req.msgid, recv_req.msgid);
   // check message in server side
-  ASSERT_TRUE(sh.m_ != NULL);
-  ASSERT_EQ(RESPONSE, sh.m_->type);
-  Response resp = sh.m_->as<Response>();
+  ASSERT_TRUE(sh->m_ != NULL);
+  ASSERT_EQ(RESPONSE, sh->m_->type);
+  Response resp = sh->m_->as<Response>();
   ASSERT_EQ(req.msgid, resp.msgid);
   ASSERT_EQ(req.params, resp.result);
   ASSERT_TRUE(resp.error.is_nil());
@@ -140,7 +140,7 @@ TEST_F(SSLClientServerSendRecvTest, RequestFromServerFTResponseFromClientBT) {
 
 // Send Request from Client in back thread and Send Response from Server in back thread
 TEST_F(SSLClientServerSendRecvTest, RequestFromClientBTResponseFromServerBT) {
-  MockHandler ch;
+  linear::shared_ptr<MockHandler> ch = linear::shared_ptr<MockHandler>(new MockHandler());
   SSLContext context(SSLContext::TLSv1_1);
   context.SetCertificate(std::string(CLIENT_CERT));
   context.SetPrivateKey(std::string(CLIENT_PKEY));
@@ -148,7 +148,7 @@ TEST_F(SSLClientServerSendRecvTest, RequestFromClientBTResponseFromServerBT) {
   context.SetCiphers(std::string(CIPHER_LIST));
   context.SetVerifyMode(SSLContext::VERIFY_PEER);
   SSLClient cl(ch, context);
-  MockHandler sh;
+  linear::shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
   SSLContext server_context(SSLContext::TLSv1_1);
   server_context.SetCertificate(std::string(SERVER_CERT));
   server_context.SetPrivateKey(std::string(SERVER_PKEY));
@@ -164,15 +164,15 @@ TEST_F(SSLClientServerSendRecvTest, RequestFromClientBTResponseFromServerBT) {
 
   {
     InSequence dummy;
-    EXPECT_CALL(sh, OnConnectMock(_));
-    EXPECT_CALL(sh, OnMessageMock(Eq(ByRef(sh.s_)), _)).WillOnce(DoAll(WithArgs<0, 1>(SendResponse()), Assign(&srv_finished, true)));
-    EXPECT_CALL(sh, OnDisconnectMock(_, _)).Times(::testing::AtLeast(0));
+    EXPECT_CALL(*sh, OnConnectMock(_));
+    EXPECT_CALL(*sh, OnMessageMock(Eq(ByRef(sh->s_)), _)).WillOnce(DoAll(WithArgs<0, 1>(SendResponse()), Assign(&srv_finished, true)));
+    EXPECT_CALL(*sh, OnDisconnectMock(_, _)).Times(::testing::AtLeast(0));
   }
   {
     InSequence dummy;
-    EXPECT_CALL(ch, OnConnectMock(cs)).WillOnce(WithArg<0>(SendRequest()));
-    EXPECT_CALL(ch, OnMessageMock(cs, _)).WillOnce(Assign(&cli_finished, true));
-    EXPECT_CALL(ch, OnDisconnectMock(_, _)).Times(::testing::AtLeast(0));
+    EXPECT_CALL(*ch, OnConnectMock(cs)).WillOnce(WithArg<0>(SendRequest()));
+    EXPECT_CALL(*ch, OnMessageMock(cs, _)).WillOnce(Assign(&cli_finished, true));
+    EXPECT_CALL(*ch, OnDisconnectMock(_, _)).Times(::testing::AtLeast(0));
   }
 
   e = cs.Connect();
@@ -180,12 +180,12 @@ TEST_F(SSLClientServerSendRecvTest, RequestFromClientBTResponseFromServerBT) {
   WAIT_TO_FINISH_CALLBACK();
 
   // check messages
-  ASSERT_TRUE(sh.m_ != NULL);
-  ASSERT_EQ(REQUEST, sh.m_->type);
-  Request recv_req = sh.m_->as<Request>();
-  ASSERT_TRUE(ch.m_ != NULL);
-  ASSERT_EQ(RESPONSE, ch.m_->type);
-  Response resp = ch.m_->as<Response>();
+  ASSERT_TRUE(sh->m_ != NULL);
+  ASSERT_EQ(REQUEST, sh->m_->type);
+  Request recv_req = sh->m_->as<Request>();
+  ASSERT_TRUE(ch->m_ != NULL);
+  ASSERT_EQ(RESPONSE, ch->m_->type);
+  Response resp = ch->m_->as<Response>();
   ASSERT_EQ(recv_req.msgid, resp.msgid);
   ASSERT_EQ(recv_req.params, resp.result);
   ASSERT_TRUE(resp.error.is_nil());
@@ -193,7 +193,7 @@ TEST_F(SSLClientServerSendRecvTest, RequestFromClientBTResponseFromServerBT) {
 
 // Send Request from Server in back thread and Send Response from Client in back thread
 TEST_F(SSLClientServerSendRecvTest, RequestFromServerBTResponseFromClientBT) {
-  MockHandler ch;
+  linear::shared_ptr<MockHandler> ch = linear::shared_ptr<MockHandler>(new MockHandler());
   SSLContext context(SSLContext::TLSv1_1);
   context.SetCertificate(std::string(CLIENT_CERT));
   context.SetPrivateKey(std::string(CLIENT_PKEY));
@@ -201,7 +201,7 @@ TEST_F(SSLClientServerSendRecvTest, RequestFromServerBTResponseFromClientBT) {
   context.SetCiphers(std::string(CIPHER_LIST));
   context.SetVerifyMode(SSLContext::VERIFY_PEER);
   SSLClient cl(ch, context);
-  MockHandler sh;
+  linear::shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
   SSLContext server_context(SSLContext::TLSv1_1);
   server_context.SetCertificate(std::string(SERVER_CERT));
   server_context.SetPrivateKey(std::string(SERVER_PKEY));
@@ -217,15 +217,15 @@ TEST_F(SSLClientServerSendRecvTest, RequestFromServerBTResponseFromClientBT) {
 
   {
     InSequence dummy;
-    EXPECT_CALL(sh, OnConnectMock(_)).WillOnce(WithArg<0>(SendRequest()));
-    EXPECT_CALL(sh, OnMessageMock(Eq(ByRef(sh.s_)), _)).WillOnce(Assign(&srv_finished, true));
-    EXPECT_CALL(sh, OnDisconnectMock(_, _)).Times(::testing::AtLeast(0));
+    EXPECT_CALL(*sh, OnConnectMock(_)).WillOnce(WithArg<0>(SendRequest()));
+    EXPECT_CALL(*sh, OnMessageMock(Eq(ByRef(sh->s_)), _)).WillOnce(Assign(&srv_finished, true));
+    EXPECT_CALL(*sh, OnDisconnectMock(_, _)).Times(::testing::AtLeast(0));
   }
   {
     InSequence dummy;
-    EXPECT_CALL(ch, OnConnectMock(cs));
-    EXPECT_CALL(ch, OnMessageMock(cs, _)).WillOnce(DoAll(WithArgs<0, 1>(SendResponse()), Assign(&cli_finished, true)));
-    EXPECT_CALL(ch, OnDisconnectMock(_, _)).Times(::testing::AtLeast(0));
+    EXPECT_CALL(*ch, OnConnectMock(cs));
+    EXPECT_CALL(*ch, OnMessageMock(cs, _)).WillOnce(DoAll(WithArgs<0, 1>(SendResponse()), Assign(&cli_finished, true)));
+    EXPECT_CALL(*ch, OnDisconnectMock(_, _)).Times(::testing::AtLeast(0));
   }
 
   e = cs.Connect();
@@ -233,12 +233,12 @@ TEST_F(SSLClientServerSendRecvTest, RequestFromServerBTResponseFromClientBT) {
   WAIT_TO_FINISH_CALLBACK();
 
   // check messages
-  ASSERT_TRUE(ch.m_ != NULL);
-  ASSERT_EQ(REQUEST, ch.m_->type);
-  Request recv_req = ch.m_->as<Request>();
-  ASSERT_TRUE(sh.m_ != NULL);
-  ASSERT_EQ(RESPONSE, sh.m_->type);
-  Response resp = sh.m_->as<Response>();
+  ASSERT_TRUE(ch->m_ != NULL);
+  ASSERT_EQ(REQUEST, ch->m_->type);
+  Request recv_req = ch->m_->as<Request>();
+  ASSERT_TRUE(sh->m_ != NULL);
+  ASSERT_EQ(RESPONSE, sh->m_->type);
+  Response resp = sh->m_->as<Response>();
   ASSERT_EQ(recv_req.msgid, resp.msgid);
   ASSERT_EQ(recv_req.params, resp.result);
   ASSERT_TRUE(resp.error.is_nil());
@@ -246,7 +246,7 @@ TEST_F(SSLClientServerSendRecvTest, RequestFromServerBTResponseFromClientBT) {
 
 // Send Request from Client in front thread and not Send Response from Server(Timeout)
 TEST_F(SSLClientServerSendRecvTest, RequestFromClientFTNotResponseFromServer) {
-  MockHandler ch;
+  linear::shared_ptr<MockHandler> ch = linear::shared_ptr<MockHandler>(new MockHandler());
   SSLContext context(SSLContext::TLSv1_1);
   context.SetCertificate(std::string(CLIENT_CERT));
   context.SetPrivateKey(std::string(CLIENT_PKEY));
@@ -254,7 +254,7 @@ TEST_F(SSLClientServerSendRecvTest, RequestFromClientFTNotResponseFromServer) {
   context.SetCiphers(std::string(CIPHER_LIST));
   context.SetVerifyMode(SSLContext::VERIFY_PEER);
   SSLClient cl(ch, context);
-  MockHandler sh;
+  linear::shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
   SSLContext server_context(SSLContext::TLSv1_1);
   server_context.SetCertificate(std::string(SERVER_CERT));
   server_context.SetPrivateKey(std::string(SERVER_PKEY));
@@ -268,17 +268,17 @@ TEST_F(SSLClientServerSendRecvTest, RequestFromClientFTNotResponseFromServer) {
 
   SSLSocket cs = cl.CreateSocket(TEST_ADDR, TEST_PORT);
 
-  EXPECT_CALL(sh, OnConnectMock(_)).WillOnce(Assign(&srv_finished, true));
-  EXPECT_CALL(ch, OnConnectMock(cs)).WillOnce(Assign(&cli_finished, true));
+  EXPECT_CALL(*sh, OnConnectMock(_)).WillOnce(Assign(&srv_finished, true));
+  EXPECT_CALL(*ch, OnConnectMock(cs)).WillOnce(Assign(&cli_finished, true));
 
   e = cs.Connect();
   ASSERT_EQ(LNR_OK, e.Code());
   WAIT_TO_FINISH_CALLBACK();
 
-  EXPECT_CALL(sh, OnMessageMock(sh.s_, _)).WillOnce(Assign(&srv_finished, true));
-  EXPECT_CALL(ch, OnErrorMock(cs, _, Error(LNR_ETIMEDOUT))).WillOnce(Assign(&cli_finished, true));
-  EXPECT_CALL(sh, OnDisconnectMock(_, _)).Times(::testing::AtLeast(0));
-  EXPECT_CALL(ch, OnDisconnectMock(_, _)).Times(::testing::AtLeast(0));
+  EXPECT_CALL(*sh, OnMessageMock(sh->s_, _)).WillOnce(Assign(&srv_finished, true));
+  EXPECT_CALL(*ch, OnErrorMock(cs, _, Error(LNR_ETIMEDOUT))).WillOnce(Assign(&cli_finished, true));
+  EXPECT_CALL(*sh, OnDisconnectMock(_, _)).Times(::testing::AtLeast(0));
+  EXPECT_CALL(*ch, OnDisconnectMock(_, _)).Times(::testing::AtLeast(0));
 
   Params msg;
   Request req(std::string(METHOD_NAME), msg);
@@ -287,20 +287,20 @@ TEST_F(SSLClientServerSendRecvTest, RequestFromClientFTNotResponseFromServer) {
   WAIT_TO_FINISH_CALLBACK();
 
   // check message in server side
-  ASSERT_TRUE(sh.m_ != NULL);
-  ASSERT_EQ(REQUEST, sh.m_->type);
-  Request recv_req = sh.m_->as<Request>();
+  ASSERT_TRUE(sh->m_ != NULL);
+  ASSERT_EQ(REQUEST, sh->m_->type);
+  Request recv_req = sh->m_->as<Request>();
   ASSERT_EQ(req.msgid, recv_req.msgid);
   // check message in client side
-  ASSERT_TRUE(ch.err_m_ != NULL);
-  ASSERT_EQ(REQUEST, ch.err_m_->type);
-  Request err_req = ch.err_m_->as<Request>();
+  ASSERT_TRUE(ch->err_m_ != NULL);
+  ASSERT_EQ(REQUEST, ch->err_m_->type);
+  Request err_req = ch->err_m_->as<Request>();
   ASSERT_EQ(req.msgid, err_req.msgid);
 }
 
 // Send Request from Server in front thread and not Send Response from Client(Timeout)
 TEST_F(SSLClientServerSendRecvTest, RequestFromServerFTNotResponseFromClient) {
-  MockHandler ch;
+  linear::shared_ptr<MockHandler> ch = linear::shared_ptr<MockHandler>(new MockHandler());
   SSLContext context(SSLContext::TLSv1_1);
   context.SetCertificate(std::string(CLIENT_CERT));
   context.SetPrivateKey(std::string(CLIENT_PKEY));
@@ -308,7 +308,7 @@ TEST_F(SSLClientServerSendRecvTest, RequestFromServerFTNotResponseFromClient) {
   context.SetCiphers(std::string(CIPHER_LIST));
   context.SetVerifyMode(SSLContext::VERIFY_PEER);
   SSLClient cl(ch, context);
-  MockHandler sh;
+  linear::shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
   SSLContext server_context(SSLContext::TLSv1_1);
   server_context.SetCertificate(std::string(SERVER_CERT));
   server_context.SetPrivateKey(std::string(SERVER_PKEY));
@@ -322,39 +322,39 @@ TEST_F(SSLClientServerSendRecvTest, RequestFromServerFTNotResponseFromClient) {
 
   SSLSocket cs = cl.CreateSocket(TEST_ADDR, TEST_PORT);
 
-  EXPECT_CALL(sh, OnConnectMock(_)).WillOnce(Assign(&srv_finished, true));
-  EXPECT_CALL(ch, OnConnectMock(cs)).WillOnce(Assign(&cli_finished, true));
+  EXPECT_CALL(*sh, OnConnectMock(_)).WillOnce(Assign(&srv_finished, true));
+  EXPECT_CALL(*ch, OnConnectMock(cs)).WillOnce(Assign(&cli_finished, true));
 
   e = cs.Connect();
   ASSERT_EQ(LNR_OK, e.Code());
   WAIT_TO_FINISH_CALLBACK();
 
-  EXPECT_CALL(ch, OnMessageMock(cs, _)).WillOnce(Assign(&cli_finished, true));
-  EXPECT_CALL(sh, OnErrorMock(Eq(ByRef(sh.s_)), _, Error(LNR_ETIMEDOUT))).WillOnce(Assign(&srv_finished, true));
-  EXPECT_CALL(ch, OnDisconnectMock(_, _)).Times(::testing::AtLeast(0));
-  EXPECT_CALL(sh, OnDisconnectMock(_, _)).Times(::testing::AtLeast(0));
+  EXPECT_CALL(*ch, OnMessageMock(cs, _)).WillOnce(Assign(&cli_finished, true));
+  EXPECT_CALL(*sh, OnErrorMock(Eq(ByRef(sh->s_)), _, Error(LNR_ETIMEDOUT))).WillOnce(Assign(&srv_finished, true));
+  EXPECT_CALL(*ch, OnDisconnectMock(_, _)).Times(::testing::AtLeast(0));
+  EXPECT_CALL(*sh, OnDisconnectMock(_, _)).Times(::testing::AtLeast(0));
 
   Params msg;
   Request req(std::string(METHOD_NAME), msg);
-  e = req.Send(sh.s_, 1);
+  e = req.Send(sh->s_, 1);
   ASSERT_EQ(LNR_OK, e.Code());
   WAIT_TO_FINISH_CALLBACK();
 
   // check message in client side
-  ASSERT_TRUE(ch.m_ != NULL);
-  ASSERT_EQ(REQUEST, ch.m_->type);
-  Request recv_req = ch.m_->as<Request>();
+  ASSERT_TRUE(ch->m_ != NULL);
+  ASSERT_EQ(REQUEST, ch->m_->type);
+  Request recv_req = ch->m_->as<Request>();
   ASSERT_EQ(req.msgid, recv_req.msgid);
   // check message in server side
-  ASSERT_TRUE(sh.err_m_ != NULL);
-  ASSERT_EQ(REQUEST, sh.err_m_->type);
-  Request err_req = sh.err_m_->as<Request>();
+  ASSERT_TRUE(sh->err_m_ != NULL);
+  ASSERT_EQ(REQUEST, sh->err_m_->type);
+  Request err_req = sh->err_m_->as<Request>();
   ASSERT_EQ(req.msgid, err_req.msgid);
 }
 
 // Cancel to Send Request
 TEST_F(SSLClientServerSendRecvTest, CancelRequestFromClientFT) {
-  MockHandler ch;
+  linear::shared_ptr<MockHandler> ch = linear::shared_ptr<MockHandler>(new MockHandler());
   SSLContext context(SSLContext::TLSv1_1);
   context.SetCertificate(std::string(CLIENT_CERT));
   context.SetPrivateKey(std::string(CLIENT_PKEY));
@@ -368,8 +368,8 @@ TEST_F(SSLClientServerSendRecvTest, CancelRequestFromClientFT) {
 
   {
     InSequence dummy;
-    EXPECT_CALL(ch, OnErrorMock(cs, _, Error(LNR_ECANCELED)));
-    EXPECT_CALL(ch, OnDisconnectMock(cs, Error(LNR_OK))).WillOnce(DoAll(Assign(&cli_finished, true), Assign(&srv_finished, true)));
+    EXPECT_CALL(*ch, OnErrorMock(cs, _, Error(LNR_ECANCELED)));
+    EXPECT_CALL(*ch, OnDisconnectMock(cs, Error(LNR_OK))).WillOnce(DoAll(Assign(&cli_finished, true), Assign(&srv_finished, true)));
   }
 
   Request req(std::string(METHOD_NAME), Params());
@@ -382,9 +382,9 @@ TEST_F(SSLClientServerSendRecvTest, CancelRequestFromClientFT) {
   WAIT_TO_FINISH_CALLBACK();
 
   // check message in client side
-  ASSERT_TRUE(ch.err_m_ != NULL);
-  ASSERT_EQ(REQUEST, ch.err_m_->type);
-  Request err_req = ch.err_m_->as<Request>();
+  ASSERT_TRUE(ch->err_m_ != NULL);
+  ASSERT_EQ(REQUEST, ch->err_m_->type);
+  Request err_req = ch->err_m_->as<Request>();
   ASSERT_EQ(req.msgid, err_req.msgid);
   ASSERT_EQ(req.method, err_req.method);
   ASSERT_EQ(req.params, err_req.params);
@@ -392,7 +392,7 @@ TEST_F(SSLClientServerSendRecvTest, CancelRequestFromClientFT) {
 
 // Cancel to Send Request with Timeout
 TEST_F(SSLClientServerSendRecvTest, CancelRequestWithTimeoutFromClientFT) {
-  MockHandler ch;
+  linear::shared_ptr<MockHandler> ch = linear::shared_ptr<MockHandler>(new MockHandler());
   SSLContext context(SSLContext::TLSv1_1);
   context.SetCertificate(std::string(CLIENT_CERT));
   context.SetPrivateKey(std::string(CLIENT_PKEY));
@@ -400,7 +400,7 @@ TEST_F(SSLClientServerSendRecvTest, CancelRequestWithTimeoutFromClientFT) {
   context.SetCiphers(std::string(CIPHER_LIST));
   context.SetVerifyMode(SSLContext::VERIFY_PEER);
   SSLClient cl(ch, context);
-  MockHandler sh;
+  linear::shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
   SSLContext server_context(SSLContext::TLSv1_1);
   server_context.SetCertificate(std::string(SERVER_CERT));
   server_context.SetPrivateKey(std::string(SERVER_PKEY));
@@ -414,15 +414,15 @@ TEST_F(SSLClientServerSendRecvTest, CancelRequestWithTimeoutFromClientFT) {
 
   SSLSocket cs = cl.CreateSocket(TEST_ADDR, TEST_PORT);
 
-  EXPECT_CALL(sh, OnConnectMock(_)).Times(::testing::AtLeast(0));
-  EXPECT_CALL(sh, OnMessageMock(_, _)).Times(::testing::AtLeast(0));
-  EXPECT_CALL(sh, OnDisconnectMock(_, _)).Times(::testing::AtLeast(0));
+  EXPECT_CALL(*sh, OnConnectMock(_)).Times(::testing::AtLeast(0));
+  EXPECT_CALL(*sh, OnMessageMock(_, _)).Times(::testing::AtLeast(0));
+  EXPECT_CALL(*sh, OnDisconnectMock(_, _)).Times(::testing::AtLeast(0));
   {
     InSequence dummy;
-    EXPECT_CALL(ch, OnConnectMock(_)).Times(::testing::AtLeast(0));
+    EXPECT_CALL(*ch, OnConnectMock(_)).Times(::testing::AtLeast(0));
     // occur ECANCELED or ETIMEDOUT only once
-    EXPECT_CALL(ch, OnErrorMock(cs, _, _)).Times(1);
-    EXPECT_CALL(ch, OnDisconnectMock(cs, Error(LNR_OK))).WillOnce(DoAll(Assign(&cli_finished, true), Assign(&srv_finished, true)));
+    EXPECT_CALL(*ch, OnErrorMock(cs, _, _)).Times(1);
+    EXPECT_CALL(*ch, OnDisconnectMock(cs, Error(LNR_OK))).WillOnce(DoAll(Assign(&cli_finished, true), Assign(&srv_finished, true)));
   }
 
   Request req(std::string(METHOD_NAME), Params());
@@ -435,9 +435,9 @@ TEST_F(SSLClientServerSendRecvTest, CancelRequestWithTimeoutFromClientFT) {
   WAIT_TO_FINISH_CALLBACK();
 
   // check message in client side
-  ASSERT_TRUE(ch.err_m_ != NULL);
-  ASSERT_EQ(REQUEST, ch.err_m_->type);
-  Request err_req = ch.err_m_->as<Request>();
+  ASSERT_TRUE(ch->err_m_ != NULL);
+  ASSERT_EQ(REQUEST, ch->err_m_->type);
+  Request err_req = ch->err_m_->as<Request>();
   ASSERT_EQ(req.msgid, err_req.msgid);
   ASSERT_EQ(req.method, err_req.method);
   ASSERT_EQ(req.params, err_req.params);
@@ -445,7 +445,7 @@ TEST_F(SSLClientServerSendRecvTest, CancelRequestWithTimeoutFromClientFT) {
 
 // Cancel to Send Request(Disconnected by peer)
 TEST_F(SSLClientServerSendRecvTest, CancelRequestWithDisconnectedFromClientFT) {
-  MockHandler ch;
+  linear::shared_ptr<MockHandler> ch = linear::shared_ptr<MockHandler>(new MockHandler());
   SSLContext context(SSLContext::TLSv1_1);
   context.SetCertificate(std::string(CLIENT_CERT));
   context.SetPrivateKey(std::string(CLIENT_PKEY));
@@ -453,7 +453,7 @@ TEST_F(SSLClientServerSendRecvTest, CancelRequestWithDisconnectedFromClientFT) {
   context.SetCiphers(std::string(CIPHER_LIST));
   context.SetVerifyMode(SSLContext::VERIFY_PEER);
   SSLClient cl(ch, context);
-  MockHandler sh;
+  linear::shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
   SSLContext server_context(SSLContext::TLSv1_1);
   server_context.SetCertificate(std::string(SERVER_CERT));
   server_context.SetPrivateKey(std::string(SERVER_PKEY));
@@ -469,15 +469,15 @@ TEST_F(SSLClientServerSendRecvTest, CancelRequestWithDisconnectedFromClientFT) {
 
   {
     InSequence dummy;
-    EXPECT_CALL(ch, OnConnectMock(cs));
-    EXPECT_CALL(ch, OnErrorMock(cs, _, Error(LNR_ECANCELED)));
-    EXPECT_CALL(ch, OnDisconnectMock(cs, Error(LNR_EOF))).WillOnce(Assign(&cli_finished, true));
+    EXPECT_CALL(*ch, OnConnectMock(cs));
+    EXPECT_CALL(*ch, OnErrorMock(cs, _, Error(LNR_ECANCELED)));
+    EXPECT_CALL(*ch, OnDisconnectMock(cs, Error(LNR_EOF))).WillOnce(Assign(&cli_finished, true));
   }
   {
     InSequence dummy;
-    EXPECT_CALL(sh, OnConnectMock(_));
-    EXPECT_CALL(sh, OnMessageMock(Eq(ByRef(sh.s_)), _)).WillOnce(WithArg<0>(Disconnect()));
-    EXPECT_CALL(sh, OnDisconnectMock(Eq(ByRef(sh.s_)), Error(LNR_OK))).WillOnce(Assign(&srv_finished, true));
+    EXPECT_CALL(*sh, OnConnectMock(_));
+    EXPECT_CALL(*sh, OnMessageMock(Eq(ByRef(sh->s_)), _)).WillOnce(WithArg<0>(Disconnect()));
+    EXPECT_CALL(*sh, OnDisconnectMock(Eq(ByRef(sh->s_)), Error(LNR_OK))).WillOnce(Assign(&srv_finished, true));
   }
 
   Request req(std::string(METHOD_NAME), Params());
@@ -488,16 +488,16 @@ TEST_F(SSLClientServerSendRecvTest, CancelRequestWithDisconnectedFromClientFT) {
   WAIT_TO_FINISH_CALLBACK();
 
   // check message in server side
-  ASSERT_TRUE(sh.m_ != NULL);
-  ASSERT_EQ(REQUEST, sh.m_->type);
-  Request recv_req = sh.m_->as<Request>();
+  ASSERT_TRUE(sh->m_ != NULL);
+  ASSERT_EQ(REQUEST, sh->m_->type);
+  Request recv_req = sh->m_->as<Request>();
   ASSERT_EQ(req.msgid, recv_req.msgid);
   ASSERT_EQ(req.method, recv_req.method);
   ASSERT_EQ(req.params, recv_req.params);
   // check message in client side
-  ASSERT_TRUE(ch.err_m_ != NULL);
-  ASSERT_EQ(REQUEST, ch.err_m_->type);
-  Request err_req = ch.err_m_->as<Request>();
+  ASSERT_TRUE(ch->err_m_ != NULL);
+  ASSERT_EQ(REQUEST, ch->err_m_->type);
+  Request err_req = ch->err_m_->as<Request>();
   ASSERT_EQ(req.msgid, err_req.msgid);
   ASSERT_EQ(req.method, err_req.method);
   ASSERT_EQ(req.params, err_req.params);
@@ -505,7 +505,7 @@ TEST_F(SSLClientServerSendRecvTest, CancelRequestWithDisconnectedFromClientFT) {
 
 // Send Notify from Client in front thread
 TEST_F(SSLClientServerSendRecvTest, NotifyFromClientFT) {
-  MockHandler ch;
+  linear::shared_ptr<MockHandler> ch = linear::shared_ptr<MockHandler>(new MockHandler());
   SSLContext context(SSLContext::TLSv1_1);
   context.SetCertificate(std::string(CLIENT_CERT));
   context.SetPrivateKey(std::string(CLIENT_PKEY));
@@ -513,7 +513,7 @@ TEST_F(SSLClientServerSendRecvTest, NotifyFromClientFT) {
   context.SetCiphers(std::string(CIPHER_LIST));
   context.SetVerifyMode(SSLContext::VERIFY_PEER);
   SSLClient cl(ch, context);
-  MockHandler sh;
+  linear::shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
   SSLContext server_context(SSLContext::TLSv1_1);
   server_context.SetCertificate(std::string(SERVER_CERT));
   server_context.SetPrivateKey(std::string(SERVER_PKEY));
@@ -526,16 +526,16 @@ TEST_F(SSLClientServerSendRecvTest, NotifyFromClientFT) {
   ASSERT_EQ(LNR_OK, e.Code());
   SSLSocket cs = cl.CreateSocket(TEST_ADDR, TEST_PORT);
 
-  EXPECT_CALL(sh, OnConnectMock(_)).WillOnce(Assign(&srv_finished, true));
-  EXPECT_CALL(ch, OnConnectMock(cs)).WillOnce(Assign(&cli_finished, true));
+  EXPECT_CALL(*sh, OnConnectMock(_)).WillOnce(Assign(&srv_finished, true));
+  EXPECT_CALL(*ch, OnConnectMock(cs)).WillOnce(Assign(&cli_finished, true));
 
   e = cs.Connect();
   ASSERT_EQ(LNR_OK, e.Code());
   WAIT_TO_FINISH_CALLBACK();
 
-  EXPECT_CALL(sh, OnMessageMock(Eq(ByRef(sh.s_)), _)).WillOnce(DoAll(Assign(&srv_finished, true), Assign(&cli_finished, true)));
-  EXPECT_CALL(ch, OnDisconnectMock(_, _)).Times(::testing::AtLeast(0));
-  EXPECT_CALL(sh, OnDisconnectMock(_, _)).Times(::testing::AtLeast(0));
+  EXPECT_CALL(*sh, OnMessageMock(Eq(ByRef(sh->s_)), _)).WillOnce(DoAll(Assign(&srv_finished, true), Assign(&cli_finished, true)));
+  EXPECT_CALL(*ch, OnDisconnectMock(_, _)).Times(::testing::AtLeast(0));
+  EXPECT_CALL(*sh, OnDisconnectMock(_, _)).Times(::testing::AtLeast(0));
 
   Notify notif(std::string(METHOD_NAME), Params());
   e = notif.Send(cs);
@@ -543,16 +543,16 @@ TEST_F(SSLClientServerSendRecvTest, NotifyFromClientFT) {
   WAIT_TO_FINISH_CALLBACK();
 
   // check message in server side
-  ASSERT_TRUE(sh.m_ != NULL);
-  ASSERT_EQ(NOTIFY, sh.m_->type);
-  Notify recv_notif = sh.m_->as<Notify>();
+  ASSERT_TRUE(sh->m_ != NULL);
+  ASSERT_EQ(NOTIFY, sh->m_->type);
+  Notify recv_notif = sh->m_->as<Notify>();
   ASSERT_EQ(notif.method, recv_notif.method);
   ASSERT_EQ(notif.params, recv_notif.params);
 }
 
 // Send Notify from Server in front thread
 TEST_F(SSLClientServerSendRecvTest, NotifyFromServerFT) {
-  MockHandler ch;
+  linear::shared_ptr<MockHandler> ch = linear::shared_ptr<MockHandler>(new MockHandler());
   SSLContext context(SSLContext::TLSv1_1);
   context.SetCertificate(std::string(CLIENT_CERT));
   context.SetPrivateKey(std::string(CLIENT_PKEY));
@@ -560,7 +560,7 @@ TEST_F(SSLClientServerSendRecvTest, NotifyFromServerFT) {
   context.SetCiphers(std::string(CIPHER_LIST));
   context.SetVerifyMode(SSLContext::VERIFY_PEER);
   SSLClient cl(ch, context);
-  MockHandler sh;
+  linear::shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
   SSLContext server_context(SSLContext::TLSv1_1);
   server_context.SetCertificate(std::string(SERVER_CERT));
   server_context.SetPrivateKey(std::string(SERVER_PKEY));
@@ -573,33 +573,33 @@ TEST_F(SSLClientServerSendRecvTest, NotifyFromServerFT) {
   ASSERT_EQ(LNR_OK, e.Code());
   SSLSocket cs = cl.CreateSocket(TEST_ADDR, TEST_PORT);
 
-  EXPECT_CALL(sh, OnConnectMock(_)).WillOnce(Assign(&srv_finished, true));
-  EXPECT_CALL(ch, OnConnectMock(cs)).WillOnce(Assign(&cli_finished, true));
+  EXPECT_CALL(*sh, OnConnectMock(_)).WillOnce(Assign(&srv_finished, true));
+  EXPECT_CALL(*ch, OnConnectMock(cs)).WillOnce(Assign(&cli_finished, true));
 
   e = cs.Connect();
   ASSERT_EQ(LNR_OK, e.Code());
   WAIT_TO_FINISH_CALLBACK();
 
-  EXPECT_CALL(ch, OnMessageMock(cs, _)).WillOnce(DoAll(Assign(&srv_finished, true), Assign(&cli_finished, true)));
-  EXPECT_CALL(sh, OnDisconnectMock(_, _)).Times(::testing::AtLeast(0));
-  EXPECT_CALL(ch, OnDisconnectMock(_, _)).Times(::testing::AtLeast(0));
+  EXPECT_CALL(*ch, OnMessageMock(cs, _)).WillOnce(DoAll(Assign(&srv_finished, true), Assign(&cli_finished, true)));
+  EXPECT_CALL(*sh, OnDisconnectMock(_, _)).Times(::testing::AtLeast(0));
+  EXPECT_CALL(*ch, OnDisconnectMock(_, _)).Times(::testing::AtLeast(0));
 
   Notify notif(std::string(METHOD_NAME), Params());
-  e = notif.Send(sh.s_);
+  e = notif.Send(sh->s_);
   ASSERT_EQ(LNR_OK, e.Code());
   WAIT_TO_FINISH_CALLBACK();
 
   // check message in client side
-  ASSERT_TRUE(ch.m_ != NULL);
-  ASSERT_EQ(NOTIFY, ch.m_->type);
-  Notify recv_notif = ch.m_->as<Notify>();
+  ASSERT_TRUE(ch->m_ != NULL);
+  ASSERT_EQ(NOTIFY, ch->m_->type);
+  Notify recv_notif = ch->m_->as<Notify>();
   ASSERT_EQ(notif.method, recv_notif.method);
   ASSERT_EQ(notif.params, recv_notif.params);
 }
 
 // Send Notify from Client in back thread
 TEST_F(SSLClientServerSendRecvTest, NotifyFromClientBT) {
-  MockHandler ch;
+  linear::shared_ptr<MockHandler> ch = linear::shared_ptr<MockHandler>(new MockHandler());
   SSLContext context(SSLContext::TLSv1_1);
   context.SetCertificate(std::string(CLIENT_CERT));
   context.SetPrivateKey(std::string(CLIENT_PKEY));
@@ -607,7 +607,7 @@ TEST_F(SSLClientServerSendRecvTest, NotifyFromClientBT) {
   context.SetCiphers(std::string(CIPHER_LIST));
   context.SetVerifyMode(SSLContext::VERIFY_PEER);
   SSLClient cl(ch, context);
-  MockHandler sh;
+  linear::shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
   SSLContext server_context(SSLContext::TLSv1_1);
   server_context.SetCertificate(std::string(SERVER_CERT));
   server_context.SetPrivateKey(std::string(SERVER_PKEY));
@@ -623,14 +623,14 @@ TEST_F(SSLClientServerSendRecvTest, NotifyFromClientBT) {
 
   {
     InSequence dummy;
-    EXPECT_CALL(sh, OnConnectMock(_));
-    EXPECT_CALL(sh, OnMessageMock(Eq(ByRef(sh.s_)), _)).WillOnce(Assign(&srv_finished, true));
-    EXPECT_CALL(sh, OnDisconnectMock(_, _)).Times(::testing::AtLeast(0));
+    EXPECT_CALL(*sh, OnConnectMock(_));
+    EXPECT_CALL(*sh, OnMessageMock(Eq(ByRef(sh->s_)), _)).WillOnce(Assign(&srv_finished, true));
+    EXPECT_CALL(*sh, OnDisconnectMock(_, _)).Times(::testing::AtLeast(0));
   }
   {
     InSequence dummy;
-    EXPECT_CALL(ch, OnConnectMock(cs)).WillOnce(DoAll(WithArg<0>(SendNotify()), Assign(&cli_finished, true)));
-    EXPECT_CALL(ch, OnDisconnectMock(_, _)).Times(::testing::AtLeast(0));
+    EXPECT_CALL(*ch, OnConnectMock(cs)).WillOnce(DoAll(WithArg<0>(SendNotify()), Assign(&cli_finished, true)));
+    EXPECT_CALL(*ch, OnDisconnectMock(_, _)).Times(::testing::AtLeast(0));
   }
 
   e = cs.Connect();
@@ -638,9 +638,9 @@ TEST_F(SSLClientServerSendRecvTest, NotifyFromClientBT) {
   WAIT_TO_FINISH_CALLBACK();
 
   // check messages
-  ASSERT_TRUE(sh.m_ != NULL);
-  ASSERT_EQ(NOTIFY, sh.m_->type);
-  Notify recv_notif = sh.m_->as<Notify>();
+  ASSERT_TRUE(sh->m_ != NULL);
+  ASSERT_EQ(NOTIFY, sh->m_->type);
+  Notify recv_notif = sh->m_->as<Notify>();
   ASSERT_EQ(std::string(METHOD_NAME), recv_notif.method);
   linear::type::any params = Params();
   ASSERT_EQ(params, recv_notif.params);
@@ -648,7 +648,7 @@ TEST_F(SSLClientServerSendRecvTest, NotifyFromClientBT) {
 
 // Send Notify from Server in back thread
 TEST_F(SSLClientServerSendRecvTest, NotifyFromServerBT) {
-  MockHandler ch;
+  linear::shared_ptr<MockHandler> ch = linear::shared_ptr<MockHandler>(new MockHandler());
   SSLContext context(SSLContext::TLSv1_1);
   context.SetCertificate(std::string(CLIENT_CERT));
   context.SetPrivateKey(std::string(CLIENT_PKEY));
@@ -656,7 +656,7 @@ TEST_F(SSLClientServerSendRecvTest, NotifyFromServerBT) {
   context.SetCiphers(std::string(CIPHER_LIST));
   context.SetVerifyMode(SSLContext::VERIFY_PEER);
   SSLClient cl(ch, context);
-  MockHandler sh;
+  linear::shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
   SSLContext server_context(SSLContext::TLSv1_1);
   server_context.SetCertificate(std::string(SERVER_CERT));
   server_context.SetPrivateKey(std::string(SERVER_PKEY));
@@ -672,14 +672,14 @@ TEST_F(SSLClientServerSendRecvTest, NotifyFromServerBT) {
 
   {
     InSequence dummy;
-    EXPECT_CALL(sh, OnConnectMock(_)).WillOnce(DoAll(WithArg<0>(SendNotify()), Assign(&srv_finished, true)));
-    EXPECT_CALL(sh, OnDisconnectMock(_, _)).Times(::testing::AtLeast(0));
+    EXPECT_CALL(*sh, OnConnectMock(_)).WillOnce(DoAll(WithArg<0>(SendNotify()), Assign(&srv_finished, true)));
+    EXPECT_CALL(*sh, OnDisconnectMock(_, _)).Times(::testing::AtLeast(0));
   }
   {
     InSequence dummy;
-    EXPECT_CALL(ch, OnConnectMock(cs));
-    EXPECT_CALL(ch, OnMessageMock(cs, _)).WillOnce(Assign(&cli_finished, true));
-    EXPECT_CALL(ch, OnDisconnectMock(_, _)).Times(::testing::AtLeast(0));
+    EXPECT_CALL(*ch, OnConnectMock(cs));
+    EXPECT_CALL(*ch, OnMessageMock(cs, _)).WillOnce(Assign(&cli_finished, true));
+    EXPECT_CALL(*ch, OnDisconnectMock(_, _)).Times(::testing::AtLeast(0));
   }
 
   e = cs.Connect();
@@ -687,9 +687,9 @@ TEST_F(SSLClientServerSendRecvTest, NotifyFromServerBT) {
   WAIT_TO_FINISH_CALLBACK();
 
   // check messages
-  ASSERT_TRUE(ch.m_ != NULL);
-  ASSERT_EQ(NOTIFY, ch.m_->type);
-  Notify recv_notif = ch.m_->as<Notify>();
+  ASSERT_TRUE(ch->m_ != NULL);
+  ASSERT_EQ(NOTIFY, ch->m_->type);
+  Notify recv_notif = ch->m_->as<Notify>();
   ASSERT_EQ(std::string(METHOD_NAME), recv_notif.method);
   linear::type::any params = Params();
   ASSERT_EQ(params, recv_notif.params);
@@ -697,7 +697,9 @@ TEST_F(SSLClientServerSendRecvTest, NotifyFromServerBT) {
 
 // Send Notify from Server to Specific Group
 TEST_F(SSLClientServerSendRecvTest, NotifyFromServerToGroup) {
-  MockHandler ch1, ch2, ch3;
+  shared_ptr<MockHandler> ch1 = linear::shared_ptr<MockHandler>(new MockHandler());
+  shared_ptr<MockHandler> ch2 = linear::shared_ptr<MockHandler>(new MockHandler());
+  shared_ptr<MockHandler> ch3 = linear::shared_ptr<MockHandler>(new MockHandler());
   SSLContext context(SSLContext::TLSv1_1);
   context.SetCertificate(std::string(CLIENT_CERT));
   context.SetPrivateKey(std::string(CLIENT_PKEY));
@@ -705,7 +707,7 @@ TEST_F(SSLClientServerSendRecvTest, NotifyFromServerToGroup) {
   context.SetCiphers(std::string(CIPHER_LIST));
   context.SetVerifyMode(SSLContext::VERIFY_PEER);
   SSLClient cl1(ch1, context), cl2(ch2, context), cl3(ch3, context);
-  MockHandler sh;
+  linear::shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
   SSLContext server_context(SSLContext::TLSv1_1);
   server_context.SetCertificate(std::string(SERVER_CERT));
   server_context.SetPrivateKey(std::string(SERVER_PKEY));
@@ -723,29 +725,29 @@ TEST_F(SSLClientServerSendRecvTest, NotifyFromServerToGroup) {
 
   {
     InSequence dummy;
-    EXPECT_CALL(sh, OnConnectMock(_)).Times(3)
+    EXPECT_CALL(*sh, OnConnectMock(_)).Times(3)
       .WillOnce(DoAll(WithArg<0>(JoinToGroup()), SendNotify2Group()))
       .WillOnce(DoAll(WithArg<0>(JoinToGroup()), SendNotify2Group(), WithArg<0>(LeaveFromGroup())))
       .WillOnce(DoAll(WithArg<0>(JoinToGroup()), SendNotify2Group()));
-    EXPECT_CALL(sh, OnDisconnectMock(_, _)).Times(::testing::AtLeast(1)).WillOnce(Assign(&srv_finished, true));
+    EXPECT_CALL(*sh, OnDisconnectMock(_, _)).Times(::testing::AtLeast(1)).WillOnce(Assign(&srv_finished, true));
   }
   {
     InSequence dummy;
-    EXPECT_CALL(ch1, OnConnectMock(cs1));
-    EXPECT_CALL(ch1, OnMessageMock(cs1, _)).Times(3);
-    EXPECT_CALL(ch1, OnDisconnectMock(_, _)).Times(::testing::AtLeast(0));
+    EXPECT_CALL(*ch1, OnConnectMock(cs1));
+    EXPECT_CALL(*ch1, OnMessageMock(cs1, _)).Times(3);
+    EXPECT_CALL(*ch1, OnDisconnectMock(_, _)).Times(::testing::AtLeast(0));
   }
   {
     InSequence dummy;
-    EXPECT_CALL(ch2, OnConnectMock(cs2));
-    EXPECT_CALL(ch2, OnMessageMock(cs2, _)).Times(1);
-    EXPECT_CALL(ch2, OnDisconnectMock(_, _)).Times(::testing::AtLeast(0));
+    EXPECT_CALL(*ch2, OnConnectMock(cs2));
+    EXPECT_CALL(*ch2, OnMessageMock(cs2, _)).Times(1);
+    EXPECT_CALL(*ch2, OnDisconnectMock(_, _)).Times(::testing::AtLeast(0));
   }
   {
     InSequence dummy;
-    EXPECT_CALL(ch3, OnConnectMock(cs3));
-    EXPECT_CALL(ch3, OnMessageMock(cs3, _)).Times(1).WillOnce(WithArg<0>(Disconnect()));
-    EXPECT_CALL(ch3, OnDisconnectMock(cs3, _)).WillOnce(Assign(&cli_finished, true));
+    EXPECT_CALL(*ch3, OnConnectMock(cs3));
+    EXPECT_CALL(*ch3, OnMessageMock(cs3, _)).Times(1).WillOnce(WithArg<0>(Disconnect()));
+    EXPECT_CALL(*ch3, OnDisconnectMock(cs3, _)).WillOnce(Assign(&cli_finished, true));
   }
 
   e = cs1.Connect();
@@ -757,27 +759,27 @@ TEST_F(SSLClientServerSendRecvTest, NotifyFromServerToGroup) {
   WAIT_TO_FINISH_CALLBACK();
 
   // check messages
-  ASSERT_TRUE(ch1.m_ != NULL);
-  ASSERT_EQ(NOTIFY, ch1.m_->type);
-  Notify recv_notif = ch1.m_->as<Notify>();
+  ASSERT_TRUE(ch1->m_ != NULL);
+  ASSERT_EQ(NOTIFY, ch1->m_->type);
+  Notify recv_notif = ch1->m_->as<Notify>();
   ASSERT_EQ(std::string(METHOD_NAME), recv_notif.method);
   linear::type::any params = Params();
   ASSERT_EQ(params, recv_notif.params);
-  ASSERT_TRUE(ch2.m_ != NULL);
-  ASSERT_EQ(NOTIFY, ch2.m_->type);
-  recv_notif = ch2.m_->as<Notify>();
+  ASSERT_TRUE(ch2->m_ != NULL);
+  ASSERT_EQ(NOTIFY, ch2->m_->type);
+  recv_notif = ch2->m_->as<Notify>();
   ASSERT_EQ(std::string(METHOD_NAME), recv_notif.method);
   ASSERT_EQ(params, recv_notif.params);
-  ASSERT_EQ(NOTIFY, ch3.m_->type);
-  ASSERT_TRUE(ch3.m_ != NULL);
-  recv_notif = ch3.m_->as<Notify>();
+  ASSERT_EQ(NOTIFY, ch3->m_->type);
+  ASSERT_TRUE(ch3->m_ != NULL);
+  recv_notif = ch3->m_->as<Notify>();
   ASSERT_EQ(std::string(METHOD_NAME), recv_notif.method);
   ASSERT_EQ(params, recv_notif.params);
 }
 
 // Send Notify from Client to Specific Group
 TEST_F(SSLClientServerSendRecvTest, NotifyFromClientToGroup) {
-  MockHandler ch;
+  linear::shared_ptr<MockHandler> ch = linear::shared_ptr<MockHandler>(new MockHandler());
   SSLContext context(SSLContext::TLSv1_1);
   context.SetCertificate(std::string(CLIENT_CERT));
   context.SetPrivateKey(std::string(CLIENT_PKEY));
@@ -785,7 +787,9 @@ TEST_F(SSLClientServerSendRecvTest, NotifyFromClientToGroup) {
   context.SetCiphers(std::string(CIPHER_LIST));
   context.SetVerifyMode(SSLContext::VERIFY_PEER);
   SSLClient cl(ch, context);
-  MockHandler sh1, sh2, sh3;
+  shared_ptr<MockHandler> sh1 = linear::shared_ptr<MockHandler>(new MockHandler());
+  shared_ptr<MockHandler> sh2 = linear::shared_ptr<MockHandler>(new MockHandler());
+  shared_ptr<MockHandler> sh3 = linear::shared_ptr<MockHandler>(new MockHandler());
   SSLContext server_context(SSLContext::TLSv1_1);
   server_context.SetCertificate(std::string(SERVER_CERT));
   server_context.SetPrivateKey(std::string(SERVER_PKEY));
@@ -807,31 +811,31 @@ TEST_F(SSLClientServerSendRecvTest, NotifyFromClientToGroup) {
 
   {
     InSequence dummy;
-    EXPECT_CALL(ch, OnConnectMock(cs1)).Times(1)
+    EXPECT_CALL(*ch, OnConnectMock(cs1)).Times(1)
       .WillOnce(DoAll(WithArg<0>(JoinToGroup()), SendNotify2Group()));
-    EXPECT_CALL(ch, OnConnectMock(cs2)).Times(1)
+    EXPECT_CALL(*ch, OnConnectMock(cs2)).Times(1)
       .WillOnce(DoAll(WithArg<0>(JoinToGroup()), SendNotify2Group(), WithArg<0>(LeaveFromGroup())));
-    EXPECT_CALL(ch, OnConnectMock(cs3)).Times(1)
+    EXPECT_CALL(*ch, OnConnectMock(cs3)).Times(1)
       .WillOnce(DoAll(WithArg<0>(JoinToGroup()), SendNotify2Group()));
-    EXPECT_CALL(ch, OnDisconnectMock(_, _)).Times(::testing::AtLeast(1)).WillOnce(Assign(&cli_finished, true));
+    EXPECT_CALL(*ch, OnDisconnectMock(_, _)).Times(::testing::AtLeast(1)).WillOnce(Assign(&cli_finished, true));
   }
   {
     InSequence dummy;
-    EXPECT_CALL(sh1, OnConnectMock(_));
-    EXPECT_CALL(sh1, OnMessageMock(Eq(ByRef(sh1.s_)), _)).Times(3);
-    EXPECT_CALL(sh1, OnDisconnectMock(_, _)).Times(::testing::AtLeast(0));
+    EXPECT_CALL(*sh1, OnConnectMock(_));
+    EXPECT_CALL(*sh1, OnMessageMock(Eq(ByRef(sh1->s_)), _)).Times(3);
+    EXPECT_CALL(*sh1, OnDisconnectMock(_, _)).Times(::testing::AtLeast(0));
   }
   {
     InSequence dummy;
-    EXPECT_CALL(sh2, OnConnectMock(_)).Times(1);
-    EXPECT_CALL(sh2, OnMessageMock(Eq(ByRef(sh2.s_)), _)).Times(1);
-    EXPECT_CALL(sh2, OnDisconnectMock(_, _)).Times(::testing::AtLeast(0));
+    EXPECT_CALL(*sh2, OnConnectMock(_)).Times(1);
+    EXPECT_CALL(*sh2, OnMessageMock(Eq(ByRef(sh2->s_)), _)).Times(1);
+    EXPECT_CALL(*sh2, OnDisconnectMock(_, _)).Times(::testing::AtLeast(0));
   }
   {
     InSequence dummy;
-    EXPECT_CALL(sh3, OnConnectMock(_)).Times(1);
-    EXPECT_CALL(sh3, OnMessageMock(Eq(ByRef(sh3.s_)), _)).Times(1).WillOnce(WithArg<0>(Disconnect()));
-    EXPECT_CALL(sh3, OnDisconnectMock(Eq(ByRef(sh3.s_)), _)).WillOnce(Assign(&srv_finished, true));;
+    EXPECT_CALL(*sh3, OnConnectMock(_)).Times(1);
+    EXPECT_CALL(*sh3, OnMessageMock(Eq(ByRef(sh3->s_)), _)).Times(1).WillOnce(WithArg<0>(Disconnect()));
+    EXPECT_CALL(*sh3, OnDisconnectMock(Eq(ByRef(sh3->s_)), _)).WillOnce(Assign(&srv_finished, true));;
   }
 
   e = cs1.Connect();
@@ -843,27 +847,27 @@ TEST_F(SSLClientServerSendRecvTest, NotifyFromClientToGroup) {
   WAIT_TO_FINISH_CALLBACK();
 
   // check messages
-  ASSERT_TRUE(sh1.m_ != NULL);
-  ASSERT_EQ(NOTIFY, sh1.m_->type);
-  Notify recv_notif = sh1.m_->as<Notify>();
+  ASSERT_TRUE(sh1->m_ != NULL);
+  ASSERT_EQ(NOTIFY, sh1->m_->type);
+  Notify recv_notif = sh1->m_->as<Notify>();
   ASSERT_EQ(std::string(METHOD_NAME), recv_notif.method);
   linear::type::any params = Params();
   ASSERT_EQ(params, recv_notif.params);
-  ASSERT_TRUE(sh2.m_ != NULL);
-  ASSERT_EQ(NOTIFY, sh2.m_->type);
-  recv_notif = sh2.m_->as<Notify>();
+  ASSERT_TRUE(sh2->m_ != NULL);
+  ASSERT_EQ(NOTIFY, sh2->m_->type);
+  recv_notif = sh2->m_->as<Notify>();
   ASSERT_EQ(std::string(METHOD_NAME), recv_notif.method);
   ASSERT_EQ(params, recv_notif.params);
-  ASSERT_TRUE(sh3.m_ != NULL);
-  ASSERT_EQ(NOTIFY, sh3.m_->type);
-  recv_notif = sh3.m_->as<Notify>();
+  ASSERT_TRUE(sh3->m_ != NULL);
+  ASSERT_EQ(NOTIFY, sh3->m_->type);
+  recv_notif = sh3->m_->as<Notify>();
   ASSERT_EQ(std::string(METHOD_NAME), recv_notif.method);
   ASSERT_EQ(params, recv_notif.params);
 }
 
 // Send Request with Long Message from Client in front thread and Send Response from Server in back thread
 TEST_F(SSLClientServerSendRecvTest, RequestFromClientFTWithLongResponseFromServerBT) {
-  MockHandler ch;
+  linear::shared_ptr<MockHandler> ch = linear::shared_ptr<MockHandler>(new MockHandler());
   SSLContext context(SSLContext::TLSv1_1);
   context.SetCertificate(std::string(CLIENT_CERT));
   context.SetPrivateKey(std::string(CLIENT_PKEY));
@@ -871,7 +875,7 @@ TEST_F(SSLClientServerSendRecvTest, RequestFromClientFTWithLongResponseFromServe
   context.SetCiphers(std::string(CIPHER_LIST));
   context.SetVerifyMode(SSLContext::VERIFY_PEER);
   SSLClient cl(ch, context);
-  MockHandler sh;
+  linear::shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
   SSLContext server_context(SSLContext::TLSv1_1);
   server_context.SetCertificate(std::string(SERVER_CERT));
   server_context.SetPrivateKey(std::string(SERVER_PKEY));
@@ -887,15 +891,15 @@ TEST_F(SSLClientServerSendRecvTest, RequestFromClientFTWithLongResponseFromServe
 
   {
     InSequence dummy;
-    EXPECT_CALL(sh, OnConnectMock(_));
-    EXPECT_CALL(sh, OnMessageMock(Eq(ByRef(sh.s_)), _)).WillOnce(DoAll(WithArgs<0, 1>(SendResponse()), Assign(&srv_finished, true)));
-    EXPECT_CALL(sh, OnDisconnectMock(_, _)).Times(::testing::AtLeast(0));
+    EXPECT_CALL(*sh, OnConnectMock(_));
+    EXPECT_CALL(*sh, OnMessageMock(Eq(ByRef(sh->s_)), _)).WillOnce(DoAll(WithArgs<0, 1>(SendResponse()), Assign(&srv_finished, true)));
+    EXPECT_CALL(*sh, OnDisconnectMock(_, _)).Times(::testing::AtLeast(0));
   }
   {
     InSequence dummy;
-    EXPECT_CALL(ch, OnConnectMock(cs));
-    EXPECT_CALL(ch, OnMessageMock(cs, _)).WillOnce(Assign(&cli_finished, true));
-    EXPECT_CALL(ch, OnDisconnectMock(_, _)).Times(::testing::AtLeast(0));
+    EXPECT_CALL(*ch, OnConnectMock(cs));
+    EXPECT_CALL(*ch, OnMessageMock(cs, _)).WillOnce(Assign(&cli_finished, true));
+    EXPECT_CALL(*ch, OnDisconnectMock(_, _)).Times(::testing::AtLeast(0));
   }
 
   e = cs.Connect();
@@ -908,14 +912,14 @@ TEST_F(SSLClientServerSendRecvTest, RequestFromClientFTWithLongResponseFromServe
   WAIT_TO_FINISH_CALLBACK();
 
   // check message in server side
-  ASSERT_TRUE(sh.m_ != NULL);
-  ASSERT_EQ(REQUEST, sh.m_->type);
-  Request recv_req = sh.m_->as<Request>();
+  ASSERT_TRUE(sh->m_ != NULL);
+  ASSERT_EQ(REQUEST, sh->m_->type);
+  Request recv_req = sh->m_->as<Request>();
   ASSERT_EQ(req.msgid, recv_req.msgid);
   // check message in client side
-  ASSERT_TRUE(ch.m_ != NULL);
-  ASSERT_EQ(RESPONSE, ch.m_->type);
-  Response resp = ch.m_->as<Response>();
+  ASSERT_TRUE(ch->m_ != NULL);
+  ASSERT_EQ(RESPONSE, ch->m_->type);
+  Response resp = ch->m_->as<Response>();
   ASSERT_EQ(req.msgid, resp.msgid);
   ASSERT_EQ(req.params, resp.result);
   ASSERT_TRUE(resp.error.is_nil());
@@ -927,7 +931,7 @@ TEST_F(SSLClientServerSendRecvTest, MalformedPacket) {
     LINEAR_LOG(LOG_DEBUG, "sizeof(size_t) != 4, so ignore this test");
     return;
   }
-  MockHandler sh;
+  linear::shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
   SSLContext server_context(SSLContext::TLSv1_1);
   server_context.SetCertificate(std::string(SERVER_CERT));
   server_context.SetPrivateKey(std::string(SERVER_PKEY));
@@ -939,8 +943,8 @@ TEST_F(SSLClientServerSendRecvTest, MalformedPacket) {
   Error e = sv.Start(TEST_ADDR, TEST_PORT);
   ASSERT_EQ(LNR_OK, e.Code());
 
-  EXPECT_CALL(sh, OnConnectMock(_)).Times(1);
-  EXPECT_CALL(sh, OnDisconnectMock(_, _)).WillOnce(DoAll(Assign(&srv_finished, true), Assign(&cli_finished, true)));
+  EXPECT_CALL(*sh, OnConnectMock(_)).Times(1);
+  EXPECT_CALL(*sh, OnDisconnectMock(_, _)).WillOnce(DoAll(Assign(&srv_finished, true), Assign(&cli_finished, true)));
 
   struct sockaddr_in s;
   int fd = socket(AF_INET, SOCK_STREAM, 0);

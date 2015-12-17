@@ -30,11 +30,12 @@ class LINEAR_EXTERN WSSServer : public Server {
    * @param [in] handler application defined behavior.
    * @param [in] ssl_context linear::SSLContext object
    * @param [in] auth_type authentication type
+   * @see linear::AuthContext
    * @param [in] realm authentication realm
    * @see linear::AuthContext
    * @param [in] [loop] eventloop(thread) object
    */
-  WSSServer(const linear::Handler& handler,
+  WSSServer(const linear::shared_ptr<linear::Handler>& handler,
             const linear::SSLContext& ssl_context = linear::SSLContext(),
             linear::AuthContext::Type auth_type = linear::AuthContext::UNUSED,
             const std::string& realm = "Authorization Required",
@@ -43,17 +44,18 @@ class LINEAR_EXTERN WSSServer : public Server {
    * WSSServer Constructor with SSLContext
    * @param [in] handler application defined behavior.
    * @param [in] ssl_context linear::SSLContext object
-   * @param [in] [loop] eventloop(thread) object
+   * @param [in] loop eventloop(thread) object
    */
-  WSSServer(const linear::Handler& handler,
+  WSSServer(const linear::shared_ptr<linear::Handler>& handler,
             const linear::SSLContext& ssl_context,
             const linear::EventLoop& loop);
   /**
    * WSSServer Constructor with SSLContext
    * @param [in] handler application defined behavior.
-   * @param [in] [loop] eventloop(thread) object
+   * @param [in] loop eventloop(thread) object
    */
-  WSSServer(const linear::Handler& handler, const linear::EventLoop& loop);
+  WSSServer(const linear::shared_ptr<linear::Handler>& handler,
+            const linear::EventLoop& loop);
   /**
    * Set SSLContext into Server Object.
    * If you can not provide handler when construct SSLServer, call this method.

@@ -16,13 +16,13 @@ class WSSSocketImpl : public linear::SocketImpl {
                 const linear::WSRequestContext& ws_context,
                 const SSLContext& ssl_context,
                 const linear::shared_ptr<linear::EventLoopImpl>& loop,
-                const linear::HandlerDelegate& delegate);
+                const linear::weak_ptr<linear::HandlerDelegate>& delegate);
   // Server Socket
   WSSSocketImpl(tv_stream_t* stream,
                 const linear::WSRequestContext& ws_context,
                 const SSLContext& ssl_context,
                 const linear::shared_ptr<linear::EventLoopImpl>& loop,
-                const linear::HandlerDelegate& delegate);
+                const linear::weak_ptr<linear::HandlerDelegate>& delegate);
   virtual ~WSSSocketImpl();
   linear::Error Connect();
   void OnConnect(const shared_ptr<SocketImpl>& socket, tv_stream_t* handle, int status);

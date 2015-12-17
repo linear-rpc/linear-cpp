@@ -17,26 +17,12 @@ mutex::mutex_impl::~mutex_impl() {
 void mutex::mutex_impl::lock() {
   uv_mutex_lock(&mutex_);
 }
-#define WAIT_UPDATING_LIBUV (1) // https://github.com/linear-rpc/linear-cpp/issues/1
 bool mutex::mutex_impl::try_lock() {
-#if WAIT_UPDATING_LIBUV && ! defined(_WIN32)
-  int err;
-  err = pthread_mutex_trylock(&mutex_);
-  if (err) {
-    if (err != EBUSY && err != EAGAIN && err != EDEADLK) {
-      abort();
-    }
-    return false;
-  }
-  return true;
-#else
   if (uv_mutex_trylock(&mutex_)) {
     return false;
   }
   return true;
-#endif
 }
-#undef WAIT_UPDATING_LIBUV
 void mutex::mutex_impl::unlock() {
   uv_mutex_unlock(&mutex_);
 }

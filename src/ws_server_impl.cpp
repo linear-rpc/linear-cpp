@@ -10,12 +10,11 @@ using namespace linear::log;
 
 namespace linear {
 
-WSServerImpl::WSServerImpl(const Handler& handler,
-                           linear::AuthContext::Type auth_type,
-                           const std::string& realm,
-                           const linear::EventLoop& loop)
+WSServerImpl::WSServerImpl(const weak_ptr<Handler>& handler,
+                           AuthContext::Type auth_type, const std::string& realm,
+                           const EventLoop& loop)
   : ServerImpl(handler, loop),
-    auth_type_(auth_type), realm_(realm), handle_(NULL) {
+    auth_type_(auth_type), realm_(realm) {
 }
 
 WSServerImpl::~WSServerImpl() {
@@ -87,8 +86,9 @@ void WSServerImpl::OnAccept(tv_stream_t* srv_stream, tv_stream_t* cli_stream, in
     return;
   }
   try {
-    linear::WSRequestContext request_context_;
-    shared_ptr<WSSocketImpl> shared = shared_ptr<WSSocketImpl>(new WSSocketImpl(cli_stream, request_context_, loop_, *this));
+    WSRequestContext request_context_;
+    weak_ptr<HandlerDelegate> self = reinterpret_cast<EventLoopImpl::ServerEvent*>(handle_->data)->server;
+    shared_ptr<WSSocketImpl> shared = shared_ptr<WSSocketImpl>(new WSSocketImpl(cli_stream, request_context_, loop_, self));
     EventLoopImpl::SocketEvent* ev = new EventLoopImpl::SocketEvent(shared);
     if (shared->StartRead(ev) != Error(LNR_OK)) {
         throw std::runtime_error("fail to accept");
@@ -128,7 +128,7 @@ void WSServerImpl::OnAccept(tv_stream_t* srv_stream, tv_stream_t* cli_stream, in
           impl.valid_nonce = nonce_pool_.IsValid(impl.nonce);
           nonce_pool_.Remove(impl.nonce);
         }
-        AuthorizationContext authorization(linear::shared_ptr<AuthorizationContextImpl>(new AuthorizationContextImpl(impl)));
+        AuthorizationContext authorization(shared_ptr<AuthorizationContextImpl>(new AuthorizationContextImpl(impl)));
         authorization.type = auth_type_;
         authorization.username = impl.username;
         authorization.realm = impl.realm;
