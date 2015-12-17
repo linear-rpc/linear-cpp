@@ -110,7 +110,6 @@ void EventLoopImpl::OnRequestTimeout(void* args) {
 }
 
 EventLoopImpl::EventLoopImpl() : handle_(tv_loop_new()) {
-  LINEAR_DEBUG(LOG_DEBUG, "%s: %p", __PRETTY_FUNCTION__, handle_);
   assert(handle_ != NULL);
 }
 
@@ -123,7 +122,6 @@ EventLoopImpl& EventLoopImpl::operator=(const EventLoopImpl& loop) {
 }
 
 EventLoopImpl::~EventLoopImpl() {
-  LINEAR_DEBUG(LOG_DEBUG, "%s: %p", __PRETTY_FUNCTION__, handle_);
   tv_loop_delete(handle_);
 }
 

@@ -367,9 +367,7 @@ void SocketImpl::OnDisconnect(const shared_ptr<SocketImpl>& socket) {
   state_lock.unlock();
   shared_ptr<HandlerDelegate> delegate = delegate_.lock();
   if (delegate) {
-    LINEAR_LOG(LOG_DEBUG, "to call delegate->Release");
     delegate->Release(socket);
-    LINEAR_LOG(LOG_DEBUG, "called delegate->Release");
   }
   // retry to connect for WebSocket DigestAuth
   if (connectable_) {
@@ -427,9 +425,7 @@ void SocketImpl::OnDisconnect(const shared_ptr<SocketImpl>& socket) {
   }
   _DiscardMessages(socket);
   if (delegate && !handshaking_) {
-    LINEAR_LOG(LOG_DEBUG, "to call delegate->OnDisconnect");
     delegate->OnDisconnect(socket, last_error_);
-    LINEAR_LOG(LOG_DEBUG, "to call delegate->OnDisconnect");
   }
   self_ = Addrinfo(); // reset self info
   return;
