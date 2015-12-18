@@ -564,27 +564,37 @@ TEST_F(WSClientServerSendRecvTest, NotifyFromServerToGroup) {
   }
   {
     InSequence dummy;
-    EXPECT_CALL(*ch1, OnConnectMock(cs1));
-    EXPECT_CALL(*ch1, OnMessageMock(cs1, _)).Times(3);
-    EXPECT_CALL(*ch1, OnDisconnectMock(_, _)).Times(::testing::AtLeast(0));
+    EXPECT_CALL(*ch1, OnConnectMock(cs1)).WillOnce(Assign(&cli_finished, true));
   }
   {
     InSequence dummy;
-    EXPECT_CALL(*ch2, OnConnectMock(cs2));
+    EXPECT_CALL(*ch1, OnMessageMock(cs1, _)).Times(2);
+    EXPECT_CALL(*ch1, OnMessageMock(cs1, _)).WillOnce(WithArg<0>(Disconnect()));
+    EXPECT_CALL(*ch1, OnDisconnectMock(_, _)).WillOnce(Assign(&cli_finished, true));
+  }
+  srv_finished = true;
+  e = cs1.Connect();
+  ASSERT_EQ(LNR_OK, e.Code());
+  WAIT_TO_FINISH_CALLBACK();
+  {
+    InSequence dummy;
+    EXPECT_CALL(*ch2, OnConnectMock(cs2)).WillOnce(Assign(&cli_finished, true));
+  }
+  {
+    InSequence dummy;
     EXPECT_CALL(*ch2, OnMessageMock(cs2, _)).Times(1);
     EXPECT_CALL(*ch2, OnDisconnectMock(_, _)).Times(::testing::AtLeast(0));
   }
+  srv_finished = true;
+  e = cs2.Connect();
+  ASSERT_EQ(LNR_OK, e.Code());
+  WAIT_TO_FINISH_CALLBACK();
   {
     InSequence dummy;
     EXPECT_CALL(*ch3, OnConnectMock(cs3));
-    EXPECT_CALL(*ch3, OnMessageMock(cs3, _)).Times(1).WillOnce(WithArg<0>(Disconnect()));
-    EXPECT_CALL(*ch3, OnDisconnectMock(cs3, _)).WillOnce(Assign(&cli_finished, true));
+    EXPECT_CALL(*ch3, OnMessageMock(cs3, _)).Times(1);
+    EXPECT_CALL(*ch3, OnDisconnectMock(cs3, _)).Times(::testing::AtLeast(0));
   }
-
-  e = cs1.Connect();
-  ASSERT_EQ(LNR_OK, e.Code());
-  e = cs2.Connect();
-  ASSERT_EQ(LNR_OK, e.Code());
   e = cs3.Connect();
   ASSERT_EQ(LNR_OK, e.Code());
   WAIT_TO_FINISH_CALLBACK();
@@ -630,19 +640,10 @@ TEST_F(WSClientServerSendRecvTest, NotifyFromClientToGroup) {
 
   {
     InSequence dummy;
-    EXPECT_CALL(*ch, OnConnectMock(cs1)).Times(1)
-      .WillOnce(DoAll(WithArg<0>(JoinToGroup()), SendNotify2Group()));
-    EXPECT_CALL(*ch, OnConnectMock(cs2)).Times(1)
-      .WillOnce(DoAll(WithArg<0>(JoinToGroup()), SendNotify2Group(), WithArg<0>(LeaveFromGroup())));
-    EXPECT_CALL(*ch, OnConnectMock(cs3)).Times(1)
-      .WillOnce(DoAll(WithArg<0>(JoinToGroup()), SendNotify2Group()));
-    EXPECT_CALL(*ch, OnDisconnectMock(_, _)).Times(::testing::AtLeast(1)).WillOnce(Assign(&cli_finished, true));
-  }
-  {
-    InSequence dummy;
     EXPECT_CALL(*sh1, OnConnectMock(_));
-    EXPECT_CALL(*sh1, OnMessageMock(Eq(ByRef(sh1->s_)), _)).Times(3);
-    EXPECT_CALL(*sh1, OnDisconnectMock(_, _)).Times(::testing::AtLeast(0));
+    EXPECT_CALL(*sh1, OnMessageMock(Eq(ByRef(sh1->s_)), _)).Times(2);
+    EXPECT_CALL(*sh1, OnMessageMock(Eq(ByRef(sh1->s_)), _)).WillOnce(WithArg<0>(Disconnect()));
+    EXPECT_CALL(*sh1, OnDisconnectMock(_, _)).Times(::testing::AtLeast(1)).WillOnce(Assign(&srv_finished, true));
   }
   {
     InSequence dummy;
@@ -653,14 +654,33 @@ TEST_F(WSClientServerSendRecvTest, NotifyFromClientToGroup) {
   {
     InSequence dummy;
     EXPECT_CALL(*sh3, OnConnectMock(_)).Times(1);
-    EXPECT_CALL(*sh3, OnMessageMock(Eq(ByRef(sh3->s_)), _)).Times(1).WillOnce(WithArg<0>(Disconnect()));
-    EXPECT_CALL(*sh3, OnDisconnectMock(Eq(ByRef(sh3->s_)), _)).WillOnce(Assign(&srv_finished, true));;
+    EXPECT_CALL(*sh3, OnMessageMock(Eq(ByRef(sh3->s_)), _)).Times(1);
+    EXPECT_CALL(*sh3, OnDisconnectMock(Eq(ByRef(sh3->s_)), _)).Times(::testing::AtLeast(0));
   }
-
+  {
+    InSequence dummy;
+    EXPECT_CALL(*ch, OnConnectMock(cs1)).Times(1)
+      .WillOnce(DoAll(WithArg<0>(JoinToGroup()), SendNotify2Group(), Assign(&cli_finished, true)));
+  }
+  srv_finished = true;
   e = cs1.Connect();
   ASSERT_EQ(LNR_OK, e.Code());
+  WAIT_TO_FINISH_CALLBACK();
+  {
+    InSequence dummy;
+    EXPECT_CALL(*ch, OnConnectMock(cs2)).Times(1)
+      .WillOnce(DoAll(WithArg<0>(JoinToGroup()), SendNotify2Group(), WithArg<0>(LeaveFromGroup()), Assign(&cli_finished, true)));
+  }
+  srv_finished = true;
   e = cs2.Connect();
   ASSERT_EQ(LNR_OK, e.Code());
+  WAIT_TO_FINISH_CALLBACK();
+  {
+    InSequence dummy;
+    EXPECT_CALL(*ch, OnConnectMock(cs3)).Times(1)
+      .WillOnce(DoAll(WithArg<0>(JoinToGroup()), SendNotify2Group()));
+    EXPECT_CALL(*ch, OnDisconnectMock(_, _)).Times(::testing::AtLeast(1)).WillOnce(Assign(&cli_finished, true));
+  }
   e = cs3.Connect();
   ASSERT_EQ(LNR_OK, e.Code());
   WAIT_TO_FINISH_CALLBACK();
