@@ -378,3 +378,119 @@ TEST_F(TCPClientServerConnectionTest, ConnectStop) {
   WAIT_TO_FINISH_CALLBACK();
 }
 
+// ClientLoop on Global
+linear::EventLoop g_loop = linear::EventLoop::GetDefault();
+TEST_F(TCPClientServerConnectionTest, ClientLoopOnGlobal) {
+  shared_ptr<MockHandler> ch = linear::shared_ptr<MockHandler>(new MockHandler());
+  TCPClient cl(ch, g_loop);
+  shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
+  TCPServer sv(sh);
+
+  Error e = sv.Start(TEST_ADDR, TEST_PORT);
+  ASSERT_EQ(LNR_OK, e.Code());
+
+  linear::TCPSocket cs = cl.CreateSocket(TEST_ADDR, TEST_PORT);
+
+  EXPECT_CALL(*sh, OnConnectMock(_)).Times(::testing::AtLeast(0)).WillOnce(WithArg<0>(Disconnect()));
+  EXPECT_CALL(*sh, OnDisconnectMock(_, _)).WillOnce(Assign(&srv_finished, true));
+  EXPECT_CALL(*ch, OnConnectMock(cs)).Times(::testing::AtLeast(0)).WillOnce(WithArg<0>(Disconnect()));
+  EXPECT_CALL(*ch, OnDisconnectMock(cs, _)).WillOnce(Assign(&cli_finished, true));
+
+  e = cs.Connect();
+  ASSERT_EQ(LNR_OK, e.Code());
+  WAIT_TO_FINISH_CALLBACK();
+}
+
+// ServerLoop on Global
+TEST_F(TCPClientServerConnectionTest, ServerLoopOnGlobal) {
+  shared_ptr<MockHandler> ch = linear::shared_ptr<MockHandler>(new MockHandler());
+  TCPClient cl(ch);
+  shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
+  TCPServer sv(sh, g_loop);
+
+  Error e = sv.Start(TEST_ADDR, TEST_PORT);
+  ASSERT_EQ(LNR_OK, e.Code());
+
+  linear::TCPSocket cs = cl.CreateSocket(TEST_ADDR, TEST_PORT);
+
+  EXPECT_CALL(*sh, OnConnectMock(_)).Times(::testing::AtLeast(0)).WillOnce(WithArg<0>(Disconnect()));
+  EXPECT_CALL(*sh, OnDisconnectMock(_, _)).WillOnce(Assign(&srv_finished, true));
+  EXPECT_CALL(*ch, OnConnectMock(cs)).Times(::testing::AtLeast(0)).WillOnce(WithArg<0>(Disconnect()));
+  EXPECT_CALL(*ch, OnDisconnectMock(cs, _)).WillOnce(Assign(&cli_finished, true));
+
+  e = cs.Connect();
+  ASSERT_EQ(LNR_OK, e.Code());
+  WAIT_TO_FINISH_CALLBACK();
+}
+
+// Client on global
+TCPClient *g_cl;
+TEST_F(TCPClientServerConnectionTest, ClientOnGlobal) {
+  shared_ptr<MockHandler> ch = linear::shared_ptr<MockHandler>(new MockHandler());
+  g_cl = new TCPClient(ch);
+  shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
+  TCPServer sv(sh);
+
+  Error e = sv.Start(TEST_ADDR, TEST_PORT);
+  ASSERT_EQ(LNR_OK, e.Code());
+
+  linear::TCPSocket cs = g_cl->CreateSocket(TEST_ADDR, TEST_PORT);
+
+  EXPECT_CALL(*sh, OnConnectMock(_)).Times(::testing::AtLeast(0)).WillOnce(WithArg<0>(Disconnect()));
+  EXPECT_CALL(*sh, OnDisconnectMock(_, _)).WillOnce(Assign(&srv_finished, true));
+  EXPECT_CALL(*ch, OnConnectMock(cs)).Times(::testing::AtLeast(0)).WillOnce(WithArg<0>(Disconnect()));
+  EXPECT_CALL(*ch, OnDisconnectMock(cs, _)).WillOnce(Assign(&cli_finished, true));
+
+  e = cs.Connect();
+  ASSERT_EQ(LNR_OK, e.Code());
+  WAIT_TO_FINISH_CALLBACK();
+  delete g_cl;
+}
+
+// client on global
+TCPServer* g_sv;
+TEST_F(TCPClientServerConnectionTest, ServerOnGlobal) {
+  shared_ptr<MockHandler> ch = linear::shared_ptr<MockHandler>(new MockHandler());
+  TCPClient cl(ch);
+  shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
+  g_sv = new TCPServer(sh);
+
+  Error e = g_sv->Start(TEST_ADDR, TEST_PORT);
+  ASSERT_EQ(LNR_OK, e.Code());
+
+  linear::TCPSocket cs = cl.CreateSocket(TEST_ADDR, TEST_PORT);
+
+  EXPECT_CALL(*sh, OnConnectMock(_)).Times(::testing::AtLeast(0)).WillOnce(WithArg<0>(Disconnect()));
+  EXPECT_CALL(*sh, OnDisconnectMock(_, _)).WillOnce(Assign(&srv_finished, true));
+  EXPECT_CALL(*ch, OnConnectMock(cs)).Times(::testing::AtLeast(0)).WillOnce(WithArg<0>(Disconnect()));
+  EXPECT_CALL(*ch, OnDisconnectMock(cs, _)).WillOnce(Assign(&cli_finished, true));
+
+  e = cs.Connect();
+  ASSERT_EQ(LNR_OK, e.Code());
+  WAIT_TO_FINISH_CALLBACK();
+  delete g_sv;
+}
+
+// Socket on Global
+linear::TCPSocket g_cs;
+TEST_F(TCPClientServerConnectionTest, SocketOnGlobal) {
+  shared_ptr<MockHandler> ch = linear::shared_ptr<MockHandler>(new MockHandler());
+  TCPClient cl(ch);
+  shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
+  TCPServer sv(sh);
+
+  Error e = sv.Start(TEST_ADDR, TEST_PORT);
+  ASSERT_EQ(LNR_OK, e.Code());
+
+  g_cs = cl.CreateSocket(TEST_ADDR, TEST_PORT);
+
+  EXPECT_CALL(*sh, OnConnectMock(_)).Times(::testing::AtLeast(0)).WillOnce(WithArg<0>(Disconnect()));
+  EXPECT_CALL(*sh, OnDisconnectMock(_, _)).WillOnce(Assign(&srv_finished, true));
+  EXPECT_CALL(*ch, OnConnectMock(g_cs)).Times(::testing::AtLeast(0)).WillOnce(WithArg<0>(Disconnect()));
+  EXPECT_CALL(*ch, OnDisconnectMock(g_cs, _)).WillOnce(Assign(&cli_finished, true));
+
+  e = g_cs.Connect();
+  ASSERT_EQ(LNR_OK, e.Code());
+  WAIT_TO_FINISH_CALLBACK();
+}
+
