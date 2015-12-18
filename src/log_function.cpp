@@ -4,6 +4,10 @@ namespace linear {
 
 namespace log {
 
+LogFunction::~LogFunction() {
+  Disable();
+}
+
 bool LogFunction::Available() {
   linear::lock_guard<linear::mutex> lock(mutex_);
   return (callback_ != NULL);

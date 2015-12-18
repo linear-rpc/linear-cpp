@@ -10,7 +10,7 @@ namespace log {
 class LogFunction : public Log {
  public:
   LogFunction() : callback_(NULL) {}
-  ~LogFunction() {}
+  ~LogFunction();
   bool Available();
   bool Enable(LogCallback callback);
   void Disable();
