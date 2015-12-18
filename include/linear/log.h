@@ -115,18 +115,21 @@ LINEAR_EXTERN void SetLevel(linear::log::Level level);
 
 /**
  * show logs to stderr
+ * @note call DisableStderr() at the end of your application
  **/
 LINEAR_EXTERN bool EnableStderr();
 
 /**
  * write log to specified file
  * @param filename [in] file name to write logs
+ * @note call DisableFile() at the end of your application
  **/
 LINEAR_EXTERN bool EnableFile(const std::string& filename);
 
 /**
  * start to callback for writing logs
  * @param function [in] function name to output logs
+ * @note call DisableCallback() at the end of your application
  **/
 LINEAR_EXTERN bool EnableCallback(linear::log::LogCallback function);
 

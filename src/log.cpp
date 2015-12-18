@@ -1,8 +1,6 @@
 #include <stdarg.h>
 #include <time.h>
 
-#include "linear/memory.h"
-
 #include "log_stderr.h"
 #include "log_function.h"
 
@@ -19,23 +17,21 @@ namespace log {
 
 static Level g_level = LOG_OFF;
 
-// ref(but there's bit differences):
-// http://stackoverflow.com/questions/16140294/is-it-right-way-to-create-sinlgeton-class-by-weak-ptr
-static linear::shared_ptr<LogStderr> g_stderr = linear::shared_ptr<LogStderr>(new LogStderr());
-static linear::shared_ptr<LogFile> g_file = linear::shared_ptr<LogFile>(new LogFile());
-static linear::shared_ptr<LogFunction> g_function = linear::shared_ptr<LogFunction>(new LogFunction());
+static bool g_log_stderr = false;
+static bool g_log_file = false;
+static bool g_log_function = false;
 
-static linear::weak_ptr<LogStderr>& GetLogStderr() {
-  static linear::weak_ptr<LogStderr> weak = g_stderr;
-  return weak;
+static LogStderr& GetLogStderr() {
+  static LogStderr s_stderr;
+  return s_stderr;
 }
-static linear::weak_ptr<LogFile>& GetLogFile() {
-  static linear::weak_ptr<LogFile> weak = g_file;
-  return weak;
+static LogFile& GetLogFile() {
+  static LogFile s_file;
+  return s_file;
 }
-static linear::weak_ptr<LogFunction>& GetLogFunction() {
-  static linear::weak_ptr<LogFunction> weak = g_function;
-  return weak;
+static LogFunction& GetLogFunction() {
+  static LogFunction s_function;
+  return s_function;
 }
 
 /* functions */
@@ -48,52 +44,49 @@ void SetLevel(Level level) {
 }
 
 bool EnableStderr() {
-  if (linear::shared_ptr<LogStderr> shared = GetLogStderr().lock()) {
-    return shared->Enable();
-  }
-  return false;
+  g_log_stderr = GetLogStderr().Enable();
+  return g_log_stderr;
 }
 
 bool EnableFile(const std::string& filename) {
-  if (linear::shared_ptr<LogFile> shared = GetLogFile().lock()) {
-    return shared->Enable(filename);
-  }
-  return false;
+  g_log_file = GetLogFile().Enable(filename);
+  return g_log_file;
 }
 
 bool EnableCallback(LogCallback callback) {
-  if (linear::shared_ptr<LogFunction> shared = GetLogFunction().lock()) {
-    return shared->Enable(callback);
-  }
-  return false;
+  g_log_function = GetLogFunction().Enable(callback);
+  return g_log_function;
 }
 
 void DisableStderr() {
-  if (linear::shared_ptr<LogStderr> shared = GetLogStderr().lock()) {
-    shared->Disable();
+  if (g_log_stderr) {
+    GetLogStderr().Disable();
+    g_log_stderr = false;
   }
 }
 
 void DisableFile() {
-  if (linear::shared_ptr<LogFile> shared = GetLogFile().lock()) {
-    shared->Disable();
+  if (g_log_file) {
+    GetLogFile().Disable();
+    g_log_file = false;
   }
 }
 
 void DisableCallback() {
-  if (linear::shared_ptr<LogFunction> shared = GetLogFunction().lock()) {
-    shared->Disable();
+  if (g_log_function) {
+    GetLogFunction().Disable();
+    g_log_function = false;
   }
 }
 
 void Colorize(bool flag) {
-  if (linear::shared_ptr<LogStderr> shared = GetLogStderr().lock()) {
-    shared->Colorize(flag);
+  if (g_log_stderr) {
+    GetLogStderr().Colorize(flag);
   }
 }
 
 bool DoPrint(linear::log::Level level) {
-  return (level <= g_level);
+  return (level <= g_level && (g_log_stderr || g_log_file || g_log_function));
 }
 
 void Print(bool debug, linear::log::Level level, const char* file, int line, const char* func, const char* format, ...) {
@@ -108,14 +101,14 @@ void Print(bool debug, linear::log::Level level, const char* file, int line, con
 #endif
   va_end(args);
 
-  if (linear::shared_ptr<LogStderr> shared = GetLogStderr().lock()) {
-    shared->Write(debug, level, file, line, func, buffer);
+  if (g_log_stderr) {
+    GetLogStderr().Write(debug, level, file, line, func, buffer);
   }
-  if (linear::shared_ptr<LogFile> shared = GetLogFile().lock()) {
-    shared->Write(debug, level, file, line, func, buffer);
+  if (g_log_file) {
+    GetLogFile().Write(debug, level, file, line, func, buffer);
   }
-  if (linear::shared_ptr<LogFunction> shared = GetLogFunction().lock()) {
-    shared->Write(debug, level, file, line, func, buffer);
+  if (g_log_function) {
+    GetLogFunction().Write(debug, level, file, line, func, buffer);
   }
 }
 

@@ -38,6 +38,9 @@ HandlerDelegate::HandlerDelegate(const weak_ptr<Handler>& handler,
 }
 
 HandlerDelegate::~HandlerDelegate() {
+  linear::log::DisableStderr();
+  linear::log::DisableFile();
+  linear::log::DisableCallback();
 }
 
 void HandlerDelegate::SetMaxLimit(size_t max) {

@@ -40,7 +40,9 @@ class LinearTest : public ::testing::Test {
     linear::log::SetLevel(linear::log::LOG_DEBUG);
     linear::log::EnableStderr();
   }
-  virtual void TearDown() {}
+  virtual void TearDown() {
+    linear::log::DisableStderr();
+  }
   virtual void WAIT_TO_FINISH_CALLBACK() {
     while (!srv_finished || !cli_finished) {
       msleep(1);
