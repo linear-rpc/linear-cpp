@@ -423,7 +423,7 @@ TEST_F(TCPClientServerConnectionTest, ServerLoopOnGlobal) {
   WAIT_TO_FINISH_CALLBACK();
 }
 
-// Client on global
+// Client on Global
 TCPClient *g_cl;
 TEST_F(TCPClientServerConnectionTest, ClientOnGlobal) {
   shared_ptr<MockHandler> ch = linear::shared_ptr<MockHandler>(new MockHandler());
@@ -447,7 +447,7 @@ TEST_F(TCPClientServerConnectionTest, ClientOnGlobal) {
   delete g_cl;
 }
 
-// client on global
+// Server on Global
 TCPServer* g_sv;
 TEST_F(TCPClientServerConnectionTest, ServerOnGlobal) {
   shared_ptr<MockHandler> ch = linear::shared_ptr<MockHandler>(new MockHandler());
