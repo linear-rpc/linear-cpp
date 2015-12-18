@@ -1,6 +1,8 @@
 #include <stdarg.h>
 #include <time.h>
 
+#include "linear/memory.h"
+
 #include "log_stderr.h"
 #include "log_function.h"
 
@@ -17,17 +19,23 @@ namespace log {
 
 static Level g_level = LOG_OFF;
 
-static LogStderr& GetLogStderr() {
-  static LogStderr s_stderr;
-  return s_stderr;
+// ref(but there's bit differences):
+// http://stackoverflow.com/questions/16140294/is-it-right-way-to-create-sinlgeton-class-by-weak-ptr
+static linear::shared_ptr<LogStderr> g_stderr = linear::shared_ptr<LogStderr>(new LogStderr());
+static linear::shared_ptr<LogFile> g_file = linear::shared_ptr<LogFile>(new LogFile());
+static linear::shared_ptr<LogFunction> g_function = linear::shared_ptr<LogFunction>(new LogFunction());
+
+static linear::weak_ptr<LogStderr>& GetLogStderr() {
+  static linear::weak_ptr<LogStderr> weak = g_stderr;
+  return weak;
 }
-static LogFile& GetLogFile() {
-  static LogFile s_file;
-  return s_file;
+static linear::weak_ptr<LogFile>& GetLogFile() {
+  static linear::weak_ptr<LogFile> weak = g_file;
+  return weak;
 }
-static LogFunction& GetLogFunction() {
-  static LogFunction s_function;
-  return s_function;
+static linear::weak_ptr<LogFunction>& GetLogFunction() {
+  static linear::weak_ptr<LogFunction> weak = g_function;
+  return weak;
 }
 
 /* functions */
@@ -40,35 +48,52 @@ void SetLevel(Level level) {
 }
 
 bool EnableStderr() {
-  return GetLogStderr().Enable();
+  if (linear::shared_ptr<LogStderr> shared = GetLogStderr().lock()) {
+    return shared->Enable();
+  }
+  return false;
 }
 
 bool EnableFile(const std::string& filename) {
-  return GetLogFile().Enable(filename);
+  if (linear::shared_ptr<LogFile> shared = GetLogFile().lock()) {
+    return shared->Enable(filename);
+  }
+  return false;
 }
 
 bool EnableCallback(LogCallback callback) {
-  return GetLogFunction().Enable(callback);
+  if (linear::shared_ptr<LogFunction> shared = GetLogFunction().lock()) {
+    return shared->Enable(callback);
+  }
+  return false;
 }
 
 void DisableStderr() {
-  GetLogStderr().Disable();
+  if (linear::shared_ptr<LogStderr> shared = GetLogStderr().lock()) {
+    shared->Disable();
+  }
 }
 
 void DisableFile() {
-  GetLogFile().Disable();
+  if (linear::shared_ptr<LogFile> shared = GetLogFile().lock()) {
+    shared->Disable();
+  }
 }
 
 void DisableCallback() {
-  GetLogFunction().Disable();
+  if (linear::shared_ptr<LogFunction> shared = GetLogFunction().lock()) {
+    shared->Disable();
+  }
 }
 
 void Colorize(bool flag) {
-  GetLogStderr().Colorize(flag);
+  if (linear::shared_ptr<LogStderr> shared = GetLogStderr().lock()) {
+    shared->Colorize(flag);
+  }
 }
 
 bool DoPrint(linear::log::Level level) {
-  return ((GetLogStderr().Available() || GetLogFile().Available() || GetLogFunction().Available()) && (level <= g_level));
+  return (level <= g_level);
 }
 
 void Print(bool debug, linear::log::Level level, const char* file, int line, const char* func, const char* format, ...) {
@@ -83,9 +108,15 @@ void Print(bool debug, linear::log::Level level, const char* file, int line, con
 #endif
   va_end(args);
 
-  GetLogStderr().Write(debug, level, file, line, func, buffer);
-  GetLogFile().Write(debug, level, file, line, func, buffer);
-  GetLogFunction().Write(debug, level, file, line, func, buffer);
+  if (linear::shared_ptr<LogStderr> shared = GetLogStderr().lock()) {
+    shared->Write(debug, level, file, line, func, buffer);
+  }
+  if (linear::shared_ptr<LogFile> shared = GetLogFile().lock()) {
+    shared->Write(debug, level, file, line, func, buffer);
+  }
+  if (linear::shared_ptr<LogFunction> shared = GetLogFunction().lock()) {
+    shared->Write(debug, level, file, line, func, buffer);
+  }
 }
 
 /* Log class methods */
