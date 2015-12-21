@@ -176,8 +176,6 @@ void usage(char* name) {
   std::cout << "Usage: " << std::string(name) << " [Host := 127.0.0.1] [Port := 37800]" << std::endl;
 }
 
-linear::EventLoop loop;
-
 int main(int argc, char* argv[]) {
 
 #if _WIN32
@@ -219,7 +217,7 @@ int main(int argc, char* argv[]) {
 #endif
 
   linear::shared_ptr<ApplicationHandler> handler = linear::shared_ptr<ApplicationHandler>(new ApplicationHandler());
-  linear::TCPClient client = linear::TCPClient(handler, loop);
+  linear::TCPClient client = linear::TCPClient(handler);
   linear::TCPSocket socket = client.CreateSocket(host, port);
 
   std::string cmd;
