@@ -153,7 +153,7 @@ void WSSSocketImpl::SetWSResponseContext(const WSResponseContext& response_conte
 
 Error WSSSocketImpl::GetVerifyResult() {
   lock_guard<mutex> state_lock(state_mutex_);
-  if (state_ != Socket::CONNECTED) {
+  if (state_ != Socket::CONNECTED && state_ != Socket::CONNECTING) {
     return Error(LNR_ENOTCONN);
   }
   int ret = tv_ssl_get_verify_result(reinterpret_cast<tv_wss_t*>(stream_)->ssl_handle);
@@ -166,7 +166,7 @@ Error WSSSocketImpl::GetVerifyResult() {
 
 bool WSSSocketImpl::PresentPeerCertificate() {
   lock_guard<mutex> state_lock(state_mutex_);
-  if (state_ != Socket::CONNECTED) {
+  if (state_ != Socket::CONNECTED && state_ != Socket::CONNECTING) {
     return false;
   }
   X509* xcert = tv_ssl_get_peer_certificate(reinterpret_cast<tv_wss_t*>(stream_)->ssl_handle);
@@ -179,7 +179,7 @@ bool WSSSocketImpl::PresentPeerCertificate() {
 
 X509Certificate WSSSocketImpl::GetPeerCertificate() {
   lock_guard<mutex> state_lock(state_mutex_);
-  if (state_ != Socket::CONNECTED) {
+  if (state_ != Socket::CONNECTED && state_ != Socket::CONNECTING) {
     throw std::runtime_error("peer certificate does not exist");
   }
   X509* xcert = tv_ssl_get_peer_certificate(reinterpret_cast<tv_wss_t*>(stream_)->ssl_handle);

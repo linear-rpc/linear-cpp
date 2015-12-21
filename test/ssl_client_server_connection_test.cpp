@@ -494,3 +494,71 @@ TEST_F(SSLClientServerConnectionTest, OnConnectAndDisconnectFromOtherTherad) {
   EXPECT_CALL(*sh, OnDisconnectMock(_, _)).Times(::testing::AtLeast(0));
   EXPECT_CALL(*ch, OnDisconnectMock(_, _)).Times(::testing::AtLeast(0));
 }
+
+ACTION(VerifySSL) {
+  linear::Socket s = arg0;
+  linear::SSLSocket ss = s.as<linear::SSLSocket>();
+  ASSERT_EQ(linear::LNR_OK, ss.GetVerifyResult().Code());
+}
+// Verify Server Cert
+TEST_F(SSLClientServerConnectionTest, VerifyServerCert) {
+  linear::shared_ptr<MockHandler> ch = linear::shared_ptr<MockHandler>(new MockHandler());
+  SSLContext context(SSLContext::TLSv1_1);
+  context.SetCertificate(std::string(CLIENT_CERT));
+  context.SetPrivateKey(std::string(CLIENT_PKEY));
+  context.SetCAFile(std::string(CA_CERT));
+  context.SetCiphers(std::string(CIPHER_LIST));
+  context.SetVerifyMode(SSLContext::VERIFY_PEER);
+  SSLClient cl(ch, context);
+  linear::shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
+  SSLContext server_context(SSLContext::TLSv1_1);
+  server_context.SetCertificate(std::string(SERVER_CERT));
+  server_context.SetPrivateKey(std::string(SERVER_PKEY));
+  server_context.SetCAFile(std::string(CA_CERT));
+  server_context.SetCiphers(std::string(CIPHER_LIST));
+  server_context.SetVerifyMode(SSLContext::VERIFY_PEER);
+  SSLServer sv(sh, server_context);
+
+  Error e = sv.Start(TEST_ADDR, TEST_PORT);
+  ASSERT_EQ(LNR_OK, e.Code());
+
+  SSLSocket cs = cl.CreateSocket(TEST_ADDR, TEST_PORT);
+
+  EXPECT_CALL(*sh, OnConnectMock(_)).WillOnce(Assign(&srv_finished, true));
+  EXPECT_CALL(*ch, OnConnectMock(cs)).WillOnce(DoAll(WithArg<0>(VerifySSL()), Assign(&cli_finished, true)));
+
+  e = cs.Connect();
+  ASSERT_EQ(LNR_OK, e.Code());
+  WAIT_TO_FINISH_CALLBACK();
+}
+// Verify Client Cert
+TEST_F(SSLClientServerConnectionTest, VerifyClientCert) {
+  linear::shared_ptr<MockHandler> ch = linear::shared_ptr<MockHandler>(new MockHandler());
+  SSLContext context(SSLContext::TLSv1_1);
+  context.SetCertificate(std::string(CLIENT_CERT));
+  context.SetPrivateKey(std::string(CLIENT_PKEY));
+  context.SetCAFile(std::string(CA_CERT));
+  context.SetCiphers(std::string(CIPHER_LIST));
+  context.SetVerifyMode(SSLContext::VERIFY_PEER);
+  SSLClient cl(ch, context);
+  linear::shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
+  SSLContext server_context(SSLContext::TLSv1_1);
+  server_context.SetCertificate(std::string(SERVER_CERT));
+  server_context.SetPrivateKey(std::string(SERVER_PKEY));
+  server_context.SetCAFile(std::string(CA_CERT));
+  server_context.SetCiphers(std::string(CIPHER_LIST));
+  server_context.SetVerifyMode(SSLContext::VERIFY_PEER);
+  SSLServer sv(sh, server_context);
+
+  Error e = sv.Start(TEST_ADDR, TEST_PORT);
+  ASSERT_EQ(LNR_OK, e.Code());
+
+  SSLSocket cs = cl.CreateSocket(TEST_ADDR, TEST_PORT);
+
+  EXPECT_CALL(*sh, OnConnectMock(_)).WillOnce(DoAll(WithArg<0>(VerifySSL()), Assign(&srv_finished, true)));
+  EXPECT_CALL(*ch, OnConnectMock(cs)).WillOnce(Assign(&cli_finished, true));
+
+  e = cs.Connect();
+  ASSERT_EQ(LNR_OK, e.Code());
+  WAIT_TO_FINISH_CALLBACK();
+}

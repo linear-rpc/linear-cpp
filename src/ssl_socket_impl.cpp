@@ -54,7 +54,7 @@ Error SSLSocketImpl::Connect() {
 
 Error SSLSocketImpl::GetVerifyResult() {
   lock_guard<mutex> state_lock(state_mutex_);
-  if (state_ != Socket::CONNECTED) {
+  if (state_ != Socket::CONNECTED && state_ != Socket::CONNECTING) {
     return Error(LNR_ENOTCONN);
   }
   int ret = tv_ssl_get_verify_result(reinterpret_cast<tv_ssl_t*>(stream_));
@@ -67,7 +67,7 @@ Error SSLSocketImpl::GetVerifyResult() {
 
 bool SSLSocketImpl::PresentPeerCertificate() {
   lock_guard<mutex> state_lock(state_mutex_);
-  if (state_ != Socket::CONNECTED) {
+  if (state_ != Socket::CONNECTED && state_ != Socket::CONNECTING) {
     return false;
   }
   X509* xcert = tv_ssl_get_peer_certificate(reinterpret_cast<tv_ssl_t*>(stream_));
@@ -80,7 +80,7 @@ bool SSLSocketImpl::PresentPeerCertificate() {
 
 X509Certificate SSLSocketImpl::GetPeerCertificate() {
   lock_guard<mutex> state_lock(state_mutex_);
-  if (state_ != Socket::CONNECTED) {
+  if (state_ != Socket::CONNECTED && state_ != Socket::CONNECTING) {
     throw std::runtime_error("peer certificate does not exist");
   }
   X509* xcert = tv_ssl_get_peer_certificate(reinterpret_cast<tv_ssl_t*>(stream_));
