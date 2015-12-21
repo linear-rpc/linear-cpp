@@ -33,11 +33,11 @@ struct Derived : public Base {
   Derived() : Base(), derived_val(0) {}
   ~Derived() {}
 
-  Base base_val;
   int derived_val;
 
   // magic(same as MSGPACK_DEFINE)
-  LINEAR_PACK(base_val, derived_val);
+  LINEAR_PACK(int_val, double_val, string_val, vector_val, map_val, // Base::
+              derived_val);
 };
 
 
@@ -130,11 +130,11 @@ class ApplicationHandler : public linear::Handler {
           Derived data = notify.params.as<Derived>();
           std::cout << "parameters detail" << std::endl;
           std::cout << "Base::"
-                    << "int: " << data.base_val.int_val 
-                    << ", double: " << data.base_val.double_val
-                    << ", string: " << data.base_val.string_val
-                    << ", vector: " << data.base_val.vector_val[0]
-                    << ", map: {\"key\": " << data.base_val.map_val["key"] << "}" << std::endl;
+                    << "int: " << data.int_val
+                    << ", double: " << data.double_val
+                    << ", string: " << data.string_val
+                    << ", vector: " << data.vector_val[0]
+                    << ", map: {\"key\": " << data.map_val["key"] << "}" << std::endl;
           std::cout << "Derived::int: " << data.derived_val << std::endl;
         } catch(const std::bad_cast&) {
           std::cout << "invalid type cast" << std::endl;
@@ -244,9 +244,6 @@ int main(int argc, char* argv[]) {
   linear::WSRequestContext ws_context;
   ws_context.path = "linear";
   ws_context.query = "?hoge=foo&alice=bob";
-  // Digest Auth Validation (username = "user", password = "password")
-  ws_context.authenticate.username = "user";
-  ws_context.authenticate.password = "password";
   linear::WSSSocket socket= client.CreateSocket(host, port, ws_context, ssl_context);;
 
   std::string cmd;

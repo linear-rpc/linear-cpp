@@ -37,11 +37,11 @@ struct Derived : public Base {
   Derived() : Base(), derived_val(1) {}
   ~Derived() {}
 
-  Base base_val;
   int derived_val;
 
   // magic(same as MSGPACK_DEFINE)
-  LINEAR_PACK(base_val, derived_val);
+  LINEAR_PACK(int_val, double_val, string_val, vector_val, map_val, // Base::
+              derived_val);
 };
 
 // You need to implement concrete handler class like as follows.
@@ -59,15 +59,6 @@ class ApplicationHandler : public linear::Handler {
     std::cout << request_context.path << std::endl;
     std::cout << "--- Request Query ---" << std::endl;
     std::cout << request_context.query << std::endl;
-    std::cout << "--- Authorization Info ---" << std::endl;
-    std::cout << "type: " << request_context.authorization.type << std::endl;
-    std::cout << "username: " << request_context.authorization.username << std::endl;
-    std::cout << "realm: " << request_context.authorization.realm << std::endl;
-
-    // Digest Auth Validation (username = "user", password = "password")
-    linear::AuthorizationContext::Result r = request_context.authorization.Validate("password");
-    std::cout << "Validate: " << ((r != linear::AuthorizationContext::INVALID) ? "VALID" : "INVALID") << std::endl;
-    
     std::cout << "--- Request Headers ---" << std::endl;
     for (std::map<std::string, std::string>::const_iterator it = request_context.headers.begin();
          it != request_context.headers.end(); it++) {
@@ -76,14 +67,6 @@ class ApplicationHandler : public linear::Handler {
     std::cout << "--- Request Headers End ---" << std::endl;
 
     linear::WSResponseContext response_context;
-
-    // set the result of Digest Auth Validation
-    if (r != linear::AuthorizationContext::INVALID) {
-      response_context.code = LNR_WS_OK;
-    } else {
-      response_context.code = LNR_WS_UNAUTHORIZED;
-    }
-
     // If you want to respond with custom header, do like below
     response_context.headers["X-Custom-Header"] = "Add Any Header for Response";
     socket.as<linear::WSSSocket>().SetWSResponseContext(response_context);
@@ -136,11 +119,11 @@ class ApplicationHandler : public linear::Handler {
           Derived data = notify.params.as<Derived>();
           std::cout << "parameters detail" << std::endl;
           std::cout << "Base::"
-                    << "int: " << data.base_val.int_val 
-                    << ", double: " << data.base_val.double_val
-                    << ", string: " << data.base_val.string_val
-                    << ", vector: " << data.base_val.vector_val[0]
-                    << ", map: {\"key\": " << data.base_val.map_val["key"] << "}" << std::endl;
+                    << "int: " << data.int_val
+                    << ", double: " << data.double_val
+                    << ", string: " << data.string_val
+                    << ", vector: " << data.vector_val[0]
+                    << ", map: {\"key\": " << data.map_val["key"] << "}" << std::endl;
           std::cout << "Derived::int: " << data.derived_val << std::endl;
         } catch(const std::bad_cast&) {
           std::cout << "invalid type cast" << std::endl;
@@ -260,7 +243,7 @@ int main(int argc, char* argv[]) {
   ssl_context.SetVerifyMode(linear::SSLContext::VERIFY_NONE);
 
   linear::shared_ptr<ApplicationHandler> handler = linear::shared_ptr<ApplicationHandler>(new ApplicationHandler());
-  linear::WSSServer server(handler, ssl_context, linear::AuthContext::DIGEST, "realm is here");
+  linear::WSSServer server(handler, ssl_context);
   server.SetMaxClients(5); // limit 5 clients
   server.Start(host, port);
 
