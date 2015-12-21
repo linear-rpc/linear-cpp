@@ -1,7 +1,7 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 
-AC_INIT([linear], [3.0.4], [https://github.com/linear-rpc/linear-cpp])
+AC_INIT([linear], [3.0.5], [https://github.com/linear-rpc/linear-cpp])
 AC_CONFIG_AUX_DIR(m4)
 AC_CONFIG_MACRO_DIR(m4)
 AC_CONFIG_SRCDIR([include/linear/handler.h])
