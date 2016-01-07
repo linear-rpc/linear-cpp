@@ -6,7 +6,9 @@
 #include <iostream>
 #include <string>
 #include <algorithm>
+#include <numeric>
 
+#include "linear/condition_variable.h"
 #include "linear/tcp_server.h"
 #include "linear/tcp_client.h"
 #include "linear/log.h"
@@ -20,15 +22,16 @@ namespace receiver {
 
 class Handler : public linear::Handler {
  public:
-  Handler() : confirm_(false), running_(true) {}
+  Handler() {}
   ~Handler() {}
 
   void OnConnect(const linear::Socket&) {
-    confirm_ = true;
+    linear::unique_lock<linear::mutex> lock(mutex_);
+    cv_.notify_one();
   }
   void OnDisconnect(const linear::Socket&, const linear::Error&) {
-    confirm_ = true;
-    running_ = false;
+    linear::unique_lock<linear::mutex> lock(mutex_);
+    cv_.notify_one();
   }
   void OnMessage(const linear::Socket& socket, const linear::Message& msg) {
     switch(msg.type) {
@@ -52,16 +55,14 @@ class Handler : public linear::Handler {
       }
     }
   }
-  bool Confirm() {
-    return confirm_;
-  }
-  bool Running() {
-    return running_;
+  void WaitToFinish() {
+    linear::unique_lock<linear::mutex> lock(mutex_);
+    cv_.wait(lock);
   }
 
  private:
-  bool confirm_;
-  bool running_;
+  linear::mutex mutex_;
+  linear::condition_variable cv_;
 };
 
 } // namespace receiver
@@ -70,121 +71,86 @@ namespace sender {
 
 class Handler : public linear::Handler {
  public:
-  Handler(size_t num, size_t msiz)
-    : running_(true), num_(num), now_(0), msiz_(msiz), err_cnt_(0) {}
+  Handler(size_t num, size_t msiz) : num_(num), msiz_(msiz) {}
   ~Handler() {}
 
   void OnConnect(const linear::Socket& socket) {
-    struct timeval t;
-    gettimeofday(&t, NULL);
+    gettimeofday(&prev_, NULL);
     linear::Request request("echo", std::string(msiz_, 'a'));
     linear::Error e = request.Send(socket);
     if (e.Code() != linear::LNR_OK) {
-      err_cnt_++;
-      running_ = false;
-      return;
+      socket.Disconnect();
     }
-    request_map_.insert(std::make_pair<uint32_t, struct timeval>(request.msgid, t));
-    now_++;
   }
   void OnDisconnect(const linear::Socket&, const linear::Error&) {
-    if (now_ == 0) {
-      err_cnt_++;
-    }
-    running_ = false;
+    linear::unique_lock<linear::mutex> lock(mutex_);
+    cv_.notify_one();
   }
   void OnMessage(const linear::Socket& socket, const linear::Message& msg) {
     switch(msg.type) {
     case linear::RESPONSE:
       {
-        const linear::Response& response = msg.as<linear::Response>();
+        linear::Response response = msg.as<linear::Response>();
         struct timeval t;
         gettimeofday(&t, NULL);
-        std::map<uint32_t, struct timeval>::iterator it = request_map_.find(response.msgid);
-        if (it == request_map_.end()) {
-          err_cnt_++;
-        } else {
-          struct timeval prev = (*it).second;
-          uint64_t d = (t.tv_sec - prev.tv_sec) * 1000 * 1000 + (t.tv_usec - prev.tv_usec);
-          duration_.push_back(d);
-        }
-        if (now_ >= num_) {
-          running_ = false;
+        uint64_t d = (t.tv_sec - prev_.tv_sec) * 1000 * 1000 + (t.tv_usec - prev_.tv_usec);
+        duration_.push_back(d);
+        prev_ = t;
+        num_--;
+        if (num_ == 0) {
+          socket.Disconnect();
           return;
         }
         linear::Request request("echo", std::string(msiz_, 'a'));
         linear::Error e = request.Send(socket);
         if (e.Code() != linear::LNR_OK) {
-          err_cnt_++;
-          running_ = false;
+          linear::unique_lock<linear::mutex> lock(mutex_);
+          cv_.notify_one();
           return;
         }
-        request_map_.insert(std::make_pair<uint32_t, struct timeval>(request.msgid, t));
-        now_++;
         break;
       }
     case linear::NOTIFY:
     case linear::REQUEST:
     default:
       {
-        err_cnt_++;
         break;
       }
     }
   }
   void OnError(const linear::Socket& socket, const linear::Message&, const linear::Error&) {
-    struct timeval t;
-    gettimeofday(&t, NULL);
-    err_cnt_++;
-    if (now_ >= num_) {
-      running_ = false;
-      return;
-    }
-    linear::Request request("echo", std::string(msiz_, 'a'));
-    linear::Error e = request.Send(socket);
-    if (e.Code() != linear::LNR_OK) {
-      err_cnt_++;
-      running_ = false;
-      return;
-    }
-    request_map_.insert(std::make_pair<uint32_t, struct timeval>(request.msgid, t));
-    now_++;
+    socket.Disconnect();
   }
 
-  bool Running() {
-    return running_;
+  bool WaitToFinish() {
+    linear::unique_lock<linear::mutex> lock(mutex_);
+    cv_.wait(lock);
+    return (num_ == 0);
   }
   void ShowResult() {
-    bool min_flag = true;
-    uint64_t max = 0, min = 0, sum = 0;
-    for (std::vector<uint64_t>::iterator it = duration_.begin();
-         it != duration_.end(); it++) {
-      if (min_flag) {
-        min = *it;
-        min_flag = false;
-      } else {
-        min = (min < *it) ? min : *it;
-      }
+    uint64_t max = *(duration_.begin()), min = *(duration_.begin()), ave;
+    for (std::vector<uint64_t>::iterator it = duration_.begin(); it != duration_.end(); it++) {
+      min = (*it < min) ? *it : min;
       max = (max > *it) ? max : *it;
-      sum += *it;
     }
+    ave = std::accumulate(duration_.begin(), duration_.end(), 0) / duration_.size();
     size_t midIndex = duration_.size() / 2;
     std::nth_element(duration_.begin(), duration_.end() + midIndex, duration_.end());
     std::cout << "--- Result ---" << std::endl;
-    std::cout << "success: " << duration_.size() << ", error: " << err_cnt_
-              << ", RTT => min: " << static_cast<double>(min) / 1000.0
-              << "ms, max: " << static_cast<double>(max) / 1000.0
-              << "ms, ave: " << static_cast<double>(sum) / static_cast<double>(num_) / 1000.0
-              << "ms, med: "<< static_cast<double>(duration_[midIndex] / 1000.0) << "ms" << std::endl;
+    std::cout << "success: " << duration_.size() << ", RTT => "
+              << "min: " << min / 1000.0 << "ms, "
+              << "max: " << max / 1000.0 << "ms, "
+              << "ave: " << ave / 1000.0 << "ms, "
+              << "med: " << duration_[midIndex] / 1000.0 << "ms" << std::endl;
   }
 
  private:
-  bool running_;
-  size_t num_, now_;
+  size_t num_;
   size_t msiz_;
-  std::map<uint32_t, struct timeval> request_map_;
+  struct timeval prev_;
   std::vector<uint64_t> duration_;
-  int err_cnt_;
+  linear::mutex mutex_;
+  linear::condition_variable cv_;
 };
 
 } // namespace sender
@@ -284,7 +250,6 @@ int main(int argc, char* argv[]) {
   if (level != LOG_OFF) {
     linear::log::SetLevel(level);
     linear::log::EnableStderr();
-    linear::log::Colorize();
   }
 
   if (type == CLIENT) {
@@ -295,18 +260,14 @@ int main(int argc, char* argv[]) {
         linear::TCPClient c(h);
         linear::TCPSocket s = c.CreateSocket(host, port);
         s.Connect();
-        while (!h->Confirm()) {
-          usleep(10);
-        }
+        h->WaitToFinish();
         if (s.GetState() == linear::Socket::CONNECTED) {
           std::cout << "Run as a client to receive a request" << std::endl;
           std::cout << "--- Conditions ---" << std::endl;
           std::cout << "Target server: " << host << ":" << port << std::endl;
-          while (h->Running()) {
-            usleep(10);
-          }
+          h->WaitToFinish();
         } else {
-          std::cerr << "Fail to connect to server: " << host << ":" << port << std::endl;
+          std::cerr << "perf fail" << std::endl;
         }
         break;
       }
@@ -320,11 +281,11 @@ int main(int argc, char* argv[]) {
         linear::TCPClient c(h);
         linear::TCPSocket s = c.CreateSocket(host, port);
         s.Connect();
-        while (h->Running()) {
-          usleep(10);
+        if (h->WaitToFinish()) {
+          h->ShowResult();
+        } else {
+          std::cerr << "perf fail" << std::endl;
         }
-        s.Disconnect();
-        h->ShowResult();
         break;
       }
     default:
@@ -340,9 +301,8 @@ int main(int argc, char* argv[]) {
         std::cout << "Run as a server to receive a request" << std::endl;
         std::cout << "--- Conditions ---" << std::endl;
         std::cout << "Server started: " << host << ":" << port << std::endl;
-        while (h->Running()) {
-          usleep(10);
-        }
+        h->WaitToFinish();
+        h->WaitToFinish();
         break;
       }
     case SENDER:
@@ -354,10 +314,11 @@ int main(int argc, char* argv[]) {
         linear::shared_ptr<sender::Handler> h = linear::shared_ptr<sender::Handler>(new sender::Handler(num, msiz));
         linear::TCPServer s(h);
         s.Start(host, port);
-        while (h->Running()) {
-          usleep(10);
+        if (h->WaitToFinish()) {
+          h->ShowResult();
+        } else {
+          std::cerr << "perf fail" << std::endl;
         }
-        h->ShowResult();
         break;
       }
     default:
