@@ -5,6 +5,7 @@
 
 #include <iostream>
 #include <string>
+#include <algorithm>
 
 #include "linear/tcp_server.h"
 #include "linear/tcp_client.h"
@@ -22,10 +23,10 @@ class Handler : public linear::Handler {
   Handler() : confirm_(false), running_(true) {}
   ~Handler() {}
 
-  void OnConnect(const linear::Socket& socket) {
+  void OnConnect(const linear::Socket&) {
     confirm_ = true;
   }
-  void OnDisconnect(const linear::Socket& socket, const linear::Error& error) {
+  void OnDisconnect(const linear::Socket&, const linear::Error&) {
     confirm_ = true;
     running_ = false;
   }
@@ -86,7 +87,7 @@ class Handler : public linear::Handler {
     request_map_.insert(std::make_pair<uint32_t, struct timeval>(request.msgid, t));
     now_++;
   }
-  void OnDisconnect(const linear::Socket& socket, const linear::Error& error) {
+  void OnDisconnect(const linear::Socket&, const linear::Error&) {
     if (now_ == 0) {
       err_cnt_++;
     }
@@ -131,7 +132,7 @@ class Handler : public linear::Handler {
       }
     }
   }
-  void OnError(const linear::Socket& socket, const linear::Message& msg, const linear::Error& err) {
+  void OnError(const linear::Socket& socket, const linear::Message&, const linear::Error&) {
     struct timeval t;
     gettimeofday(&t, NULL);
     err_cnt_++;
@@ -167,12 +168,14 @@ class Handler : public linear::Handler {
       max = (max > *it) ? max : *it;
       sum += *it;
     }
+    size_t midIndex = duration_.size() / 2;
+    std::nth_element(duration_.begin(), duration_.end() + midIndex, duration_.end());
     std::cout << "--- Result ---" << std::endl;
     std::cout << "success: " << duration_.size() << ", error: " << err_cnt_
               << ", RTT => min: " << static_cast<double>(min) / 1000.0
               << "ms, max: " << static_cast<double>(max) / 1000.0
               << "ms, ave: " << static_cast<double>(sum) / static_cast<double>(num_) / 1000.0
-              << "ms" << std::endl;
+              << "ms, med: "<< static_cast<double>(duration_[midIndex] / 1000.0) << "ms" << std::endl;
   }
 
  private:

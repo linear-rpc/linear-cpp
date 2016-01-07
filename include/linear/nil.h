@@ -38,7 +38,7 @@ class nil {
     }
   }
   template <typename MSGPACK_OBJECT>
-  void msgpack_object(MSGPACK_OBJECT* o, msgpack::zone& z) const {
+  void msgpack_object(MSGPACK_OBJECT* o, msgpack::zone&) const {
     o->type = msgpack::type::NIL;
   }
   /// @endcond

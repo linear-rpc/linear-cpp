@@ -89,7 +89,12 @@ bool DoPrint(linear::log::Level level) {
   return (level <= g_level && (g_log_stderr || g_log_file || g_log_function));
 }
 
+#ifdef _WIN32
 void Print(bool debug, linear::log::Level level, const char* file, int line, const char* func, const char* format, ...) {
+#else
+__attribute__((__format__ (__printf__, 6, 0)))
+void Print(bool debug, linear::log::Level level, const char* file, int line, const char* func, const char* format, ...) {
+#endif
   va_list args;
   char buffer[LOG_BUFSIZ];
 

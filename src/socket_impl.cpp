@@ -84,15 +84,15 @@ SocketImpl::SocketImpl(tv_stream_t* stream,
     handshaking_ = false;
     state_ = Socket::CONNECTED;
   }
-  struct sockaddr_storage ss;
+  struct sockaddr ss;
   int len = sizeof(struct sockaddr_storage);
-  int ret = tv_getsockname(stream_, reinterpret_cast<struct sockaddr*>(&ss), &len);
+  int ret = tv_getsockname(stream_, &ss, &len);
   if (ret == 0) {
-    self_ = Addrinfo(reinterpret_cast<struct sockaddr*>(&ss));
+    self_ = Addrinfo(&ss);
   }
-  ret = tv_getpeername(stream_, reinterpret_cast<struct sockaddr*>(&ss), &len);
+  ret = tv_getpeername(stream_, &ss, &len);
   if (ret == 0) {
-    peer_ = Addrinfo(reinterpret_cast<struct sockaddr*>(&ss));
+    peer_ = Addrinfo(&ss);
   } else {
     LINEAR_LOG(LOG_WARN, "fail to get peerinfo(id = %d) (may disconnected by peer): %s",
                id_, tv_strerror(reinterpret_cast<tv_handle_t*>(stream_), ret));
@@ -186,7 +186,7 @@ Error SocketImpl::Send(const Message& message, int timeout) {
     case linear::REQUEST:
       {
         Request* copy_request = new Request(dynamic_cast<const Request&>(message));
-        copy_request->timeout = timeout;
+        copy_request->timeout_ = timeout;
         copy_message = copy_request;
       }
       break;
@@ -301,6 +301,8 @@ void SocketImpl::OnConnect(const shared_ptr<SocketImpl>& socket, tv_stream_t* st
     } else if (status == TV_EX509) {
       last_error_ = Error(LNR_EX509, stream->ssl_err);
     }
+#else
+    (void)(stream);
 #endif
 
     LINEAR_LOG(LOG_DEBUG, "fail to connect(id = %d), %s: --- %s --x %s:%d",
@@ -311,11 +313,11 @@ void SocketImpl::OnConnect(const shared_ptr<SocketImpl>& socket, tv_stream_t* st
     tv_close(reinterpret_cast<tv_handle_t*>(stream_), EventLoopImpl::OnClose);
     return;
   }
-  struct sockaddr_storage ss;
+  struct sockaddr ss;
   int len = sizeof(struct sockaddr_storage);
-  int ret = tv_getsockname(stream_, reinterpret_cast<struct sockaddr*>(&ss), &len);
+  int ret = tv_getsockname(stream_, &ss, &len);
   if (ret == 0) {
-    self_ = Addrinfo(reinterpret_cast<struct sockaddr*>(&ss));
+    self_ = Addrinfo(&ss);
   }
   // OK.starts to read
   last_error_ = StartRead(ev_);
@@ -340,7 +342,7 @@ void SocketImpl::OnConnect(const shared_ptr<SocketImpl>& socket, tv_stream_t* st
   _SendPendingMessages(socket);
 }
 
-void SocketImpl::OnHandshakeComplete(const shared_ptr<SocketImpl>& socket, tv_stream_t* stream, int status) {
+void SocketImpl::OnHandshakeComplete(const shared_ptr<SocketImpl>& socket, tv_stream_t*, int status) {
   unique_lock<mutex> state_lock(state_mutex_);
   if (status) {
     state_lock.unlock();

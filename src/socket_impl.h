@@ -21,7 +21,7 @@ class SocketImpl {
       Stop();
     }
     void Start() {
-      timer.Start(linear::EventLoopImpl::OnRequestTimeout, static_cast<uint64_t>(request.timeout), this);
+      timer.Start(linear::EventLoopImpl::OnRequestTimeout, static_cast<uint64_t>(request.timeout_), this);
     }
     void Stop() {
       timer.Stop();
@@ -60,8 +60,8 @@ class SocketImpl {
   linear::Error SetSockOpt(int level, int optname, const void* optval, size_t optlen);
   linear::Error StartRead(linear::EventLoopImpl::SocketEvent* ev);
 
-  virtual void OnConnect(const shared_ptr<SocketImpl>& socket, tv_stream_t* handle, int status);
-  void OnHandshakeComplete(const shared_ptr<SocketImpl>& socket, tv_stream_t* handle, int status);
+  virtual void OnConnect(const shared_ptr<SocketImpl>& socket, tv_stream_t* stream, int status);
+  void OnHandshakeComplete(const shared_ptr<SocketImpl>& socket, tv_stream_t*, int status);
   void OnDisconnect(const shared_ptr<SocketImpl>& socket);
   void OnRead(const shared_ptr<SocketImpl>& socket, const tv_buf_t *buffer, ssize_t nread);
   void OnWrite(const shared_ptr<SocketImpl>& socket, const linear::Message* message, int status);

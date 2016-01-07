@@ -20,6 +20,8 @@ endif
 TESTS += optional_test
 TESTS += run_tests
 
+CXXFLAGS = -g -O0 -Wno-deprecated-declarations
+
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/deps/gmock-1.7.0/include \
 	-I$(top_srcdir)/deps/gmock-1.7.0/gtest/include \

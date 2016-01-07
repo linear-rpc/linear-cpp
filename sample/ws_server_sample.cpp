@@ -68,7 +68,7 @@ class ApplicationHandler : public linear::Handler {
     socket.as<linear::WSSocket>().SetWSResponseContext(response_context);
     // WSSocket specific end
   }
-  void OnDisconnect(const linear::Socket& socket, const linear::Error& err) {
+  void OnDisconnect(const linear::Socket& socket, const linear::Error&) {
     const linear::Addrinfo& info = socket.GetPeerInfo();
     std::cout << "OnDisconnect: " << info.addr << ":" << info.port << std::endl;
   }
@@ -135,7 +135,7 @@ class ApplicationHandler : public linear::Handler {
       break;
     }
   }
-  void OnError(const linear::Socket& socket, const linear::Message& msg, const linear::Error& err) {
+  void OnError(const linear::Socket&, const linear::Message& msg, const linear::Error& err) {
     switch(msg.type) {
     case linear::REQUEST:
       {

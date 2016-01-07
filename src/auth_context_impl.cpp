@@ -12,7 +12,7 @@ using namespace linear::log;
 
 namespace linear {
 
-static std::vector<std::string> Split(const std::string& src, char sep, bool kv = false) {
+static std::vector<std::string> Split(const std::string& src, char sep) {
   std::vector<std::string> vec;
   std::string s = src;
 
@@ -35,7 +35,7 @@ static std::map<std::string, std::string> Parse(const std::string& src) {
   std::map<std::string, std::string> kv;
   std::vector<std::string> vec = Split(src, ',');
   for (std::vector<std::string>::iterator it = vec.begin(); it != vec.end(); it++) {
-    std::vector<std::string> kv_vec = Split(*it, '=', true);
+    std::vector<std::string> kv_vec = Split(*it, '=');
     if (kv_vec.size() != 2) {
       continue;
     }
@@ -147,7 +147,7 @@ AuthorizationContextImpl::AuthorizationContextImpl(const std::string& v) : AuthC
       buffer_fin(&b);
       return;
     }
-    std::vector<std::string> vec = Split(std::string(b.ptr, b.len), ':', true);
+    std::vector<std::string> vec = Split(std::string(b.ptr, b.len), ':');
     buffer_fin(&b);
     if (vec.size() != 2) {
       return;

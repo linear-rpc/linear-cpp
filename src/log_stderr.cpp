@@ -8,7 +8,7 @@ LogStderr::~LogStderr() {
   Disable();
 }
 
-bool LogStderr::Enable(const std::string& filename) {
+bool LogStderr::Enable(const std::string&) {
   return false;
 }
 

@@ -15,20 +15,20 @@ static uint32_t GetId() {
   return ++id;
 }
 
-Request::Request() : Message(linear::REQUEST), msgid(GetId()), timeout(30000) {
+Request::Request() : Message(linear::REQUEST), msgid(GetId()), timeout_(30000) {
 }
 
 Request::Request(const std::string& m, const type::any& p)
-  : Message(linear::REQUEST), msgid(GetId()), method(m), params(p), timeout(30000) {
+  : Message(linear::REQUEST), msgid(GetId()), method(m), params(p), timeout_(30000) {
 }
 
 Error Request::Send(const Socket& socket) const {
-  return socket.Send(*this, this->timeout);
+  return socket.Send(*this, this->timeout_);
 }
 
 Error Request::Send(const Socket& socket, int timeout) const {
   Request* request = const_cast<Request*>(this);
-  request->timeout = timeout;
+  request->timeout_ = timeout;
   return Send(socket);
 }
 

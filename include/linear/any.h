@@ -22,13 +22,13 @@ class LINEAR_EXTERN any {
   /// @cond hidden
   any() : zone_(), object_() {
   }
-  any(const any& any) : zone_() {
-    copy_msgpack_object(any.object_, &object_, zone_);
+  any(const any& a) : zone_() {
+    copy_msgpack_object(a.object_, &object_, zone_);
   }
   any(const linear::type::nil&) : zone_(), object_() {
   }
-  any(const msgpack::object& object) : zone_() {
-    copy_msgpack_object(object, &object_, zone_);
+  any(const msgpack::object& o) : zone_() {
+    copy_msgpack_object(o, &object_, zone_);
   }
   template <typename Value>
   any(const Value& value) : zone_(), object_(value, &zone_) {
@@ -41,33 +41,33 @@ class LINEAR_EXTERN any {
     object_ = msgpack::object(value, &zone_);
     return *this;
   }
-  any& operator=(const any& any) {
+  any& operator=(const any& a) {
     zone_.clear();
-    copy_msgpack_object(any.object_, &object_, zone_);
+    copy_msgpack_object(a.object_, &object_, zone_);
     return *this;
   }
-  any& operator=(const msgpack::object& object) {
+  any& operator=(const msgpack::object& o) {
     zone_.clear();
-    copy_msgpack_object(object, &object_, zone_);
+    copy_msgpack_object(o, &object_, zone_);
     return *this;
   }
-  bool operator<(const any& any) const {
-    return (stringify() < any.stringify());
+  bool operator<(const any& a) const {
+    return (stringify() < a.stringify());
   }
-  bool operator<=(const any& any) const {
-    return (stringify() <= any.stringify());
+  bool operator<=(const any& a) const {
+    return (stringify() <= a.stringify());
   }
-  bool operator>(const any& any) const {
-    return (stringify() > any.stringify());
+  bool operator>(const any& a) const {
+    return (stringify() > a.stringify());
   }
-  bool operator>=(const any& any) const {
-    return (stringify() >= any.stringify());
+  bool operator>=(const any& a) const {
+    return (stringify() >= a.stringify());
   }
-  bool operator==(const any& any) const {
-    return (stringify() == any.stringify());
+  bool operator==(const any& a) const {
+    return (stringify() == a.stringify());
   }
-  bool operator!=(const any& any) const {
-    return (stringify() != any.stringify());
+  bool operator!=(const any& a) const {
+    return (stringify() != a.stringify());
   }
   /**
    * get internal msgpack::object reference.
@@ -225,6 +225,8 @@ class LINEAR_EXTERN any {
           ++dst_ptr;
         }
       }
+      break;
+    default:
       break;
     }
   }

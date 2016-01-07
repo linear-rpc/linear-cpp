@@ -203,7 +203,7 @@ class LINEAR_EXTERN Request : public linear::Message {
   /**
    * timeout time(ms)
    */
-  int timeout;
+  int timeout_;
 
   MSGPACK_DEFINE(type, msgid, method, params);
   /// @endcond

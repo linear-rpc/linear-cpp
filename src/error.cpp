@@ -60,6 +60,7 @@ std::string Error::Message() const {
   case LNR_OK:
     return "success";
   LNR_ERRNO_MAP(LNR_STRERROR_GEN)
+  case LNR_MAX_ERRORS:
   default:
     return "unknown error";
   }

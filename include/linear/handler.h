@@ -33,7 +33,7 @@ class LINEAR_EXTERN Handler {
    }
    @endcode
    */
-  virtual void OnConnect(const linear::Socket& socket) {}
+  virtual void OnConnect(const linear::Socket&) {}
   /**
    * Callback function called when socket is disconnected
    * @param socket disconnected socket
@@ -45,7 +45,7 @@ class LINEAR_EXTERN Handler {
    }
    @endcode
    */
-  virtual void OnDisconnect(const linear::Socket& socket, const linear::Error& error) {}
+  virtual void OnDisconnect(const linear::Socket&, const linear::Error&) {}
   /**
    * Callback function called when received message from peer
    * @param socket connected socket
@@ -89,7 +89,7 @@ class LINEAR_EXTERN Handler {
    }
    @endcode
    */
-  virtual void OnMessage(const linear::Socket& socket, const linear::Message& message) {}
+  virtual void OnMessage(const linear::Socket&, const linear::Message&) {}
   /**
    * Callback function called when occuring some error for your message sended
    * @param socket connected socket
@@ -137,7 +137,7 @@ class LINEAR_EXTERN Handler {
    }
    @endcode
    */
-  virtual void OnError(const linear::Socket& socket, const linear::Message& message, const linear::Error& error) {}
+  virtual void OnError(const linear::Socket&, const linear::Message&, const linear::Error&) {}
 };
 
 }  // namespace linear

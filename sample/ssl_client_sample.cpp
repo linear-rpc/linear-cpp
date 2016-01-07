@@ -73,12 +73,12 @@ class ApplicationHandler : public linear::Handler {
         std::cerr << " Issuer: CN=" << cert.GetIssuer().GetCommonName() << std::endl;
       }
     } else {
-      std::cerr << "invalid ServerCertificate" << std::endl;
+      std::cerr << "invalid ServerCertificate: " << err.Message() << std::endl;
       socket.Disconnect();
     }
     // WSSSocket specific end
   }
-  void OnDisconnect(const linear::Socket& socket, const linear::Error& err) {
+  void OnDisconnect(const linear::Socket& socket, const linear::Error&) {
     static int num_of_try = 0;
     if (num_of_try < num_of_retry_) {
       // retry to connect after 1 sec
@@ -146,7 +146,7 @@ class ApplicationHandler : public linear::Handler {
       break;
     }
   }
-  void OnError(const linear::Socket& socket, const linear::Message& msg, const linear::Error& err) {
+  void OnError(const linear::Socket&, const linear::Message& msg, const linear::Error& err) {
     switch(msg.type) {
     case linear::REQUEST:
       {
@@ -235,7 +235,7 @@ int main(int argc, char* argv[]) {
   int port = (argc >= 2) ? atoi(argv[1]) : 37800;
 #endif
 
-  linear::SSLContext ssl_context;
+  linear::SSLContext ssl_context(linear::SSLContext::TLSv1_1);
   bool ret;
   ret = ssl_context.SetCertificate(std::string(CLIENT_CERT));
   if (!ret) {

@@ -87,6 +87,9 @@ void LogFile::Write(bool debug, Level level, const char* file, int line, const c
           (n == std::string::npos) ? fname.c_str() : fname.substr(n + 1).c_str(), line,
           message);
 #else
+  (void)(file);
+  (void)(line);
+  (void)(func);
   fprintf(fp_, "%s: [%s] %s\n", GetDateTime().c_str(), strptr, message);
 #endif
 

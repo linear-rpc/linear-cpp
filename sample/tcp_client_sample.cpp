@@ -59,7 +59,7 @@ class ApplicationHandler : public linear::Handler {
     const linear::Addrinfo& info = socket.GetPeerInfo();
     std::cout << "OnConnect: " << info.addr << ":" << info.port << std::endl;
   }
-  void OnDisconnect(const linear::Socket& socket, const linear::Error& err) {
+  void OnDisconnect(const linear::Socket& socket, const linear::Error&) {
     static int num_of_try = 0;
     if (num_of_try < num_of_retry_) {
       // retry to connect after 1 sec
@@ -127,7 +127,7 @@ class ApplicationHandler : public linear::Handler {
       break;
     }
   }
-  void OnError(const linear::Socket& socket, const linear::Message& msg, const linear::Error& err) {
+  void OnError(const linear::Socket&, const linear::Message& msg, const linear::Error& err) {
     switch(msg.type) {
     case linear::REQUEST:
       {

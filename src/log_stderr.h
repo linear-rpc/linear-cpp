@@ -11,7 +11,7 @@ class LogStderr : public LogFile {
  public:
   LogStderr() : LogFile() {}
   ~LogStderr();
-  bool Enable(const std::string& filename);
+  bool Enable(const std::string&);
   bool Enable();
   void Disable();
 

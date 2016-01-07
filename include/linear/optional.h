@@ -38,7 +38,7 @@ class LINEAR_EXTERN optional {
       value_ = other.value_;
     }
   }
-  optional(const T& value) : initialized_(true), value_(value) {
+  optional(const T& v) : initialized_(true), value_(v) {
   }
   ~optional() {
   }
@@ -47,22 +47,22 @@ class LINEAR_EXTERN optional {
     initialized_ = false;
     return *this;
   }
-  optional& operator=(const optional<T>& value) {
-    if (!initialized_ && !value.initialized_) {
+  optional& operator=(const optional<T>& v) {
+    if (!initialized_ && !v.initialized_) {
       return *this;
     }
-    if (initialized_ && !value.initialized_) {
+    if (initialized_ && !v.initialized_) {
       initialized_ = false;
       return *this;
     }
     initialized_ = true;
-    value_ = value.value_;
+    value_ = v.value_;
     return *this;
   }
   template <typename U>
-  optional& operator=(const U& value) {
+  optional& operator=(const U& v) {
     initialized_ = true;
-    value_ = value;
+    value_ = v;
     return *this;
   }
 
@@ -101,9 +101,9 @@ class LINEAR_EXTERN optional {
   }
 
   template <typename U>
-  T value_or(const U& value) const {
+  T value_or(const U& v) const {
     if (!initialized_) {
-      return value;
+      return v;
     } else {
       return value_;
     }
@@ -134,6 +134,8 @@ class LINEAR_EXTERN optional {
     case msgpack::type::MAP:
       initialized_ = true;
       o.convert(&value_);
+      break;
+    default:
       break;
     }
   }
@@ -270,7 +272,7 @@ bool operator==(const linear::type::optional<T>& opt, linear::type::nil) {
   return !bool(opt);
 }
 template <class T>
-bool operator==(linear::type::nil, const linear::type::optional<T>& opt) {
+bool operator==(linear::type::nil, const linear::type::optional<T>&) {
   return false;
 }
 template <class T>
@@ -283,16 +285,16 @@ bool operator<(linear::type::nil, const linear::type::optional<T>& opt) {
 }
 
 template <class T>
-bool operator==(const linear::type::optional<T>& opt, const T& value) {
-  return (bool(opt) ? (*opt == value) : false);
+bool operator==(const linear::type::optional<T>& opt, const T& v) {
+  return (bool(opt) ? (*opt == v) : false);
 }
 template <class T>
-bool operator==(const T& value, const linear::type::optional<T>& opt) {
-  return (bool(opt) ? (*opt == value) : false);
+bool operator==(const T& v, const linear::type::optional<T>& opt) {
+  return (bool(opt) ? (*opt == v) : false);
 }
 template <class T>
-bool operator<(const linear::type::optional<T>& opt, const T& value) {
-  return (bool(opt) ? std::less<T>()(*opt, value) : true);
+bool operator<(const linear::type::optional<T>& opt, const T& v) {
+  return (bool(opt) ? std::less<T>()(*opt, v) : true);
 }
 
 #endif  // LINEAR_TYPE_OPTIONAL_H_

@@ -887,7 +887,7 @@ TEST_F(WSSClientServerSendRecvTest, NotifyFromClientToGroup) {
 
 TEST_F(WSSClientServerSendRecvTest, ZeroLengthPacket) {
   linear::shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
-  SSLContext server_context(SSLContext::TLSv1_1);
+  SSLContext server_context(SSLContext::SSLv23);
   server_context.SetCertificate(std::string(SERVER_CERT));
   server_context.SetPrivateKey(std::string(SERVER_PKEY));
   server_context.SetCAFile(std::string(CA_CERT));
@@ -909,7 +909,7 @@ TEST_F(WSSClientServerSendRecvTest, ZeroLengthPacket) {
   int ret = connect(fd, (struct sockaddr *)&s, sizeof(s));
   ASSERT_EQ(0, ret);
 
-  SSL_CTX* ctx = SSL_CTX_new(TLSv1_1_client_method());
+  SSL_CTX* ctx = SSL_CTX_new(SSLv23_client_method());
   SSL* ssl = SSL_new(ctx);
   SSL_set_fd(ssl, fd);
   SSL_connect(ssl);
@@ -932,7 +932,7 @@ TEST_F(WSSClientServerSendRecvTest, ZeroLengthPacket) {
 // Recv malformed packet issue #2790
 TEST_F(WSSClientServerSendRecvTest, MalformedPacket) {
   linear::shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
-  SSLContext server_context(SSLContext::TLSv1_1);
+  SSLContext server_context(SSLContext::SSLv23);
   server_context.SetCertificate(std::string(SERVER_CERT));
   server_context.SetPrivateKey(std::string(SERVER_PKEY));
   server_context.SetCAFile(std::string(CA_CERT));
@@ -954,7 +954,7 @@ TEST_F(WSSClientServerSendRecvTest, MalformedPacket) {
   int ret = connect(fd, (struct sockaddr *)&s, sizeof(s));
   ASSERT_EQ(0, ret);
 
-  SSL_CTX* ctx = SSL_CTX_new(TLSv1_1_client_method());
+  SSL_CTX* ctx = SSL_CTX_new(SSLv23_client_method());
   SSL* ssl = SSL_new(ctx);
   SSL_set_fd(ssl, fd);
   SSL_connect(ssl);

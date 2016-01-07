@@ -29,7 +29,7 @@ class binary : public std::string {
   binary(const char* ptr, size_t siz) : std::string(ptr, siz) {
   }
   template <class InputIterator>
-  binary(InputIterator beg, InputIterator end) : std::string(beg, end) {
+  binary(InputIterator b, InputIterator e) : std::string(b, e) {
   }
   ~binary() {
   }
@@ -47,6 +47,14 @@ class binary : public std::string {
     case msgpack::type::STR:
         this->assign(o.via.str.ptr, o.via.str.size);
         break;
+    case msgpack::type::NIL:
+    case msgpack::type::BOOLEAN:
+    case msgpack::type::POSITIVE_INTEGER:
+    case msgpack::type::NEGATIVE_INTEGER:
+    case msgpack::type::FLOAT:
+    case msgpack::type::ARRAY:
+    case msgpack::type::MAP:
+    case msgpack::type::EXT:
     default:
         throw msgpack::type_error();
         break;

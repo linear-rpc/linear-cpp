@@ -68,7 +68,7 @@ class ApplicationHandler : public linear::Handler {
     }
     // SSLSocket specific end
   }
-  void OnDisconnect(const linear::Socket& socket, const linear::Error& err) {
+  void OnDisconnect(const linear::Socket& socket, const linear::Error&) {
     const linear::Addrinfo& info = socket.GetPeerInfo();
     std::cout << "OnDisconnect: " << info.addr << ":" << info.port << std::endl;
   }
@@ -135,7 +135,7 @@ class ApplicationHandler : public linear::Handler {
       break;
     }
   }
-  void OnError(const linear::Socket& socket, const linear::Message& msg, const linear::Error& err) {
+  void OnError(const linear::Socket&, const linear::Message& msg, const linear::Error& err) {
     switch(msg.type) {
     case linear::REQUEST:
       {
@@ -217,7 +217,7 @@ int main(int argc, char* argv[]) {
   int port = (argc >= 2) ? atoi(argv[1]) : 37800;
 #endif
 
-  linear::SSLContext ssl_context;
+  linear::SSLContext ssl_context(linear::SSLContext::TLSv1_1);
   bool ret = ssl_context.SetCertificate(std::string(SERVER_CERT));
   if (!ret) {
     std::cerr << "SetCertificate error" << std::endl;
