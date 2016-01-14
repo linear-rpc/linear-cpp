@@ -235,7 +235,7 @@ int main(int argc, char* argv[]) {
   int port = (argc >= 2) ? atoi(argv[1]) : 37800;
 #endif
 
-  linear::SSLContext ssl_context(linear::SSLContext::TLSv1_1);
+  linear::SSLContext ssl_context;
   bool ret;
   ret = ssl_context.SetCertificate(std::string(CLIENT_CERT));
   if (!ret) {
