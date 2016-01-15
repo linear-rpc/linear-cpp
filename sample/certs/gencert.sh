@@ -39,7 +39,7 @@ createca() {
 }
 gencert() {
     TARGET=$1
-    CN_PAD="`echo ${CA} | tr '[a-z]' '[A-Z]'`"
+    CN_PAD="`echo ${TARGET} | tr '[a-z]' '[A-Z]'`"
     openssl genrsa -out ${TARGET}.key ${KEYLEN}
     openssl req -new -key ${TARGET}.key -out ${TARGET}.csr <<EOF
 ${C}
