@@ -49,7 +49,7 @@ class SSLContext::SSLContextImpl {
       if (siz == 0) {
         return false;
       }
-      std::ifstream ifs(file);
+      std::ifstream ifs(file.c_str(), std::ios::in | std::ios::binary);
       if (ifs.fail()) {
         return false;
       }
@@ -117,7 +117,7 @@ class SSLContext::SSLContextImpl {
       if (siz == 0) {
         return false;
       }
-      std::ifstream ifs(file);
+      std::ifstream ifs(file.c_str(), std::ios::in | std::ios::binary);
       if (ifs.fail()) {
         return false;
       }
@@ -168,7 +168,7 @@ class SSLContext::SSLContextImpl {
       if (siz == 0) {
         return false;
       }
-      std::ifstream ifs(file);
+      std::ifstream ifs(file.c_str(), std::ios::in | std::ios::binary);
       if (ifs.fail()) {
         return false;
       }
@@ -242,7 +242,7 @@ class SSLContext::SSLContextImpl {
 
  private:
   size_t getFileSize(const std::string& file) {
-    std::ifstream ifs(file, std::ios::in | std::ios::binary);
+    std::ifstream ifs(file.c_str(), std::ios::in | std::ios::binary);
     return (ifs.fail() ? 0 : static_cast<size_t>(ifs.seekg(0, std::ios::end).tellg()));
   }
 
