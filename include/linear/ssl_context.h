@@ -34,6 +34,11 @@ class LINEAR_EXTERN SSLContext {
     VERIFY_FAIL_IF_NO_PEER_CERT
   };
 
+  enum Encoding {
+    PEM,
+    DER
+  };
+
   /// @cond hidden
   SSLContext();
   SSLContext(const SSLContext& obj);
@@ -47,13 +52,15 @@ class LINEAR_EXTERN SSLContext {
    * @see linear::SSLContext::Method
    */
   explicit SSLContext(const Method& method);
-
-  bool SetCertificate(const std::string& certfile);
-  bool SetPrivateKey(const std::string& pkeyfile); // TODO: need?
-  bool SetPrivateKey(const std::string& pkeyfile, const std::string& passphrase);
+  bool SetCertificate(const std::string& file,
+                      linear::SSLContext::Encoding encoding = linear::SSLContext::PEM);
+  bool SetPrivateKey(const std::string& file, const std::string& passphrase = "",
+                     linear::SSLContext::Encoding encoding = linear::SSLContext::PEM);
   bool SetCiphers(const std::string& ciphers);
-  bool SetCAFile(const std::string& cafile);
-  bool SetCAPath(const std::string& capath);
+  bool SetCAFile(const std::string& file,
+                 linear::SSLContext::Encoding encoding = linear::SSLContext::PEM);
+  bool SetCAData(const unsigned char* data, int siz,
+                 linear::SSLContext::Encoding encoding = linear::SSLContext::DER);
   void SetVerifyMode(const VerifyMode& mode, int (*verify_callback)(int, X509_STORE_CTX*) = NULL);
 
   /// @cond hidden

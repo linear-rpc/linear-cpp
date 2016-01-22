@@ -1,8 +1,8 @@
+#include <fstream>
+
 #include "tv.h"
 
 #include "linear/ssl_context.h"
-
-#include "linear/log.h"
 
 namespace linear {
 
@@ -13,21 +13,15 @@ class SSLContext::SSLContextImpl {
     switch (method) {
     case SSLContext::SSLv23_client:
       ssl_ctx_ = SSL_CTX_new(SSLv23_client_method());
-      SSL_CTX_set_options(ssl_ctx_, SSL_OP_NO_TLSv1);
-      SSL_CTX_set_options(ssl_ctx_, SSL_OP_NO_SSLv3);
-      SSL_CTX_set_options(ssl_ctx_, SSL_OP_NO_SSLv2);
+      SSL_CTX_set_options(ssl_ctx_, SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 | SSL_OP_NO_TLSv1);
       break;
     case SSLContext::SSLv23_server:
       ssl_ctx_ = SSL_CTX_new(SSLv23_server_method());
-      SSL_CTX_set_options(ssl_ctx_, SSL_OP_NO_TLSv1);
-      SSL_CTX_set_options(ssl_ctx_, SSL_OP_NO_SSLv3);
-      SSL_CTX_set_options(ssl_ctx_, SSL_OP_NO_SSLv2);
+      SSL_CTX_set_options(ssl_ctx_, SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 | SSL_OP_NO_TLSv1);
       break;
     case SSLContext::SSLv23:
       ssl_ctx_ = SSL_CTX_new(SSLv23_method());
-      SSL_CTX_set_options(ssl_ctx_, SSL_OP_NO_TLSv1);
-      SSL_CTX_set_options(ssl_ctx_, SSL_OP_NO_SSLv3);
-      SSL_CTX_set_options(ssl_ctx_, SSL_OP_NO_SSLv2);
+      SSL_CTX_set_options(ssl_ctx_, SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 | SSL_OP_NO_TLSv1);
       break;
     case SSLContext::TLSv1_1_client:
       ssl_ctx_ = SSL_CTX_new(TLSv1_1_client_method());
@@ -46,104 +40,195 @@ class SSLContext::SSLContextImpl {
   ~SSLContextImpl() {
     SSL_CTX_free(ssl_ctx_);
   }
-
-  bool SetCertificate(const std::string& certfile) {
-    if (SSL_CTX_use_certificate_chain_file(ssl_ctx_, certfile.c_str()) != 1) {
-      return false;
+  bool SetCertificate(const std::string& file,
+                      SSLContext::Encoding encoding) {
+    if (encoding == SSLContext::PEM) {
+      return (SSL_CTX_use_certificate_chain_file(ssl_ctx_, file.c_str()) == 1);
+    } else if (encoding == SSLContext::DER) {
+      size_t siz = getFileSize(file);
+      if (siz == 0) {
+        return false;
+      }
+      std::ifstream ifs(file);
+      if (ifs.fail()) {
+        return false;
+      }
+      char* data = NULL;
+      try {
+        data = new char[siz];
+      } catch(...) {
+        return false;
+      }
+      ifs.read(data, siz);
+      if (static_cast<size_t>(ifs.gcount()) != siz) {
+        delete[] data;
+        return false;
+      }
+      BIO* bio = BIO_new(BIO_s_mem());
+      if (bio == NULL) {
+        delete[] data;
+        return false;
+      }
+      BIO_reset(bio);
+      if (BIO_write(bio, data, siz) == -1) {
+        BIO_free_all(bio);
+        delete[] data;
+        return false;
+      }
+      delete[] data;
+      X509* cert = d2i_X509_bio(bio, NULL);
+      if (cert == NULL) {
+        BIO_free_all(bio);
+        return false;
+      }
+      BIO_free_all(bio);
+      if (SSL_CTX_use_certificate(ssl_ctx_, cert) != 1) {
+        X509_free(cert);
+        return false;
+      }
+      X509_free(cert);
+      return true;
     }
-    return true;
+    return false;
   }
-  bool SetPrivateKey(const std::string& pkeyfile) {
-    FILE* fp;
+  // DER can't have passphrase, so ignore passphrase var arg.
+  bool SetPrivateKey(const std::string& file, const std::string& passphrase,
+                     SSLContext::Encoding encoding) {
+    EVP_PKEY* key = NULL;
+    if (encoding == SSLContext::PEM) {
+      const char* p = (passphrase.size() > 0) ? passphrase.c_str() : NULL;
+      FILE* fp = NULL;
 
 #ifdef _WIN32
-    errno_t error;
-    if ((error = fopen_s(&fp, pkeyfile.c_str(), "r")) != 0) {
-      return false;
-    }
+      errno_t error;
+      if ((error = fopen_s(&fp, file.c_str(), "r")) != 0) {
+        return false;
+      }
 #else
-    if ((fp = fopen(pkeyfile.c_str(), "r")) == NULL) {
-      return false;
-    }
+      if ((fp = fopen(file.c_str(), "r")) == NULL) {
+        return false;
+      }
 #endif
 
-    EVP_PKEY* key;
-    if ((key = PEM_read_PrivateKey(fp, NULL, NULL, NULL)) == NULL) {
+      key = PEM_read_PrivateKey(fp, NULL, NULL, const_cast<char*>(p));
       fclose(fp);
+    } else if (encoding == SSLContext::DER) {
+      size_t siz = getFileSize(file);
+      if (siz == 0) {
+        return false;
+      }
+      std::ifstream ifs(file);
+      if (ifs.fail()) {
+        return false;
+      }
+      char* data = NULL;
+      try {
+        data = new char[siz];
+      } catch(...) {
+        return false;
+      }
+      ifs.read(data, siz);
+      if (static_cast<size_t>(ifs.gcount()) != siz) {
+        delete[] data;
+        return false;
+      }
+      BIO* bio = BIO_new(BIO_s_mem());
+      if (bio == NULL) {
+        delete[] data;
+        return false;
+      }
+      BIO_reset(bio);
+      if (BIO_write(bio, data, siz) == -1) {
+        BIO_free_all(bio);
+        delete[] data;
+        return false;
+      }
+      key = d2i_PrivateKey_bio(bio, NULL);
+      BIO_free_all(bio);
+      delete[] data;
+    }
+    if (key == NULL) {
       return false;
     }
-
     if (SSL_CTX_use_PrivateKey(ssl_ctx_, key) != 1) {
       EVP_PKEY_free(key);
-      fclose(fp);
       return false;
     }
-
     EVP_PKEY_free(key);
-    fclose(fp);
-    return true;
-  }
-  bool SetPrivateKey(const std::string& pkeyfile, const std::string& passphrase) {
-    FILE* fp;
-
-#ifdef _WIN32
-    errno_t error;
-    if ((error = fopen_s(&fp, pkeyfile.c_str(), "r")) != 0) {
-      return false;
-    }
-#else
-    if ((fp = fopen(pkeyfile.c_str(), "r")) == NULL) {
-      return false;
-    }
-#endif
-
-    EVP_PKEY* key;
-    if ((key = PEM_read_PrivateKey(fp, NULL, NULL, reinterpret_cast<void*>(const_cast<char*>(passphrase.c_str())))) == NULL) {
-      fclose(fp);
-      return false;
-    }
-
-    if (SSL_CTX_use_PrivateKey(ssl_ctx_, key) != 1) {
-      EVP_PKEY_free(key);
-      fclose(fp);
-      return false;
-    }
-
-    EVP_PKEY_free(key);
-    fclose(fp);
     return true;
   }
   bool SetCiphers(const std::string& ciphers) {
-    if (SSL_CTX_set_cipher_list(ssl_ctx_, ciphers.c_str()) != 1) {
+    return (SSL_CTX_set_cipher_list(ssl_ctx_, ciphers.c_str()) == 1);
+  }
+  bool SetCAFile(const std::string& file, SSLContext::Encoding encoding) {
+    if (encoding == SSLContext::PEM) {
+      return (SSL_CTX_load_verify_locations(ssl_ctx_, file.c_str(), NULL) == 1);
+    } else if (encoding == SSLContext::DER) {
+      size_t siz = getFileSize(file);
+      if (siz == 0) {
+        return false;
+      }
+      std::ifstream ifs(file);
+      if (ifs.fail()) {
+        return false;
+      }
+      char* data = NULL;
+      try {
+        data = new char[siz];
+      } catch(...) {
+        return false;
+      }
+      ifs.read(data, siz);
+      if (static_cast<size_t>(ifs.gcount()) != siz) {
+        delete[] data;
+        return false;
+      }
+      bool r = SetCAData(reinterpret_cast<unsigned char*>(data), siz, encoding);
+      delete[] data;
+      return r;
+    }
+    return false;
+  }
+  bool SetCAData(const unsigned char* data, int siz,
+                 SSLContext::Encoding encoding) {
+    X509_STORE* store = SSL_CTX_get_cert_store(ssl_ctx_);
+    if (store == NULL) {
       return false;
     }
-    return true;
-  }
-  bool SetCAFile(const std::string& cafile) {
-    cafile_ = cafile;
-    const char* caf = cafile_.empty() ? NULL : cafile_.c_str();
-    const char* cap = capath_.empty() ? NULL : capath_.c_str();
-    if (SSL_CTX_load_verify_locations(ssl_ctx_, caf, cap) != 1) {
+    X509* cert = NULL;
+    if (encoding == linear::SSLContext::DER) {
+      cert = d2i_X509(NULL, &data, siz);
+    } else if (encoding == linear::SSLContext::PEM) {
+      BIO* bio = BIO_new(BIO_s_mem());
+      if (bio == NULL) {
+        return false;
+      }
+      if (BIO_write(bio, data, siz) == -1) {
+        BIO_free_all(bio);
+        return false;
+      }
+      cert = PEM_read_bio_X509(bio, NULL, NULL, NULL);
+      BIO_free_all(bio);
+    }
+    if (cert == NULL) {
       return false;
     }
+    X509_STORE_add_cert(store, cert);
+    X509_free(cert);
     return true;
   }
-  bool SetCAPath(const std::string& capath) {
-    capath_ = capath;
-    const char* caf = cafile_.empty() ? NULL : cafile_.c_str();
-    const char* cap = capath_.empty() ? NULL : capath_.c_str();
-    if (SSL_CTX_load_verify_locations(ssl_ctx_, caf, cap) != 1) {
-      return false;
-    }
-    return true;
-  }
-  void SetVerifyMode(const SSLContext::VerifyMode& mode, int (*verify_callback)(int, X509_STORE_CTX*)) {
+  void SetVerifyMode(const SSLContext::VerifyMode& mode,
+                     int (*verify_callback)(int, X509_STORE_CTX*)) {
     switch (mode) {
     case SSLContext::VERIFY_FAIL_IF_NO_PEER_CERT:
-      SSL_CTX_set_verify(ssl_ctx_, SSL_VERIFY_PEER|SSL_VERIFY_CLIENT_ONCE|SSL_VERIFY_FAIL_IF_NO_PEER_CERT, verify_callback);
+      SSL_CTX_set_verify(ssl_ctx_,
+                         SSL_VERIFY_PEER | SSL_VERIFY_CLIENT_ONCE | SSL_VERIFY_FAIL_IF_NO_PEER_CERT,
+                         verify_callback);
       break;
     case SSLContext::VERIFY_PEER:
-      SSL_CTX_set_verify(ssl_ctx_, SSL_VERIFY_PEER|SSL_VERIFY_CLIENT_ONCE, verify_callback);
+      SSL_CTX_set_verify(ssl_ctx_,
+                         SSL_VERIFY_PEER | SSL_VERIFY_CLIENT_ONCE,
+                         verify_callback);
       break;
     case SSLContext::VERIFY_NONE:
     default:
@@ -153,6 +238,12 @@ class SSLContext::SSLContextImpl {
   }
   SSL_CTX* GetHandle() const {
     return ssl_ctx_;
+  }
+
+ private:
+  size_t getFileSize(const std::string& file) {
+    std::ifstream ifs(file, std::ios::in | std::ios::binary);
+    return (ifs.fail() ? 0 : static_cast<size_t>(ifs.seekg(0, std::ios::end).tellg()));
   }
 
  private:
@@ -176,25 +267,27 @@ SSLContext& SSLContext::operator=(const SSLContext& obj) {
 SSLContext::~SSLContext() {
 }
 
-bool SSLContext::SetCertificate(const std::string& certfile) {
-  return pimpl_->SetCertificate(certfile);
+bool SSLContext::SetCertificate(const std::string& file,
+                                linear::SSLContext::Encoding encoding) {
+  return pimpl_->SetCertificate(file, encoding);
 }
-bool SSLContext::SetPrivateKey(const std::string& pkeyfile) {
-  return pimpl_->SetPrivateKey(pkeyfile);
-}
-bool SSLContext::SetPrivateKey(const std::string& pkeyfile, const std::string& passphrase) {
-  return pimpl_->SetPrivateKey(pkeyfile, passphrase);
+bool SSLContext::SetPrivateKey(const std::string& file, const std::string& passphrase,
+                               linear::SSLContext::Encoding encoding) {
+  return pimpl_->SetPrivateKey(file, passphrase, encoding);
 }
 bool SSLContext::SetCiphers(const std::string& ciphers) {
   return pimpl_->SetCiphers(ciphers);
 }
-bool SSLContext::SetCAFile(const std::string& cafile) {
-  return pimpl_->SetCAFile(cafile);
+bool SSLContext::SetCAFile(const std::string& file,
+                           linear::SSLContext::Encoding encoding) {
+  return pimpl_->SetCAFile(file, encoding);
 }
-bool SSLContext::SetCAPath(const std::string& capath) {
-  return pimpl_->SetCAPath(capath);
+bool SSLContext::SetCAData(const unsigned char* data, int siz,
+                           linear::SSLContext::Encoding encoding) {
+  return pimpl_->SetCAData(data, siz, encoding);
 }
-void SSLContext::SetVerifyMode(const SSLContext::VerifyMode& mode, int (*verify_callback)(int, X509_STORE_CTX*)) {
+void SSLContext::SetVerifyMode(const SSLContext::VerifyMode& mode,
+                               int (*verify_callback)(int, X509_STORE_CTX*)) {
   pimpl_->SetVerifyMode(mode, verify_callback);
 }
 SSL_CTX* SSLContext::GetHandle() const {
