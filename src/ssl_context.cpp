@@ -69,7 +69,6 @@ class SSLContext::SSLContextImpl {
         delete[] data;
         return false;
       }
-      BIO_reset(bio);
       if (BIO_write(bio, data, siz) == -1) {
         BIO_free_all(bio);
         delete[] data;
@@ -137,7 +136,6 @@ class SSLContext::SSLContextImpl {
         delete[] data;
         return false;
       }
-      BIO_reset(bio);
       if (BIO_write(bio, data, siz) == -1) {
         BIO_free_all(bio);
         delete[] data;
