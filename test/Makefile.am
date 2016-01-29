@@ -5,7 +5,10 @@ TESTS = \
 	log_test.sh \
 	log_onoff_test.sh
 
+CXXFLAGS = -g -O0 -Wno-deprecated-declarations
+
 if LINEAR_LOG_DEBUG
+CXXFLAGS += -D_LINEAR_LOG_DEBUG_
 TESTS += \
 	log_macro4file_debug_test.sh \
 	log_macro4stderr_debug_test.sh \
@@ -19,8 +22,6 @@ endif
 
 TESTS += optional_test
 TESTS += run_tests
-
-CXXFLAGS = -g -O0 -Wno-deprecated-declarations
 
 AM_CPPFLAGS = \
 	-I$(top_srcdir)/deps/gmock-1.7.0/include \

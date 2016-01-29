@@ -43,14 +43,14 @@ TEST_F(LinearLogMacro4FunctionTest, showValidLog) {
   linear::log::EnableCallback(OnLog);
   linear::log::SetLevel(LOG_WARN);
 
-  LINEAR_LOG(LOG_ERR, "%s\n", TEST_DISPLAY.c_str());
-  LINEAR_LOG(LOG_WARN, "%s\n", TEST_DISPLAY.c_str());
-  LINEAR_LOG(LOG_INFO, "%s\n", TEST_HIDE.c_str());
-  LINEAR_LOG(LOG_DEBUG, "%s\n", TEST_HIDE.c_str());
-  LINEAR_DEBUG(LOG_ERR, "%s\n", TEST_DISPLAY.c_str());
-  LINEAR_DEBUG(LOG_WARN, "%s\n", TEST_DISPLAY.c_str());
-  LINEAR_DEBUG(LOG_INFO, "%s\n", TEST_HIDE.c_str());
-  LINEAR_DEBUG(LOG_DEBUG, "%s\n", TEST_HIDE.c_str());
+  LINEAR_LOG(LOG_ERR, "%s", TEST_DISPLAY.c_str());
+  LINEAR_LOG(LOG_WARN, "%s", TEST_DISPLAY.c_str());
+  LINEAR_LOG(LOG_INFO, "%s", TEST_HIDE.c_str());
+  LINEAR_LOG(LOG_DEBUG, "%s", TEST_HIDE.c_str());
+  LINEAR_DEBUG(LOG_ERR, "%s", TEST_DISPLAY.c_str());
+  LINEAR_DEBUG(LOG_WARN, "%s", TEST_DISPLAY.c_str());
+  LINEAR_DEBUG(LOG_INFO, "%s", TEST_HIDE.c_str());
+  LINEAR_DEBUG(LOG_DEBUG, "%s", TEST_HIDE.c_str());
 }
 
 int main(int argc, char** argv) {

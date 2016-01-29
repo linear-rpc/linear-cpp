@@ -38,7 +38,7 @@ void OnLog(linear::log::Level level, const char* file, int line, const char* fun
 }
 
 TEST_F(LinearLogFunctionTest, showValidLog) {
-  std::string TEST_DISPLAY("DISPLAY\n");
+  std::string TEST_DISPLAY("DISPLAY");
 
   LogFunction log;
   log.Enable(OnLog);

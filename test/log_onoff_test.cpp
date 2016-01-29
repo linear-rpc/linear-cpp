@@ -19,17 +19,17 @@ TEST_F(LinearLogTest, onoff) {
 
   linear::log::EnableStderr();
   linear::log::SetLevel(linear::log::LOG_DEBUG);
-  LINEAR_LOG(LOG_ERR, "%s\n", TEST_DISPLAY.c_str());
-  LINEAR_LOG(LOG_WARN, "%s\n", TEST_DISPLAY.c_str());
-  LINEAR_LOG(LOG_INFO, "%s\n", TEST_DISPLAY.c_str());
-  LINEAR_LOG(LOG_DEBUG, "%s\n", TEST_DISPLAY.c_str());
+  LINEAR_LOG(LOG_ERR, "%s", TEST_DISPLAY.c_str());
+  LINEAR_LOG(LOG_WARN, "%s", TEST_DISPLAY.c_str());
+  LINEAR_LOG(LOG_INFO, "%s", TEST_DISPLAY.c_str());
+  LINEAR_LOG(LOG_DEBUG, "%s", TEST_DISPLAY.c_str());
   linear::log::SetLevel(linear::log::LOG_OFF);
-  LINEAR_LOG(LOG_DEBUG, "%s\n", TEST_HIDE.c_str());
+  LINEAR_LOG(LOG_DEBUG, "%s", TEST_HIDE.c_str());
   linear::log::SetLevel(linear::log::LOG_WARN);
-  LINEAR_LOG(LOG_ERR, "%s\n", TEST_DISPLAY.c_str());
-  LINEAR_LOG(LOG_WARN, "%s\n", TEST_DISPLAY.c_str());
-  LINEAR_LOG(LOG_INFO, "%s\n", TEST_HIDE.c_str());
-  LINEAR_LOG(LOG_DEBUG, "%s\n", TEST_HIDE.c_str());
+  LINEAR_LOG(LOG_ERR, "%s", TEST_DISPLAY.c_str());
+  LINEAR_LOG(LOG_WARN, "%s", TEST_DISPLAY.c_str());
+  LINEAR_LOG(LOG_INFO, "%s", TEST_HIDE.c_str());
+  LINEAR_LOG(LOG_DEBUG, "%s", TEST_HIDE.c_str());
 }
 
 int main(int argc, char** argv) {

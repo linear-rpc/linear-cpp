@@ -81,6 +81,7 @@ void LogFile::Write(bool debug, Level level, const char* file, int line, const c
   (void) n;
 # undef SEPARATOR
 
+  (void)(func);
   fprintf(fp_, "%s: [%s] (%s:%d) %s\n",
           GetDateTime().c_str(),
           strptr,

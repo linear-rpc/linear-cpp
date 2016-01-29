@@ -1,12 +1,5 @@
 #include <gtest/gtest.h>
 
-#ifdef _LINEAR_LOG_FCGI_
-# include <stdio.h>
-FILE* gStdout = stdout;
-FILE* gStderr = stderr;
-#include <fcgi_stdio.h>
-#endif
-
 #include <string>
 
 #include "linear/log.h"
@@ -24,22 +17,17 @@ protected:
 TEST_F(LinearLogMacro4StderrTest, showValidLog) {
   std::string TEST_DISPLAY("DISPLAY"), TEST_HIDE("HIDE");
 
-#ifdef _LINEAR_LOG_FCGI_
-  _fcgi_sF[1].stdio_stream = gStdout;
-  _fcgi_sF[2].stdio_stream = gStderr;
-#endif
-
   ASSERT_EQ(true, linear::log::EnableStderr());
   linear::log::SetLevel(LOG_WARN);
 
-  LINEAR_LOG(LOG_ERR, "%s\n", TEST_DISPLAY.c_str());
-  LINEAR_LOG(LOG_WARN, "%s\n", TEST_DISPLAY.c_str());
-  LINEAR_LOG(LOG_INFO, "%s\n", TEST_HIDE.c_str());
-  LINEAR_LOG(LOG_DEBUG, "%s\n", TEST_HIDE.c_str());
-  LINEAR_DEBUG(LOG_ERR, "%s\n", TEST_DISPLAY.c_str());
-  LINEAR_DEBUG(LOG_WARN, "%s\n", TEST_DISPLAY.c_str());
-  LINEAR_DEBUG(LOG_INFO, "%s\n", TEST_HIDE.c_str());
-  LINEAR_DEBUG(LOG_DEBUG, "%s\n", TEST_HIDE.c_str());
+  LINEAR_LOG(LOG_ERR, "%s", TEST_DISPLAY.c_str());
+  LINEAR_LOG(LOG_WARN, "%s", TEST_DISPLAY.c_str());
+  LINEAR_LOG(LOG_INFO, "%s", TEST_HIDE.c_str());
+  LINEAR_LOG(LOG_DEBUG, "%s", TEST_HIDE.c_str());
+  LINEAR_DEBUG(LOG_ERR, "%s", TEST_DISPLAY.c_str());
+  LINEAR_DEBUG(LOG_WARN, "%s", TEST_DISPLAY.c_str());
+  LINEAR_DEBUG(LOG_INFO, "%s", TEST_HIDE.c_str());
+  LINEAR_DEBUG(LOG_DEBUG, "%s", TEST_HIDE.c_str());
 }
 
 int main(int argc, char** argv) {

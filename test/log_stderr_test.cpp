@@ -2,12 +2,6 @@
 
 #include <string>
 
-#ifdef _LINEAR_LOG_FCGI_
-# include <stdio.h>
-FILE* gStdout = stdout;
-FILE* gStderr = stderr;
-#endif
-
 #include "log_stderr.h"
 
 using namespace linear::log;
@@ -21,11 +15,7 @@ protected:
 };
 
 TEST_F(LinearLogStderrTest, showValidLog) {
-  std::string TEST_DISPLAY("DISPLAY\n");
-#ifdef _LINEAR_LOG_FCGI_
-  _fcgi_sF[1].stdio_stream = gStdout;
-  _fcgi_sF[2].stdio_stream = gStderr;
-#endif
+  std::string TEST_DISPLAY("DISPLAY");
   LogStderr log;
   ASSERT_FALSE(log.Enable(std::string("./test.log")));
   ASSERT_TRUE(log.Enable());

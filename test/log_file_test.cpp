@@ -15,7 +15,7 @@ protected:
 };
 
 TEST_F(LinearLogFileTest, showValidLog) {
-  std::string TEST_DISPLAY("DISPLAY\n");
+  std::string TEST_DISPLAY("DISPLAY");
 
   LogFile log;
   log.Enable("./test.log");
