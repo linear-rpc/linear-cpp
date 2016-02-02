@@ -8,6 +8,7 @@
 
 #include <string>
 
+#include "linear/memory.h"
 #include "linear/private/extern.h"
 
 #ifdef _WIN32
@@ -18,7 +19,7 @@
 #endif
 
 #include <openssl/ssl.h>
-#include <openssl/x509.h>
+#include <openssl/x509v3.h>
 
 namespace linear {
 
@@ -38,8 +39,9 @@ class LINEAR_EXTERN X509Principal {
    */
   std::string GetCommonName() const;
 
- private:
-  std::string common_name_;
+ public:
+  std::string CN;
+  std::string DN;
 };
 
 /**
@@ -54,6 +56,10 @@ class LINEAR_EXTERN X509Certificate {
   ~X509Certificate() {}
   /// @endcond
   /**
+   * whether this cert is CA cert.
+   */
+  bool IsCA() const;
+  /**
    * get subject from certificate
    */
   X509Principal GetSubject() const;
@@ -62,9 +68,13 @@ class LINEAR_EXTERN X509Certificate {
    */
   X509Principal GetIssuer() const;
 
+  /// @cond hidden
+  X509* GetHandle() const;
+  /// @endcond
+
  private:
-  X509Principal subject_;
-  X509Principal issuer_;
+  class X509CertificateImpl;
+  linear::shared_ptr<X509CertificateImpl> pimpl_;
 };
 
 }  // namespace linear

@@ -83,11 +83,33 @@ X509Certificate SSLSocketImpl::GetPeerCertificate() {
   if (state_ != Socket::CONNECTED && state_ != Socket::CONNECTING) {
     throw std::runtime_error("peer certificate does not exist");
   }
+  // SSL_get_peer_certificate returns a new X509* object
   X509* xcert = tv_ssl_get_peer_certificate(reinterpret_cast<tv_ssl_t*>(stream_));
   if (xcert == NULL) {
     throw std::runtime_error("peer certificate does not exist");
   }
-  return X509Certificate(xcert);
+  X509Certificate cert(xcert);
+  X509_free(xcert);
+  return cert;
+}
+
+std::vector<X509Certificate> SSLSocketImpl::GetPeerCertificateChain() {
+  lock_guard<mutex> state_lock(state_mutex_);
+  if (state_ != Socket::CONNECTED && state_ != Socket::CONNECTING) {
+    throw std::runtime_error("peer certificate does not exist");
+  }
+  // SSL_get_peer_cert_chain returns a X509* array and frees them when onclose
+  STACK_OF(X509*) xcerts = tv_ssl_get_peer_certificate_chain(reinterpret_cast<tv_ssl_t*>(stream_));
+  if (xcerts == NULL) {
+    throw std::runtime_error("peer certificate does not exist");
+  }
+  // if we use sk_X509_pop, we can't ref them after
+  std::vector<X509Certificate> certs;
+  for (int i = 0; i < sk_X509_num(xcerts); i++) {
+    certs.push_back(X509Certificate(sk_X509_value(xcerts, i)));
+    // NOTICE: DONOT call X509_free( (X509*)sk_X509_value(xcerts, i) );
+  }
+  return certs;
 }
 
 }  // namespace linear

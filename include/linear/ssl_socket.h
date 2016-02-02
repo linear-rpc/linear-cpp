@@ -6,6 +6,8 @@
 #ifndef LINEAR_SSL_SOCKET_H_
 #define LINEAR_SSL_SOCKET_H_
 
+#include <vector>
+
 #include "linear/socket.h"
 #include "linear/x509_certificate.h"
 
@@ -41,6 +43,11 @@ class LINEAR_EXTERN SSLSocket : public Socket {
    * @return linear::X509Certificate object
    */
   linear::X509Certificate GetPeerCertificate() const;
+  /**
+   * get peer certificate chain
+   * @return linear::X509Certificate object array
+   */
+  std::vector<linear::X509Certificate> GetPeerCertificateChain() const;
 };
 
 }  // namespace linear

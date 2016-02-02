@@ -44,4 +44,11 @@ X509Certificate SSLSocket::GetPeerCertificate() const {
   return dynamic_pointer_cast<SSLSocketImpl>(socket_)->GetPeerCertificate();
 }
 
+std::vector<X509Certificate> SSLSocket::GetPeerCertificateChain() const {
+  if (!socket_) {
+    return std::vector<X509Certificate>();
+  }
+  return dynamic_pointer_cast<SSLSocketImpl>(socket_)->GetPeerCertificateChain();
+}
+
 }  // namespace linear

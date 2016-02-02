@@ -24,6 +24,7 @@ class SSLSocketImpl : public linear::SocketImpl {
   linear::Error GetVerifyResult();
   bool PresentPeerCertificate();
   linear::X509Certificate GetPeerCertificate();
+  std::vector<linear::X509Certificate> GetPeerCertificateChain();
 
  private:
   linear::SSLContext context_;

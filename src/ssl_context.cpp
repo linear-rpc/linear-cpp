@@ -36,6 +36,7 @@ class SSLContext::SSLContextImpl {
       ssl_ctx_ = SSL_CTX_new(TLSv1_1_method());
       break;
     }
+    SSL_CTX_set_default_verify_paths(ssl_ctx_);
   }
   ~SSLContextImpl() {
     SSL_CTX_free(ssl_ctx_);
@@ -211,7 +212,10 @@ class SSLContext::SSLContextImpl {
     if (cert == NULL) {
       return false;
     }
-    X509_STORE_add_cert(store, cert);
+    if (X509_STORE_add_cert(store, cert) == 0) {
+      X509_free(cert);
+      return false;
+    }
     X509_free(cert);
     return true;
   }
