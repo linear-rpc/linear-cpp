@@ -65,14 +65,16 @@ class ApplicationHandler : public linear::Handler {
 
     // SSLSocket specific
     linear::SSLSocket ssl_socket = socket.as<linear::SSLSocket>();
+    std::vector<linear::X509Certificate> certs = ssl_socket.GetPeerCertificateChain();
+    for (std::vector<linear::X509Certificate>::iterator it = certs.begin();
+         it != certs.end(); it++) {
+      std::cout << ( (it->IsCA()) ? "Intermediate CA" : "Server" )
+                << ", Subject DN: " << it->GetSubject().DN
+                << ", Issuer DN: " << it->GetIssuer().DN
+                << std::endl;
+    }
     linear::Error err = ssl_socket.GetVerifyResult();
-    if (err.Code() == linear::LNR_OK) {
-      if (ssl_socket.PresentPeerCertificate()) {
-        linear::X509Certificate cert = ssl_socket.GetPeerCertificate();
-        std::cerr << "Subject: CN=" << cert.GetSubject().GetCommonName() << std::endl;
-        std::cerr << " Issuer: CN=" << cert.GetIssuer().GetCommonName() << std::endl;
-      }
-    } else {
+    if (err.Code() != linear::LNR_OK) {
       std::cerr << "invalid ServerCertificate: " << err.Message() << std::endl;
       socket.Disconnect();
     }
@@ -252,7 +254,7 @@ int main(int argc, char* argv[]) {
     std::cerr << "SetCAFile error" << std::endl;
     return -1;
   }
-  ret = ssl_context.SetCiphers(std::string("AES128-GCM-SHA256:RC4:HIGH:!MD5:!aNULL:!EDH"));
+  ret = ssl_context.SetCiphers(std::string("ALL:EECDH+HIGH:EDH+HIGH:+MEDIUM+HIGH:!EXP:!LOW:!eNULL:!aNULL:!MD5:!RC4:!ADH:!KRB5:!PSK:!SRP"));
   if (!ret) {
     std::cerr << "SetCiphers error" << std::endl;
     return -1;
