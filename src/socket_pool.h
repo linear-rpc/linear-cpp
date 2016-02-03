@@ -24,8 +24,13 @@ class SocketPool {
     }
     linear::lock_guard<linear::mutex> lock(mutex_);
     if (max_ > 0 && max_ <= pool_.size()) {
-      LINEAR_LOG(linear::log::LOG_WARN, "Socket(type = %d, id = %d) excess MaxLimits(%d)",
+#ifdef _WIN32
+      LINEAR_LOG(linear::log::LOG_WARN, "Socket(type = %d, id = %d) excess MaxLimits(%Iu)",
                  s->GetType(), id, max_);
+#else
+      LINEAR_LOG(linear::log::LOG_WARN, "Socket(type = %d, id = %d) excess MaxLimits(%zu)",
+                 s->GetType(), id, max_);
+#endif
       return Error(LNR_ENOSPC);
     }
     for (std::vector<linear::shared_ptr<linear::SocketImpl> >::iterator it = pool_.begin();

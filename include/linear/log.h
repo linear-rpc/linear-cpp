@@ -157,7 +157,12 @@ LINEAR_EXTERN void Colorize(bool flag = true);
 
 /// @cond hidden
 LINEAR_EXTERN bool DoPrint(linear::log::Level level);
+#ifdef _WIN32
 LINEAR_EXTERN void Print(bool debug, linear::log::Level level, const char* file, int line, const char* func, const char* format, ...);
+#else
+__attribute__((format(printf, 6, 7)))
+LINEAR_EXTERN void Print(bool debug, linear::log::Level level, const char* file, int line, const char* func, const char* format, ...);
+#endif
 /// @endcond
 
 } // namespace log
