@@ -14,7 +14,7 @@ WSServerImpl::WSServerImpl(const weak_ptr<Handler>& handler,
                            AuthContext::Type auth_type, const std::string& realm,
                            const EventLoop& loop)
   : ServerImpl(handler, loop),
-    auth_type_(auth_type), realm_(realm) {
+    auth_type_(auth_type), realm_(realm), handle_(NULL) {
 }
 
 WSServerImpl::~WSServerImpl() {

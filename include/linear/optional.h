@@ -235,6 +235,8 @@ class LINEAR_EXTERN optional {
         }
       }
       break;
+    default:
+      break;
     }
   }
 

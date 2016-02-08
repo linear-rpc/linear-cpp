@@ -65,6 +65,7 @@ SocketImpl::SocketImpl(tv_stream_t* stream,
                        Socket::Type type)
   : stream_(stream), ev_(NULL), loop_(loop), type_(type), id_(Id()),
     connectable_(false), last_error_(LNR_OK), delegate_(delegate),
+    connect_timeout_(0),
     max_buffer_size_(Socket::DEFAULT_MAX_BUFFER_SIZE) {
   LINEAR_LOG(LOG_DEBUG, "socket(id = %d, type = %s, not connectable) is created",
              id_, GetTypeString(type_).c_str());

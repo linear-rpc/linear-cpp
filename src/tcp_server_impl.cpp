@@ -12,7 +12,8 @@ using namespace linear::log;
 namespace linear {
 
 TCPServerImpl::TCPServerImpl(const weak_ptr<Handler>& handler, const EventLoop& loop)
-  : ServerImpl(handler, loop) {
+  : ServerImpl(handler, loop),
+    handle_(NULL) {
 }
 
 TCPServerImpl::~TCPServerImpl() {
