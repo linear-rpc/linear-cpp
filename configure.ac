@@ -1,7 +1,7 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 
-AC_INIT([linear], [3.1.1], [https://github.com/linear-rpc/linear-cpp])
+AC_INIT([linear], [3.1.2], [https://github.com/linear-rpc/linear-cpp])
 AC_CONFIG_AUX_DIR(m4)
 AC_CONFIG_MACRO_DIR(m4)
 AC_CONFIG_SRCDIR([include/linear/handler.h])
@@ -35,8 +35,10 @@ AC_SUBST(AWK)
 AC_CHECK_LIB([pthread], [pthread_create])
 AC_CHECK_LIB([rt], [timer_create])
 
-CFLAGS="$CFLAGS -Wall -Wextra -Werror -Wcast-align -Wcast-qual -Wdisabled-optimization -Wfloat-equal -Wformat=2 -Winit-self -Winvalid-pch -Wmissing-include-dirs -Wmissing-noreturn -Wpacked -Wpointer-arith -Wswitch-default -Wswitch-enum -Wvolatile-register-var -Wwrite-strings -ftrapv -D_FORTIFY_SOURCE=2 -fstack-protector-all -Wstack-protector -fstrict-aliasing -Wstrict-aliasing=2 -fno-omit-frame-pointer -Wbad-function-cast -Wmissing-declarations -Wmissing-prototypes -Wnested-externs -Wold-style-definition -Wstrict-prototypes -Wno-sign-compare"
-CXXFLAGS="$CXXFLAGS -Wall -Wextra -Werror -Wcast-align -Wcast-qual -Wdisabled-optimization -Wfloat-equal -Wformat=2 -Winit-self -Winvalid-pch -Wmissing-include-dirs -Wmissing-noreturn -Wpacked -Wpointer-arith -Wswitch-default -Wswitch-enum -Wvolatile-register-var -Wwrite-strings -ftrapv -D_FORTIFY_SOURCE=2 -fstack-protector-all -Wstack-protector -fstrict-aliasing -Wstrict-aliasing=2 -fno-omit-frame-pointer -Wredundant-decls -Wshadow"
+AS_IF([test "x${ac_cv_env_CFLAGS_set}" = "x"],
+      [CFLAGS="$CFLAGS -Wall -Wextra -Werror -Wcast-align -Wcast-qual -Wdisabled-optimization -Wfloat-equal -Wformat=2 -Winit-self -Winvalid-pch -Wmissing-include-dirs -Wmissing-noreturn -Wpacked -Wpointer-arith -Wswitch-default -Wswitch-enum -Wvolatile-register-var -Wwrite-strings -ftrapv -D_FORTIFY_SOURCE=2 -fstack-protector-all -Wstack-protector -fstrict-aliasing -Wstrict-aliasing=2 -fno-omit-frame-pointer -Wbad-function-cast -Wmissing-declarations -Wmissing-prototypes -Wnested-externs -Wold-style-definition -Wstrict-prototypes -Wno-sign-compare"])
+AS_IF([test "x${ac_cv_env_CXXFLAGS_set}" = "x"],
+      [CXXFLAGS="$CXXFLAGS -Wall -Wextra -Werror -Wcast-align -Wcast-qual -Wdisabled-optimization -Wfloat-equal -Wformat=2 -Winit-self -Winvalid-pch -Wmissing-include-dirs -Wmissing-noreturn -Wpacked -Wpointer-arith -Wswitch-default -Wswitch-enum -Wvolatile-register-var -Wwrite-strings -ftrapv -D_FORTIFY_SOURCE=2 -fstack-protector-all -Wstack-protector -fstrict-aliasing -Wstrict-aliasing=2 -fno-omit-frame-pointer -Wredundant-decls -Wshadow"])
 
 # for MacPorts
 AC_CANONICAL_HOST
