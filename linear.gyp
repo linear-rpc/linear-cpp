@@ -11,7 +11,7 @@
       # '-Wmissing-format-attribute',
       '-Wmissing-include-dirs -Wmissing-noreturn',
       '-Wpacked -Wpointer-arith',
-      #'-Wswitch-default',
+      '-Wswitch-default',
       # '-Wswitch-enum',
       '-Wvolatile-register-var',
       '-Wwrite-strings',
