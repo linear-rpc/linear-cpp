@@ -22,7 +22,7 @@
     'configurations': {
       'Debug': {
         'defines': [ 'DEBUG', '_DEBUG' ],
-        'cflags': [ '<@(debug_cflags)' '-O0' ],
+        'cflags': [ '<@(debug_cflags)', '-O0' ],
         'xcode_settings': {
           'GCC_OPTIMIZATION_LEVEL': '0',
           'OTHER_CFLAGS': [ '<@(debug_cflags)' ],
@@ -57,7 +57,7 @@
       },
       'Release': {
         'defines': [ 'NDEBUG', ],
-        'cflags': [ '<@(release_cflags)' '-O3' ],
+        'cflags': [ '<@(release_cflags)', '-O3' ],
         'xcode_settings': {
           'GCC_OPTIMIZATION_LEVEL': '3',
           'OTHER_CFLAGS': [ '<@(release_cflags)' ],
