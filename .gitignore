@@ -46,6 +46,7 @@ Makefile.in
 /build/
 /linear-package/
 /configure.pyc
+/*.pyc
 
 # windows
 /Debug/

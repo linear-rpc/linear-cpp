@@ -1,53 +1,58 @@
 {
   'variables': {
-    # linear_parent_path is the relative path to liblinear in the parent project
-    # this is only relevant when dtrace is enabled and liblinear is a child project
-    # as it's necessary to correctly locate the object files for post
-    # processing.
-    # XXX gyp is quite sensitive about paths with double / they don't normalize
-    'linear_parent_path': '/',
-    'linear_headers_without_ssl': [
-      'include/linear/addrinfo.h',
-      'include/linear/any.h',
-      'include/linear/auth_context.h',
-      'include/linear/binary.h',
-      'include/linear/client.h',
-      'include/linear/condition_variable.h',
-      'include/linear/error.h',
-      'include/linear/event_loop.h',
-      'include/linear/group.h',
-      'include/linear/handler.h',
-      'include/linear/log.h',
-      'include/linear/memory.h',
-      'include/linear/message.h',
-      'include/linear/msgpack_inc.h',
-      'include/linear/mutex.h',
-      'include/linear/nil.h',
-      'include/linear/optional.h',
-      'include/linear/server.h',
-      'include/linear/socket.h',
-      'include/linear/tcp_client.h',
-      'include/linear/tcp_server.h',
-      'include/linear/tcp_socket.h',
-      'include/linear/timer.h',
-      'include/linear/version.h',
-      'include/linear/ws_client.h',
-      'include/linear/ws_context.h',
-      'include/linear/ws_server.h',
-      'include/linear/ws_socket.h',
+    'warning_cflags%': [
+      '-Wall -Wextra',
+      '-Werror',
+      '-Wcast-align -Wcast-qual',
+      # '-Wconversion',
+      '-Wdisabled-optimization',
+      '-Wfloat-equal -Wformat=2',
+      '-Winit-self -Winvalid-pch',
+      # '-Wmissing-format-attribute',
+      '-Wmissing-include-dirs -Wmissing-noreturn',
+      '-Wpacked -Wpointer-arith',
+      '-Wswitch-default',
+      # '-Wswitch-enum',
+      '-Wvolatile-register-var',
+      '-Wwrite-strings',
+      # '-Wlogical-op -Woverlength-strings -Wstrict-overflow=5 -Wvla',
+      # '-Waggregate-return -Winline -Wpadded -Wunreachable-code -Wunsafe-loop-optimizations',
+      # '-Wlarger-than-XXXXXX',
+      '-Wno-unused-parameter',
     ],
-    'linear_headers_with_ssl': [
-      'include/linear/ssl_client.h',
-      'include/linear/ssl_context.h',
-      'include/linear/ssl_server.h',
-      'include/linear/ssl_socket.h',
-      'include/linear/wss_client.h',
-      'include/linear/wss_server.h',
-      'include/linear/wss_socket.h',
-      'include/linear/x509_certificate.h',
+    'warning_cflags_c%': [
+      '-Wbad-function-cast',
+      '-Wmissing-declarations -Wmissing-prototypes',
+      '-Wnested-externs',
+      '-Wold-style-definition',
+      '-Wstrict-prototypes',
+      '-Wno-sign-compare',
+      '-Wstrict-aliasing',
+    ],
+    'other_cflags%': [
+      '-ftrapv -D_FORTIFY_SOURCE=2',
+      '-fstack-protector-all -Wstack-protector',
+      # '-fmudflapth -lmudflapth',
+      '-fstrict-aliasing -Wstrict-aliasing=2',
+      '-fno-omit-frame-pointer',
+    ],
+    'other_cflags_c%': [
+      '-pedantic',
+      '-std=gnu99',
     ],
   },
-
+  'target_defaults': {
+    'defines': [ '_GNU_SOURCE' ],
+    'cflags': [ '<@(warning_cflags)', '<@(other_cflags)' ],
+    'cflags_c': [ '<@(warning_cflags_c)', '<@(other_cflags_c)' ],
+    'xcode_settings': {
+      'GCC_GENERATE_DEBUGGING_SYMBOLS': 'NO',
+      'GCC_OPTIMIZATION_LEVEL': '0',
+      'WARNING_CFLAGS': [ '<@(warning_cflags)', '<@(warning_cflags_c)' ],
+      'OTHER_CFLAGS': [ '<@(other_cflags)', '<@(other_cflags_c)' ],
+      'OTHER_CPLUSPLUSFLAGS': [ '<@(other_cflags)' ],
+    },
+  },
   'targets': [
     {
       'target_name': 'liblinear',
@@ -61,9 +66,13 @@
         'deps/libtv/deps/libuv/uv.gyp:libuv',
         'deps/libtv/tv.gyp:libtv',
       ],
+      'direct_dependent_settings': {
+        'include_dirs': [
+          'include',
+          'deps/msgpack/include',
+        ],
+      },
       'sources': [
-        'common.gypi',
-        '<@(linear_headers_without_ssl)',
         'src/addrinfo.cpp',
         'src/any.cpp',
         'src/auth_context.cpp',
@@ -98,8 +107,10 @@
       ],
       'conditions': [
         [ 'with_ssl != "false"', {
+          'defines': [
+            'WITH_SSL',
+          ],
           'sources': [
-            '<@(linear_headers_with_ssl)',
             'src/ssl_client.cpp',
             'src/ssl_context.cpp',
             'src/ssl_server.cpp',
@@ -113,27 +124,21 @@
             'src/wss_socket_impl.cpp',
             'src/x509_certificate.cpp',
           ],
+        }],
+        ['OS=="win"', {
           'defines': [
-            'WITH_SSL',
+            # https://msdn.microsoft.com/en-US/library/windows/desktop/aa383745(v=vs.85).aspx
+            '_WIN32_WINNT=0x0600', # supports after Windows Vista
+          ],
+        }, { # Not Windows i.e. POSIX
+          'conditions': [
+            ['_type == "shared_library" and OS != "mac"', {
+              # This will cause gyp to set soname
+              'product_extension': 'so.1',
+            }],
           ],
         }],
-        [ 'OS=="win"', {
-          'defines': [
-            '_WIN32_WINNT=0x0600',
-            '_GNU_SOURCE',
-          ],
-          'link_settings': {
-            'libraries': [
-              '-ladvapi32',
-              '-liphlpapi',
-              '-lpsapi',
-              '-lshell32',
-              '-luserenv',
-              '-lws2_32'
-            ],
-          },
-        }],
-        [ 'linear_library=="shared_library"', {
+        ['_type == "shared_library"', {
           'defines': [
             'BUILDING_LINEAR_SHARED=1',
             'USING_TV_SHARED=1',

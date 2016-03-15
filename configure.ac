@@ -12,6 +12,9 @@ AC_CONFIG_HEADERS([config.h])
 LINEAR_VERSION_ID="`echo $PACKAGE_NAME-$PACKAGE_VERSION`"
 # AC_DEFINE_UNQUOTED([LINEAR_VERSION_ID], ["$PACKAGE_NAME-$PACKAGE_VERSION"], [linear-version-id])
 AC_SUBST(LINEAR_VERSION_ID)
+# linear-commit-id
+LINEAR_COMMIT_ID="`git log --pretty=format:"%H" -1`"
+AC_SUBST(LINEAR_COMMIT_ID)
 
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 
@@ -36,9 +39,9 @@ AC_CHECK_LIB([pthread], [pthread_create])
 AC_CHECK_LIB([rt], [timer_create])
 
 AS_IF([test "x${ac_cv_env_CFLAGS_set}" = "x"],
-      [CFLAGS="$CFLAGS -Wall -Wextra -Werror -Wcast-align -Wcast-qual -Wdisabled-optimization -Wfloat-equal -Wformat=2 -Winit-self -Winvalid-pch -Wmissing-include-dirs -Wmissing-noreturn -Wpacked -Wpointer-arith -Wswitch-default -Wswitch-enum -Wvolatile-register-var -Wwrite-strings -ftrapv -D_FORTIFY_SOURCE=2 -fstack-protector-all -Wstack-protector -fstrict-aliasing -Wstrict-aliasing=2 -fno-omit-frame-pointer -Wbad-function-cast -Wmissing-declarations -Wmissing-prototypes -Wnested-externs -Wold-style-definition -Wstrict-prototypes -Wno-sign-compare"])
+      [CFLAGS="-Wall -Wextra -Werror -Wcast-align -Wcast-qual -Wdisabled-optimization -Wfloat-equal -Wformat=2 -Winit-self -Winvalid-pch -Wmissing-include-dirs -Wmissing-noreturn -Wpacked -Wpointer-arith -Wswitch-default -Wswitch-enum -Wvolatile-register-var -Wwrite-strings -ftrapv -D_FORTIFY_SOURCE=2 -fstack-protector-all -Wstack-protector -fstrict-aliasing -Wstrict-aliasing=2 -fno-omit-frame-pointer -Wbad-function-cast -Wmissing-declarations -Wmissing-prototypes -Wnested-externs -Wold-style-definition -Wstrict-prototypes -Wno-sign-compare"])
 AS_IF([test "x${ac_cv_env_CXXFLAGS_set}" = "x"],
-      [CXXFLAGS="$CXXFLAGS -Wall -Wextra -Werror -Wcast-align -Wcast-qual -Wdisabled-optimization -Wfloat-equal -Wformat=2 -Winit-self -Winvalid-pch -Wmissing-include-dirs -Wmissing-noreturn -Wpacked -Wpointer-arith -Wswitch-default -Wswitch-enum -Wvolatile-register-var -Wwrite-strings -ftrapv -D_FORTIFY_SOURCE=2 -fstack-protector-all -Wstack-protector -fstrict-aliasing -Wstrict-aliasing=2 -fno-omit-frame-pointer -Wredundant-decls -Wshadow"])
+      [CXXFLAGS="-Wall -Wextra -Werror -Wcast-align -Wcast-qual -Wdisabled-optimization -Wfloat-equal -Wformat=2 -Winit-self -Winvalid-pch -Wmissing-include-dirs -Wmissing-noreturn -Wpacked -Wpointer-arith -Wswitch-default -Wswitch-enum -Wvolatile-register-var -Wwrite-strings -ftrapv -D_FORTIFY_SOURCE=2 -fstack-protector-all -Wstack-protector -fstrict-aliasing -Wstrict-aliasing=2 -fno-omit-frame-pointer -Wredundant-decls -Wshadow"])
 
 # for MacPorts
 AC_CANONICAL_HOST
@@ -84,30 +87,32 @@ fi
 AM_CONDITIONAL(LINEAR_LOG_DEBUG, test "x${debug}" = "xdev")
 
 # Check for shared_ptr
+HAVE_STD_SHARED_PTR="#undef HAVE_STD_SHARED_PTR"
+HAVE_TR1_SHARED_PTR="#undef HAVE_TR1_SHARED_PTR"
+HAVE_BOOST_SHARED_PTR="#undef HAVE_BOOST_SHARED_PTR"
 AC_LANG([C++])
-AC_MSG_CHECKING([for std::shared_ptr])
+AC_MSG_CHECKING([for shared_ptr type])
 # not use boost now
-AC_SUBST(HAVE_BOOST_SHARED_PTR, 0)
 AC_COMPILE_IFELSE(
     [AC_LANG_PROGRAM([[#include <memory>]],
                      [[std::shared_ptr<int> test_shared_ptr;]])],
-    [AC_MSG_RESULT([yes])
-     # AC_DEFINE_UNQUOTED([HAVE_STD_SHARED_PTR], 1, [Define to 1 if you have std::shared_ptr.])
-     AC_SUBST(HAVE_STD_SHARED_PTR, 1)],
+    [AC_MSG_RESULT([std::shared_ptr])
+     HAVE_STD_SHARED_PTR="#define HAVE_STD_SHARED_PTR 1"],
     [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <tr1/memory>]],
                                         [[std::tr1::shared_ptr<int> test_shared_ptr;]])],
-         [AC_MSG_RESULT([yes])
-          # AC_DEFINE_UNQUOTED([HAVE_TR1_SHARED_PTR], 1, [Define to 1 if you have std::tr1::shared_ptr.])
-          AC_SUBST(HAVE_TR1_SHARED_PTR, 1)],
+         [AC_MSG_RESULT([tr1::shared_ptr])
+          HAVE_TR1_SHARED_PTR="#define HAVE_TR1_SHARED_PTR 1"],
          [AC_MSG_RESULT([no])
           AC_MSG_ERROR([configure cannot find shared_ptr.])])])
 #         [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <boost/shared_ptr.hpp>]],
 #                                             [[boost::shared_ptr<int> test_shared_ptr;]])],
-#            [AC_MSG_RESULT([yes])
-#             AC_DEFINE_UNQUOTED([HAVE_BOOST_SHARED_PTR], 1, [Define to 1 if you have boost::shared_ptr.])
-#             AC_SUBST(HAVE_BOOST_SHARED_PTR, 1)],
+#            [AC_MSG_RESULT([boost::shared_ptr])
+#             HAVE_BOOST_SHARED_PTR="#define HAVE_BOOST_SHARED_PTR 1"],
 #            [AC_MSG_RESULT([no])
 #             AC_MSG_ERROR([configure cannot find shared_ptr.])])])])
+AC_SUBST(HAVE_STD_SHARED_PTR)
+AC_SUBST(HAVE_TR1_SHARED_PTR)
+AC_SUBST(HAVE_BOOST_SHARED_PTR)
 
 # Checks for --with-ssl
 AC_ARG_WITH([ssl],

@@ -1,144 +1,158 @@
+## Preferred settings in each platforms.
+#
 {
   'variables': {
-    'visibility%': 'default',
-    'target_arch%': 'x64',
+    'visibility%': 'hidden',
     'host_arch%': 'x64',
-    'linear_library%': 'static_library', # allow override to 'shared_library' for DLL/.so builds
-    'msvs_multi_core_compile%': '1',
-    'runtime_library%': 'default',
+    'target_arch%': 'x64',
+    'enable_shared%': 'false', # 'false' or 'true'
+    'runtime_library%': 'default', # 'md' or 'mt' or 'default'
     'with_ssl%': 'false',
+    'linear_library%': 'static_library',
+    'debug_cflags%': [ '-g', '-fwrapv', '-Wno-gnu-folding-constant' ],
+    'release_cflags%': [ '-Wno-gnu-folding-constant' ],
   },
+
+  'includes': [
+    'openssl.gypi',
+  ],
 
   'target_defaults': {
     'default_configuration': 'Debug',
-    'target_conditions': [
-      ['with_ssl != "false" and with_ssl != "true"', {
-        'include_dirs': [ '<(with_ssl)/include' ],
-        'target_conditions': [
-          ['OS != "win"', {
-            'library_dirs': [ '<(with_ssl)/lib' ],
-          }],
-        ],
-      }],
-      ['OS != "win" and with_ssl != "false"', {
-        'libraries': [ '-lcrypto', '-lssl' ],
-      }],
-    ],
     'configurations': {
       'Debug': {
-        'defines': [ 'DEBUG' ],
-        'cflags': [ '-g', '-O0' ],
-        'msvs_settings': {
-          'VCCLCompilerTool': {
+        'defines': [ 'DEBUG', '_DEBUG' ],
+        'cflags': [ '<@(debug_cflags)' '-O0' ],
+        'xcode_settings': {
+          'GCC_OPTIMIZATION_LEVEL': '0',
+          'OTHER_CFLAGS': [ '<@(debug_cflags)' ],
+        },
+        'msbuild_settings': {
+          'ClCompile': {
+            'Optimization': 'Disabled',
+            'MinimalRebuild': 'false',                     # /Gm
+            'BasicRuntimeChecks': 'EnableFastChecks',      # /RTC1
+            'OmitFramePointers': 'false',
+            'DebugInformationFormat': 'ProgramDatabase',   # Generate a PDB /Zi
             'target_conditions': [
-              [ 'runtime_library=="default" and linear_library=="static_library"', {
-                'RuntimeLibrary': 1, # /MTd == MultiThread debug
+              ['runtime_library == "default" and enable_shared == "false"', {
+                'RuntimeLibrary': 'MultiThreadedDebug',    # /MTd
               }],
-              [ 'runtime_library=="default" and linear_library=="shared_library"', {
-                'RuntimeLibrary': 3, # /MDd == MultiThread debug
+              ['runtime_library == "default" and enable_shared == "true"', {
+                'RuntimeLibrary': 'MultiThreadedDebugDLL', # /MDd
               }],
-              ['runtime_library=="mt"', {
-                'RuntimeLibrary': 1, # /MTd == MultiThread debug
+              ['runtime_library == "mt"', {
+                'RuntimeLibrary': 'MultiThreadedDebug',    # /MTd
               }],
-              ['runtime_library=="md"', {
-                'RuntimeLibrary': 3, # /MDd == MultiThread debug
+              ['runtime_library == "md"', {
+                'RuntimeLibrary': 'MultiThreadedDebugDLL', # /MDd
               }],
             ],
-            'Optimization': 0, # /Od, no optimization
-            'MinimalRebuild': 'false',
-            'OmitFramePointers': 'false',
-            'BasicRuntimeChecks': 3, # /RTC1
-            'DebugInformationFormat': 3, # Generate a PDB /Zi
           },
-          'VCLinkerTool': {
-            'LinkIncremental': 2, # enable incremental linking
+          'Link': {
+            # 'LinkIncremental': 'true',                    # /INCREMENTAL
             'GenerateDebugInformation': 'true',
           },
         },
       },
       'Release': {
-        'defines': [ 'NDEBUG' ],
-        'cflags': [ '-O3' ],
-        'msvs_settings': {
-          'VCCLCompilerTool': {
+        'defines': [ 'NDEBUG', ],
+        'cflags': [ '<@(release_cflags)' '-O3' ],
+        'xcode_settings': {
+          'GCC_OPTIMIZATION_LEVEL': '3',
+          'OTHER_CFLAGS': [ '<@(release_cflags)' ],
+        },
+        'msbuild_settings': {
+          'ClCompile': {
+            'WholeProgramOptimization': 'true',
+            'Optimization': 'Full',                       # /Ox
+            'FunctionLevelLinking': 'true',               # /Gy
+            'IntrinsicFunctions': 'true',                 # /Oi
             'target_conditions': [
-              [ 'runtime_library=="default" and linear_library=="static_library"', {
-                'RuntimeLibrary': 0, # /MT
+              ['runtime_library == "default" and enable_shared == "false"', {
+                'RuntimeLibrary': 'MultiThreaded',        # /MT
               }],
-              [ 'runtime_library=="default" and linear_library=="shared_library"', {
-                'RuntimeLibrary': 2, # /MD
+              ['runtime_library == "default" and enable_shared == "true"', {
+                'RuntimeLibrary': 'MultiThreadedDLL',     # /MD
               }],
-              ['runtime_library=="mt"', {
-                'RuntimeLibrary': 0, # /MT
+              ['runtime_library == "mt"', {
+                'RuntimeLibrary': 'MultiThreaded',        # /MT
               }],
-              ['runtime_library=="md"', {
-                'RuntimeLibrary': 2, # /MD
+              ['runtime_library == "md"', {
+                'RuntimeLibrary': 'MultiThreadedDLL',     # /MD
               }],
             ],
-            'Optimization': 3, # /Ox, full optimization
-            'FavorSizeOrSpeed': 1, # /Ot, favour speed over size
-            'InlineFunctionExpansion': 2, # /Ob2, inline anything eligible
-            'WholeProgramOptimization': 'true', # /GL, whole program optimization, needed for LTCG
-            'OmitFramePointers': 'true',
-            'EnableFunctionLevelLinking': 'true',
-            'EnableIntrinsicFunctions': 'true',
-            'DebugInformationFormat': 0, # not Generate a PDB
           },
-          'VCLibrarianTool': {
-            'AdditionalOptions': [
-              '/LTCG', # link time code generation
-            ],
-          },
-          'VCLinkerTool': {
-            'LinkIncremental': 1, # disable incremental linking
-            'LinkTimeCodeGeneration': 1, # link-time code generation
-            'OptimizeReferences': 2, # /OPT:REF
-            'EnableCOMDATFolding': 2, # /OPT:ICF
+          'target_conditions': [
+            ['_type == "executable"', {
+              'Link': {
+                'LinkTimeCodeGeneration': 'UseLinkTimeCodeGeneration', # /LTCG
+              },
+            }, { # != "executable"
+              'target_conditions': [
+                ['enable_shared == "false"', {
+                  'Lib': {
+                    'LinkTimeCodeGeneration': 'true',
+                  },
+                }, { # != "false"
+                  'Link': {
+                    'LinkTimeCodeGeneration': 'UseLinkTimeCodeGeneration',
+                  },
+                }],
+              ],
+            }],
+          ],
+          'Link': {
             'GenerateDebugInformation': 'false',
           },
         },
-      }
-    },
-    'msvs_settings': {
-      'VCCLCompilerTool': {
-        'StringPooling': 'true', # pool string literals
-        'WarningLevel': 3,
-        'BufferSecurityCheck': 'true',
-        'ExceptionHandling': 1, # /EHsc
-        'SuppressStartupBanner': 'true',
-        'WarnAsError': 'false',
-        'AdditionalOptions': [
-           '/MP', # compile across multiple CPUs
-         ],
-        'DisableSpecificWarnings': ['4244', '4267'], # XXX: /wd"4244", /ws"4267"
-      },
-      'VCLibrarianTool': {
-      },
-      'VCLinkerTool': {
-        'RandomizedBaseAddress': 2, # enable ASLR
-        'DataExecutionPrevention': 2, # enable DEP
-        'AllowIsolation': 'true',
-        'SuppressStartupBanner': 'true',
-        'target_conditions': [
-          [ 'runtime_library=="default" and linear_library=="shared_library" and with_ssl != "false"', {
-            'AdditionalLibraryDirectories': [ '<(with_ssl)\lib\VC' ],
-            'AdditionalDependencies': [ 'ssleay32MDd.lib', 'libeay32MDd.lib' ],
-          }],
-          [ 'runtime_library=="mt" and linear_library=="shared_library" and with_ssl != "false"', {
-            'AdditionalLibraryDirectories': [ '<(with_ssl)\lib\VC' ],
-            'AdditionalDependencies': [ 'ssleay32MTd.lib', 'libeay32MTd.lib' ],
-          }],
-          [ 'runtime_library=="md" and linear_library=="shared_library" and with_ssl != "false"', {
-            'AdditionalLibraryDirectories': [ '<(with_ssl)\lib\VC' ],
-            'AdditionalDependencies': [ 'ssleay32MDd.lib', 'libeay32MDd.lib' ],
-          }],
-        ],
       },
     },
+
     'conditions': [
       ['OS == "win"', {
-        'msvs_cygwin_shell': 0, # prevent actions from trying to use cygwin
-        'defines': [
+        'target_conditions': [
+          # if you want to change platform, use 'msvs_target_platform' key in the 'target'.
+          ['target_arch == "ia32"', {
+            'msvs_configuration_platform': 'Win32',
+          }],
+          ['target_arch == "x64"', {
+            'msvs_configuration_platform': 'x64',
+          }],
+        ],
+      }],
+      ['OS == "mac"', {
+        'target_conditions': [
+          # if you want to change platform, use 'msvs_target_platform' key in the 'target'.
+          ['target_arch == "ia32"', {
+            'xcode_settings': { 'ARCHS': ['i386'] },
+          }],
+          ['target_arch == "x64"', {
+            'xcode_settings': { 'ARCHS': ['x86_64'] },
+          }],
+        ],
+        'xcode_settings': {
+          'GCC_CW_ASM_SYNTAX': 'NO',                # No -fasm-blocks
+          'GCC_DYNAMIC_NO_PIC': 'NO',               # No -mdynamic-no-pic (Equivalent to -fPIC)
+          'GCC_ENABLE_PASCAL_STRINGS': 'NO',        # No -mpascal-strings
+        },
+      }],
+      ['OS != "win"' and 'visibility == "hidden"', {
+        'cflags': [ '-fvisibility=hidden' ],
+        'xcode_settings': {
+          'OTHER_CFLAGS':  [ '-fvisibility=hidden' ],
+        },
+      }],
+      ['enable_shared == "true"', {
+        'cflags': [ '-fPIC' ],
+        'xcode_settings': {
+          'OTHER_CFLAGS': [ '-fPIC' ],
+        },
+      }],
+    ],
+    'msbuild_settings': {
+      'ClCompile': {
+        'PreprocessorDefinitions': [
           'WIN32',
           # we don't really want VC++ warning us about
           # how dangerous C functions are...
@@ -146,14 +160,27 @@
           # ... or that C implementations shouldn't use
           # POSIX names
           '_CRT_NONSTDC_NO_DEPRECATE',
-          'WIN32_LEAN_AND_MEAN',
         ],
+        'WarningLevel': 'Level3',
+        'DisableSpecificWarnings': [ '4244', '4267' ], # TODO: convert type
         'target_conditions': [
-          ['target_arch=="x64"', {
-            'msvs_configuration_platform': 'x64'
-          }]
-        ]
-      }],
-    ],
+          ['_type == "executable"', {
+            'PreprocessorDefinitions': [ '_CONSOLE', '_LIB', ], # Visual Studio default definitions
+          }, { # != "executable"
+            'target_conditions': [
+              ['enable_shared == "false"', {
+                'PreprocessorDefinitions': [ '_LIB', ], # Visual Studio default definitions
+              }, { # != "false"
+                'PreprocessorDefinitions': [ '_WINDOWS', '_USRDLL', ], # Visual Studio default definitions
+              }],
+            ],
+          }],
+        ],
+      },
+      'Link': {
+        'EnableCOMDATFolding': 'true', # /Zc:inline
+        'OptimizeReferences': 'true',
+      },
+    },
   },
 }

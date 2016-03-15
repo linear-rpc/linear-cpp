@@ -6,8 +6,8 @@
 #ifndef LINEAR_VERSION_H_
 #define LINEAR_VERSION_H_
 
-#define LINEAR_VERSION_ID	VersionId
-#define LINEAR_COMMIT_ID	CommitId
-#define LINEAR_COMMIT_DATE	CommitDate
+/* made definition by configure.ac */
+#define LINEAR_VERSION_ID	"@LINEAR_VERSION_ID@"
+#define LINEAR_COMMIT_ID	"@LINEAR_COMMIT_ID@"
 
 #endif // LINEAR_VERSION_H_
