@@ -79,16 +79,25 @@ if __name__ == '__main__':
   if not any(a.startswith('-Dtarget_arch=') for a in args):
     args.append('-Dtarget_arch=x64')
 
-  if not any(a.startswith('-Denable_shared') for a in args):
-    args.append('-Denable_shared=false')
-    args.append('-Dlinear_library=static_library')
-    args.append('-Dtv_library=static_library')
-    args.append('-Duv_library=static_library')
-  else:
-    args.append('-Denable_shared=true')
-    args.append('-Dlinear_library=shared_library')
-    args.append('-Dtv_library=shared_library')
-    args.append('-Duv_library=shared_library')
+  enable_shared='false'
+  linear_library='static_library'
+  tv_library='static_library'
+  uv_library='static_library'
+
+  if '-Denable_shared' in args or '-Denable_shared=true' in args:
+    enable_shared='true'
+    linear_library='shared_library'
+    tv_library='shared_library'
+    uv_library='shared_library'
+
+  if not any(a.startswith('-Denable_shared=') for a in args):
+    args.append('-Denable_shared=' + enable_shared)
+  if not any(a.startswith('-Dlinear_library=') for a in args):
+    args.append('-Dlinear_library=' + linear_library)
+  if not any(a.startswith('-Dtv_library=') for a in args):
+    args.append('-Dtv_library=' + tv_library)
+  if not any(a.startswith('-Duv_library=') for a in args):
+    args.append('-Duv_library=' + uv_library)
 
   if not any(a.startswith('-Dwith_ssl=') for a in args):
     args.append('-Dwith_ssl=false')

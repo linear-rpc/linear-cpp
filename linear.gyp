@@ -1,5 +1,6 @@
 {
   'variables': {
+    'linear_library%': 'static_library',
     'warning_cflags%': [
       '-Wall -Wextra',
       '-Werror',
@@ -20,15 +21,6 @@
       # '-Wlarger-than-XXXXXX',
       '-Wno-unused-parameter',
     ],
-    'warning_cflags_c%': [
-      '-Wbad-function-cast',
-      '-Wmissing-declarations -Wmissing-prototypes',
-      '-Wnested-externs',
-      '-Wold-style-definition',
-      '-Wstrict-prototypes',
-      '-Wno-sign-compare',
-      '-Wstrict-aliasing',
-    ],
     'other_cflags%': [
       '-ftrapv -D_FORTIFY_SOURCE=2',
       '-fstack-protector-all -Wstack-protector',
@@ -36,21 +28,14 @@
       '-fstrict-aliasing -Wstrict-aliasing=2',
       '-fno-omit-frame-pointer',
     ],
-    'other_cflags_c%': [
-      '-pedantic',
-      '-std=gnu99',
-    ],
   },
   'target_defaults': {
-    'defines': [ '_GNU_SOURCE' ],
     'cflags': [ '<@(warning_cflags)', '<@(other_cflags)' ],
-    'cflags_c': [ '<@(warning_cflags_c)', '<@(other_cflags_c)' ],
     'xcode_settings': {
       'GCC_GENERATE_DEBUGGING_SYMBOLS': 'NO',
       'GCC_OPTIMIZATION_LEVEL': '0',
-      'WARNING_CFLAGS': [ '<@(warning_cflags)', '<@(warning_cflags_c)' ],
-      'OTHER_CFLAGS': [ '<@(other_cflags)', '<@(other_cflags_c)' ],
-      'OTHER_CPLUSPLUSFLAGS': [ '<@(other_cflags)' ],
+      'WARNING_CFLAGS': [ '<@(warning_cflags)' ],
+      'OTHER_CFLAGS': [ '<@(other_cflags)' ],
     },
   },
   'targets': [
