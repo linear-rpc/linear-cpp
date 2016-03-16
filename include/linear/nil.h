@@ -19,7 +19,9 @@ namespace type {
 /**
  * @class nil nil.h "linear/nil.h"
  * represent nil object
- * @warning on iOS environment, you need to use nil_() instead of nil().
+ * @warning
+ * on iOS environment, you need to use nil_t() instead of nil().
+ * (patched by linear-objc/bootstrap)
  */
 class nil {
  public:
@@ -30,7 +32,7 @@ class nil {
   }
   template <typename Packer>
   void msgpack_pack(Packer& pk) const {
-    pk.pack(msgpack::type::nil());
+    pk.pack(msgpack::type::nil_t());
   }
   void msgpack_unpack(msgpack::object o) {
     if(o.type != msgpack::type::NIL) {

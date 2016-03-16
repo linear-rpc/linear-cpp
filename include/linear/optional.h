@@ -133,7 +133,7 @@ class LINEAR_EXTERN optional {
     case msgpack::type::ARRAY:
     case msgpack::type::MAP:
       initialized_ = true;
-      o.convert(&value_);
+      o.convert(value_);
       break;
     default:
       break;

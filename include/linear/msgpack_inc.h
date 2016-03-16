@@ -17,6 +17,10 @@
 # pragma GCC system_header // TODO: for gcc (Ubuntu/Linaro 4.6.3-1ubuntu5) 4.6.3...
 #endif
 
+// use new version of msgpack
+#define MSGPACK_DISABLE_LEGACY_NIL	(1)
+#define MSGPACK_DISABLE_LEGACY_CONVERT	(1)
+
 #include "msgpack.hpp"
 
 #ifdef _WIN32

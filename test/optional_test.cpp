@@ -159,7 +159,7 @@ TEST(OptionalTest, DeserializeWorks) {
   msgpack::object obj1 = result1.get();
 
   linear::type::optional<int> o1;
-  obj1.convert(&o1);
+  obj1.convert(o1);
   EXPECT_FALSE(bool(o1));
 
   msgpack::sbuffer sbuf2;
@@ -170,7 +170,7 @@ TEST(OptionalTest, DeserializeWorks) {
   msgpack::object obj2 = result2.get();
 
   linear::type::optional<int> o2;
-  obj2.convert(&o2);
+  obj2.convert(o2);
   EXPECT_TRUE(bool(o2));
   EXPECT_EQ(1, *o2);
 }
