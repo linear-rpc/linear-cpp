@@ -4,9 +4,6 @@ import os
 import platform
 import sys
 
-import create_version_h
-import create_memory_h
-
 try:
   import multiprocessing.synchronize
   gyp_parallel_support = True
@@ -44,8 +41,6 @@ def run_gyp(args):
 
 
 if __name__ == '__main__':
-  create_version_h.process()
-  create_memory_h.process()
 
   args = sys.argv[1:]
 
