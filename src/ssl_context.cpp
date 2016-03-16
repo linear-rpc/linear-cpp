@@ -182,42 +182,29 @@ class SSLContext::SSLContextImpl {
         delete[] data;
         return false;
       }
-      bool r = SetCAData(reinterpret_cast<unsigned char*>(data), siz, encoding);
+      X509_STORE* store = SSL_CTX_get_cert_store(ssl_ctx_);
+      if (store == NULL) {
+        delete[] data;
+        return false;
+      }
+      const unsigned char* pdata = reinterpret_cast<unsigned char*>(data);
+      X509* cert = d2i_X509(NULL, &pdata, siz);
+      if (cert == NULL) {
+        delete[] data;
+        return false;
+      }
+      if (X509_STORE_add_cert(store, cert) == 0) {
+        X509_free(cert);
+        return false;
+      }
+      X509_free(cert);
       delete[] data;
-      return r;
+      return true;
     }
     return false;
   }
-  bool SetCAData(const unsigned char* data, int siz,
-                 SSLContext::Encoding encoding) {
-    X509_STORE* store = SSL_CTX_get_cert_store(ssl_ctx_);
-    if (store == NULL) {
-      return false;
-    }
-    X509* cert = NULL;
-    if (encoding == linear::SSLContext::DER) {
-      cert = d2i_X509(NULL, &data, siz);
-    } else if (encoding == linear::SSLContext::PEM) {
-      BIO* bio = BIO_new(BIO_s_mem());
-      if (bio == NULL) {
-        return false;
-      }
-      if (BIO_write(bio, data, siz) == -1) {
-        BIO_free_all(bio);
-        return false;
-      }
-      cert = PEM_read_bio_X509(bio, NULL, NULL, NULL);
-      BIO_free_all(bio);
-    }
-    if (cert == NULL) {
-      return false;
-    }
-    if (X509_STORE_add_cert(store, cert) == 0) {
-      X509_free(cert);
-      return false;
-    }
-    X509_free(cert);
-    return true;
+  bool SetCAPath(const std::string& path) {
+    return (SSL_CTX_load_verify_locations(ssl_ctx_, NULL, path.c_str()) == 1);
   }
   void SetVerifyMode(const SSLContext::VerifyMode& mode,
                      int (*verify_callback)(int, X509_STORE_CTX*)) {
@@ -284,9 +271,8 @@ bool SSLContext::SetCAFile(const std::string& file,
                            linear::SSLContext::Encoding encoding) {
   return pimpl_->SetCAFile(file, encoding);
 }
-bool SSLContext::SetCAData(const unsigned char* data, int siz,
-                           linear::SSLContext::Encoding encoding) {
-  return pimpl_->SetCAData(data, siz, encoding);
+bool SSLContext::SetCAPath(const std::string& path) {
+  return pimpl_->SetCAPath(path);
 }
 void SSLContext::SetVerifyMode(const SSLContext::VerifyMode& mode,
                                int (*verify_callback)(int, X509_STORE_CTX*)) {

@@ -17,6 +17,7 @@
 #define CIPHER_LIST     "ALL:EECDH+HIGH:EDH+HIGH:+MEDIUM+HIGH:!EXP:!LOW:!eNULL:!aNULL:!MD5:!RC4:!ADH:!KRB5:!PSK:!SRP"
 #define CA_CERT_PEM     "../sample/certs/ca.pem"
 #define CA_CERT_DER     "../sample/certs/ca.der"
+#define CA_CERT_PATH    "./CACert"
 
 using namespace linear;
 using ::testing::_;
@@ -568,21 +569,14 @@ TEST_F(SSLClientServerConnectionTest, VerifyCertsDER) {
   ASSERT_EQ(LNR_OK, e.Code());
   WAIT_TO_FINISH_CALLBACK();
 }
-// use memory for CA Cert with PEM format
-TEST_F(SSLClientServerConnectionTest, VerifyCertsPEMData) {
+// Verify Client/Server Cert using CAPath
+TEST_F(SSLClientServerConnectionTest, VerifyCertsCAPath) {
   linear::shared_ptr<MockHandler> ch = linear::shared_ptr<MockHandler>(new MockHandler());
   SSLContext context(SSLContext::TLSv1_1);
 
-  std::ifstream ifs(CA_CERT_PEM);
-  std::streamsize siz = ifs.seekg(0, std::ios::end).tellg();
-  ifs.clear();
-  ifs.seekg(0, std::ios::beg);
-  unsigned char* cadata = new unsigned char[siz];
-  ifs.read((char*)cadata, siz);
-
   ASSERT_EQ(true, context.SetCertificate(std::string(CLIENT_CERT_PEM)));
   ASSERT_EQ(true, context.SetPrivateKey(std::string(CLIENT_PKEY_PEM)));
-  ASSERT_EQ(true, context.SetCAData(cadata, siz, SSLContext::PEM));
+  ASSERT_EQ(true, context.SetCAPath(CA_CERT_PATH));
   ASSERT_EQ(true, context.SetCiphers(std::string(CIPHER_LIST)));
   context.SetVerifyMode(SSLContext::VERIFY_PEER);
   SSLClient cl(ch, context);
@@ -590,7 +584,7 @@ TEST_F(SSLClientServerConnectionTest, VerifyCertsPEMData) {
   SSLContext server_context(SSLContext::TLSv1_1);
   ASSERT_EQ(true, server_context.SetCertificate(std::string(SERVER_CERT_PEM)));
   ASSERT_EQ(true, server_context.SetPrivateKey(std::string(SERVER_PKEY_PEM)));
-  ASSERT_EQ(true, server_context.SetCAData(cadata, siz, SSLContext::PEM));
+  ASSERT_EQ(true, server_context.SetCAPath(CA_CERT_PATH));
   ASSERT_EQ(true, server_context.SetCiphers(std::string(CIPHER_LIST)));
   server_context.SetVerifyMode(SSLContext::VERIFY_PEER);
   SSLServer sv(sh, server_context);
@@ -606,47 +600,6 @@ TEST_F(SSLClientServerConnectionTest, VerifyCertsPEMData) {
   e = cs.Connect();
   ASSERT_EQ(LNR_OK, e.Code());
   WAIT_TO_FINISH_CALLBACK();
-  delete cadata;
-}
-// use memory for CA Cert with DER format
-TEST_F(SSLClientServerConnectionTest, VerifyCertsDERData) {
-  linear::shared_ptr<MockHandler> ch = linear::shared_ptr<MockHandler>(new MockHandler());
-  SSLContext context(SSLContext::TLSv1_1);
-
-  std::ifstream ifs(CA_CERT_DER);
-  std::streamsize siz = ifs.seekg(0, std::ios::end).tellg();
-  ifs.clear();
-  ifs.seekg(0, std::ios::beg);
-  unsigned char* cadata = new unsigned char[siz];
-  ifs.read((char*)cadata, siz);
-
-  ASSERT_EQ(true, context.SetCertificate(std::string(CLIENT_CERT_DER), SSLContext::DER));
-  ASSERT_EQ(true, context.SetPrivateKey(std::string(CLIENT_PKEY_DER), "", SSLContext::DER));
-  ASSERT_EQ(true, context.SetCAData(cadata, siz));
-  ASSERT_EQ(true, context.SetCiphers(std::string(CIPHER_LIST)));
-  context.SetVerifyMode(SSLContext::VERIFY_PEER);
-  SSLClient cl(ch, context);
-  linear::shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
-  SSLContext server_context(SSLContext::TLSv1_1);
-  ASSERT_EQ(true, server_context.SetCertificate(std::string(SERVER_CERT_DER), SSLContext::DER));
-  ASSERT_EQ(true, server_context.SetPrivateKey(std::string(SERVER_PKEY_DER), "", SSLContext::DER));
-  ASSERT_EQ(true, server_context.SetCAData(cadata, siz));
-  ASSERT_EQ(true, server_context.SetCiphers(std::string(CIPHER_LIST)));
-  server_context.SetVerifyMode(SSLContext::VERIFY_PEER);
-  SSLServer sv(sh, server_context);
-
-  Error e = sv.Start(TEST_ADDR, TEST_PORT);
-  ASSERT_EQ(LNR_OK, e.Code());
-
-  SSLSocket cs = cl.CreateSocket(TEST_ADDR, TEST_PORT);
-
-  EXPECT_CALL(*sh, OnConnectMock(_)).WillOnce(DoAll(WithArg<0>(VerifySSL()), Assign(&srv_finished, true)));
-  EXPECT_CALL(*ch, OnConnectMock(cs)).WillOnce(DoAll(WithArg<0>(VerifySSL()), Assign(&cli_finished, true)));
-
-  e = cs.Connect();
-  ASSERT_EQ(LNR_OK, e.Code());
-  WAIT_TO_FINISH_CALLBACK();
-  delete cadata;
 }
 
 #define CLIENT_CERT_W_PASS_PEM "../sample/certs/client-w-pass.pem"

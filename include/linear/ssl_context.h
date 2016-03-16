@@ -59,8 +59,7 @@ class LINEAR_EXTERN SSLContext {
   bool SetCiphers(const std::string& ciphers);
   bool SetCAFile(const std::string& file,
                  linear::SSLContext::Encoding encoding = linear::SSLContext::PEM);
-  bool SetCAData(const unsigned char* data, int siz,
-                 linear::SSLContext::Encoding encoding = linear::SSLContext::DER);
+  bool SetCAPath(const std::string& path);
   void SetVerifyMode(const VerifyMode& mode, int (*verify_callback)(int, X509_STORE_CTX*) = NULL);
 
   /// @cond hidden
