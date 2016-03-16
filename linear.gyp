@@ -111,12 +111,14 @@
           'inputs': [ 'tools/create_version_h.py', 'include/linear/version.h.in' ],
           'outputs': [ 'include/linear/version.h' ],
           'action': [ 'python', 'tools/create_version_h.py' ],
+          'msvs_cygwin_shell': 0,
         },
         {
           'action_name': 'create_memory_h',
           'inputs': [ 'tools/create_memory_h.py', 'include/linear/memory.h.in' ],
           'outputs': [ 'include/linear/memory.h' ],
           'action': [ 'python', 'tools/create_memory_h.py' ],
+          'msvs_cygwin_shell': 0,
         },
       ],
       'conditions': [
