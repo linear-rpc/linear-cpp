@@ -93,16 +93,19 @@
       'actions': [
         {
           'action_name': 'create_version_h',
-          'inputs': [ 'tools/create_version_h.py', 'include/linear/version.h.in' ],
+          'inputs': [ 'tools/create_version_h.py', 'include/linear/version.h.in', 'configure.ac' ],
           'outputs': [ 'include/linear/version.h' ],
-          'action': [ 'python', 'tools/create_version_h.py' ],
+          'action': [ 'python', 'tools/create_version_h.py',
+                      '-i', 'include/linear/version.h.in', '-o', 'include/linear/version.h',
+                      '-c', 'configure.ac' ],
           'msvs_cygwin_shell': 0,
         },
         {
           'action_name': 'create_memory_h',
           'inputs': [ 'tools/create_memory_h.py', 'include/linear/memory.h.in' ],
           'outputs': [ 'include/linear/memory.h' ],
-          'action': [ 'python', 'tools/create_memory_h.py' ],
+          'action': [ 'python', 'tools/create_memory_h.py',
+                      '-i', 'include/linear/memory.h.in', '-o', 'include/linear/memory.h' ],
           'msvs_cygwin_shell': 0,
         },
       ],
