@@ -13,8 +13,6 @@
 
 #include "linear/nil.h"
 
-#include "linear/private/extern.h"
-
 namespace linear {
 
 namespace type {
@@ -26,7 +24,7 @@ namespace type {
  * @warning this class can not be stored reference object.
  */
 template <typename T>
-class LINEAR_EXTERN optional {
+class optional {
  public:
   optional() : initialized_(false) {
   }
