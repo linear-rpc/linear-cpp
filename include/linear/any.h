@@ -9,6 +9,8 @@
 #include "linear/binary.h"
 #include "linear/optional.h"
 
+#include "linear/private/extern.h"
+
 namespace linear {
 
 namespace type {
