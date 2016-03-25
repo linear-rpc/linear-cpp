@@ -8,7 +8,7 @@ import subprocess
 import sys
 
 # for creating version.h
-GET_COMMIT_ID = 'git log --pretty=format:%H -1'
+GET_COMMIT_ID = 'gite log --pretty=format:%H -1'
 VERSION_ID_KEY = '@LINEAR_VERSION_ID@'
 COMMIT_ID_KEY = '@LINEAR_COMMIT_ID@'
 
@@ -16,10 +16,14 @@ _usage = 'usage: %prog [options]'
 
 
 def read_commit_id_and_version(ac, kv):
-  proc = subprocess.Popen(GET_COMMIT_ID,
-                          stdout=subprocess.PIPE,
-                          shell=True)
-  kv[COMMIT_ID_KEY] = proc.stdout.readlines()[0]
+  try:
+    proc = subprocess.Popen(GET_COMMIT_ID,
+                            stdout=subprocess.PIPE,
+                            shell=True)
+    kv[COMMIT_ID_KEY] = proc.stdout.readlines()[0]
+  except:
+    kv[COMMIT_ID_KEY] = ""
+    
   f = open(ac, 'r')
   if f:
     for line in f:
