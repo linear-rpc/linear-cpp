@@ -8,7 +8,7 @@ import subprocess
 import sys
 
 # for creating version.h
-GET_COMMIT_ID = 'gite log --pretty=format:%H -1'
+GET_COMMIT_ID = 'git log --pretty=format:%H -1'
 VERSION_ID_KEY = '@LINEAR_VERSION_ID@'
 COMMIT_ID_KEY = '@LINEAR_COMMIT_ID@'
 
