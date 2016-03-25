@@ -8,8 +8,8 @@
     'enable_shared%': 'false', # 'false' or 'true'
     'runtime_library%': 'default', # 'md' or 'mt' or 'default'
     'with_ssl%': 'false',
-    'debug_cflags%': [ '-g', '-fwrapv', '-Wno-gnu-folding-constant' ],
-    'release_cflags%': [ '-Wno-gnu-folding-constant' ],
+    'debug_cflags%': [ '-g', '-fwrapv' ],
+    'release_cflags%': [ ],
   },
 
   'includes': [
