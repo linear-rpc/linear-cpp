@@ -17,7 +17,7 @@ HAVE_TR1_SHARED_PTR = '#define HAVE_TR1_SHARED_PTR	(1)'
 HAVE_BOOST_SHARED_PTR = '#define HAVE_BOOST_SHARED_PTR	(1)'
 
 CXX = os.environ.get('CXX', 'g++')
-TRY_COMPILE = '%s -xc++ - -E' % CXX
+TRY_COMPILE = '%s -xc++ - -o /dev/null' % CXX
 CHECK_STD = """
 echo "#include <memory>
 int main() {
