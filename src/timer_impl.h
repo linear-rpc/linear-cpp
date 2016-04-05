@@ -15,7 +15,8 @@ class TimerImpl {
     START
   };
 
-  TimerImpl();
+  TimerImpl(const linear::EventLoop& loop);
+  TimerImpl(const linear::shared_ptr<linear::EventLoopImpl>& loop);
   ~TimerImpl();
   int GetId();
   linear::Error Start(TimerCallback callback, unsigned int timeout, void* args,
@@ -30,6 +31,7 @@ class TimerImpl {
   void* args_;
   tv_timer_t* tv_timer_;
   linear::mutex mutex_;
+  linear::shared_ptr<linear::EventLoopImpl> loop_;
 };
 
 } // namespace linear

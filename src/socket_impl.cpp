@@ -52,7 +52,7 @@ SocketImpl::SocketImpl(const std::string& host, int port,
   : state_(Socket::DISCONNECTED),
     stream_(NULL), ev_(NULL), peer_(Addrinfo(host, port)), loop_(loop), type_(type), id_(Id()),
     connectable_(true), handshaking_(false), last_error_(LNR_OK), delegate_(delegate),
-    connect_timeout_(0),
+    connect_timeout_(0), connect_timer_(loop_),
     max_buffer_size_(Socket::DEFAULT_MAX_BUFFER_SIZE) {
   LINEAR_LOG(LOG_DEBUG, "socket(id = %d, type = %s, connectable) is created",
              id_, GetTypeString(type_).c_str());
@@ -65,7 +65,7 @@ SocketImpl::SocketImpl(tv_stream_t* stream,
                        Socket::Type type)
   : stream_(stream), ev_(NULL), loop_(loop), type_(type), id_(Id()),
     connectable_(false), last_error_(LNR_OK), delegate_(delegate),
-    connect_timeout_(0),
+    connect_timeout_(0), connect_timer_(loop_),
     max_buffer_size_(Socket::DEFAULT_MAX_BUFFER_SIZE) {
   LINEAR_LOG(LOG_DEBUG, "socket(id = %d, type = %s, not connectable) is created",
              id_, GetTypeString(type_).c_str());
@@ -666,7 +666,7 @@ Error SocketImpl::_Send(Message* message) {
   if (message->type == REQUEST) {
     const Request* request = dynamic_cast<const Request*>(message);
     try {
-      RequestTimer* request_timer = new RequestTimer(*request, ev_->socket);
+      RequestTimer* request_timer = new RequestTimer(*request, ev_->socket, loop_);
       unique_lock<mutex> request_timer_lock(request_timer_mutex_);
       request_timers_.push_back(request_timer);
       request_timer_lock.unlock();

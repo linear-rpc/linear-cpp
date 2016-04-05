@@ -378,8 +378,54 @@ TEST_F(TCPClientServerConnectionTest, ConnectStop) {
   WAIT_TO_FINISH_CALLBACK();
 }
 
+// use ClientLoop
+TEST_F(TCPClientServerConnectionTest, ClientLoop) {
+  linear::EventLoop loop;
+  shared_ptr<MockHandler> ch = linear::shared_ptr<MockHandler>(new MockHandler());
+  TCPClient cl(ch, loop);
+  shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
+  TCPServer sv(sh);
+
+  Error e = sv.Start(TEST_ADDR, TEST_PORT);
+  ASSERT_EQ(LNR_OK, e.Code());
+
+  linear::TCPSocket cs = cl.CreateSocket(TEST_ADDR, TEST_PORT);
+
+  EXPECT_CALL(*sh, OnConnectMock(_)).Times(::testing::AtLeast(0)).WillOnce(WithArg<0>(Disconnect()));
+  EXPECT_CALL(*sh, OnDisconnectMock(_, _)).WillOnce(Assign(&srv_finished, true));
+  EXPECT_CALL(*ch, OnConnectMock(cs)).Times(::testing::AtLeast(0)).WillOnce(WithArg<0>(Disconnect()));
+  EXPECT_CALL(*ch, OnDisconnectMock(cs, _)).WillOnce(Assign(&cli_finished, true));
+
+  e = cs.Connect();
+  ASSERT_EQ(LNR_OK, e.Code());
+  WAIT_TO_FINISH_CALLBACK();
+}
+
+// use ServerLoop
+TEST_F(TCPClientServerConnectionTest, ServerLoop) {
+  linear::EventLoop loop;
+  shared_ptr<MockHandler> ch = linear::shared_ptr<MockHandler>(new MockHandler());
+  TCPClient cl(ch);
+  shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
+  TCPServer sv(sh, loop);
+
+  Error e = sv.Start(TEST_ADDR, TEST_PORT);
+  ASSERT_EQ(LNR_OK, e.Code());
+
+  linear::TCPSocket cs = cl.CreateSocket(TEST_ADDR, TEST_PORT);
+
+  EXPECT_CALL(*sh, OnConnectMock(_)).Times(::testing::AtLeast(0)).WillOnce(WithArg<0>(Disconnect()));
+  EXPECT_CALL(*sh, OnDisconnectMock(_, _)).WillOnce(Assign(&srv_finished, true));
+  EXPECT_CALL(*ch, OnConnectMock(cs)).Times(::testing::AtLeast(0)).WillOnce(WithArg<0>(Disconnect()));
+  EXPECT_CALL(*ch, OnDisconnectMock(cs, _)).WillOnce(Assign(&cli_finished, true));
+
+  e = cs.Connect();
+  ASSERT_EQ(LNR_OK, e.Code());
+  WAIT_TO_FINISH_CALLBACK();
+}
+
 // ClientLoop on Global
-linear::EventLoop g_loop = linear::EventLoop::GetDefault();
+linear::EventLoop g_loop;
 TEST_F(TCPClientServerConnectionTest, ClientLoopOnGlobal) {
   shared_ptr<MockHandler> ch = linear::shared_ptr<MockHandler>(new MockHandler());
   TCPClient cl(ch, g_loop);

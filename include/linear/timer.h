@@ -7,6 +7,7 @@
 #define LINEAR_TIMER_H_
 
 #include "linear/error.h"
+#include "linear/event_loop.h"
 #include "linear/memory.h"
 
 namespace linear {
@@ -25,7 +26,8 @@ class TimerImpl;
 class LINEAR_EXTERN Timer {
  public:
   /// @cond hidden
-  Timer();
+  Timer(const linear::EventLoop& loop = linear::EventLoop::GetDefault());
+  Timer(const linear::shared_ptr<EventLoopImpl>& loop);
   virtual ~Timer();
   Timer(const Timer& timer);
   Timer& operator=(const Timer& timer);

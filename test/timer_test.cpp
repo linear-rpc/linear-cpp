@@ -93,3 +93,51 @@ TEST_F(TimerTest, stack) {
 
   timer.Stop();
 }
+
+TEST_F(TimerTest, loop) {
+  int count = 0, timer_msec = 10, wait_msec = 30 * 1000;
+  linear::EventLoop loop;
+  linear::Timer timer(loop);
+
+  timer.Start(onTimer, timer_msec, &count);
+  usleep(wait_msec);
+  ASSERT_EQ(1, count);
+
+  linear::Timer timer2; // operator=
+  timer2 = timer;
+  timer2.Start(onTimer, timer_msec, &count);
+  usleep(wait_msec);
+  ASSERT_EQ(2, count);
+
+  linear::Timer timer3(timer2); // copy constructor
+  timer3.Start(onTimer, timer_msec, &count);
+  usleep(wait_msec);
+  ASSERT_EQ(3, count);
+
+  timer.Stop();
+}
+
+TEST_F(TimerTest, newdeleteLoop) {
+  int count = 0, timer_msec = 10, wait_msec = 30 * 1000;
+  linear::EventLoop* loop = new linear::EventLoop();
+  linear::Timer timer(*loop);
+
+  timer.Start(onTimer, timer_msec, &count);
+  usleep(wait_msec);
+  ASSERT_EQ(1, count);
+
+  linear::Timer timer2; // operator=
+  timer2 = timer;
+  timer2.Start(onTimer, timer_msec, &count);
+  usleep(wait_msec);
+  ASSERT_EQ(2, count);
+
+  delete loop; // must not segv (managed by internal shared_ptr)
+
+  linear::Timer timer3(timer2); // copy constructor
+  timer3.Start(onTimer, timer_msec, &count);
+  usleep(wait_msec);
+  ASSERT_EQ(3, count);
+
+  timer.Stop();
+}

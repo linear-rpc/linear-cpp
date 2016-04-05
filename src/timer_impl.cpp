@@ -17,7 +17,14 @@ static int Id() {
   return id++;
 }
 
-TimerImpl::TimerImpl() : id_(-1), state_(STOP), callback_(NULL), args_(NULL), tv_timer_(NULL) {
+TimerImpl::TimerImpl(const linear::EventLoop& loop)
+  : id_(-1), state_(STOP), callback_(NULL), args_(NULL), tv_timer_(NULL),
+    loop_(loop.GetImpl()) {
+}
+
+TimerImpl::TimerImpl(const linear::shared_ptr<linear::EventLoopImpl>& loop)
+  : id_(-1), state_(STOP), callback_(NULL), args_(NULL), tv_timer_(NULL),
+    loop_(loop) {
 }
 
 TimerImpl::~TimerImpl() {
@@ -38,7 +45,7 @@ Error TimerImpl::Start(TimerCallback callback, unsigned int timeout, void* args,
   if (tv_timer_ == NULL) {
     return Error(LNR_ENOMEM);
   }
-  int ret = tv_timer_init(EventLoop::GetDefault().GetImpl()->GetHandle(), tv_timer_);
+  int ret = tv_timer_init(loop_->GetHandle(), tv_timer_);
   if (ret) {
     LINEAR_LOG(LOG_ERR, "fail to start timer: %s", tv_strerror(reinterpret_cast<tv_handle_t*>(tv_timer_), ret));
     free(tv_timer_);

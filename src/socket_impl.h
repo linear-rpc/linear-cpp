@@ -15,8 +15,9 @@ class SocketImpl {
  public:
   class RequestTimer {
    public:
-    RequestTimer(const linear::Request& r, const linear::weak_ptr<linear::SocketImpl> s)
-      : request(r), socket(s) {}
+    RequestTimer(const linear::Request& r, const linear::weak_ptr<linear::SocketImpl> s,
+                 const linear::shared_ptr<linear::EventLoopImpl> l)
+      : request(r), socket(s), timer(l) {}
     ~RequestTimer() {
       Stop();
     }

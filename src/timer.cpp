@@ -1,4 +1,5 @@
 #include "linear/log.h"
+#include "linear/timer.h"
 
 #include "timer_impl.h"
 
@@ -6,7 +7,10 @@ using namespace linear::log;
 
 namespace linear {
 
-Timer::Timer() : timer_(new TimerImpl()) {
+Timer::Timer(const linear::EventLoop& loop) : timer_(new TimerImpl(loop)) {
+}
+
+Timer::Timer(const linear::shared_ptr<EventLoopImpl>& loop) : timer_(new TimerImpl(loop)) {
 }
 
 Timer::Timer(const Timer& timer) : timer_(timer.timer_) {
