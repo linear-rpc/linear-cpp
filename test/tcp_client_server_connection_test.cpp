@@ -422,6 +422,7 @@ TEST_F(TCPClientServerConnectionTest, ServerLoop) {
   e = cs.Connect();
   ASSERT_EQ(LNR_OK, e.Code());
   WAIT_TO_FINISH_CALLBACK();
+  sv.Stop();
 }
 
 // ClientLoop on Global
@@ -445,6 +446,7 @@ TEST_F(TCPClientServerConnectionTest, ClientLoopOnGlobal) {
   e = cs.Connect();
   ASSERT_EQ(LNR_OK, e.Code());
   WAIT_TO_FINISH_CALLBACK();
+  sv.Stop();
 }
 
 // ServerLoop on Global
@@ -467,6 +469,7 @@ TEST_F(TCPClientServerConnectionTest, ServerLoopOnGlobal) {
   e = cs.Connect();
   ASSERT_EQ(LNR_OK, e.Code());
   WAIT_TO_FINISH_CALLBACK();
+  sv.Stop();
 }
 
 // Client on Global
