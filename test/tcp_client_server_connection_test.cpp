@@ -456,10 +456,10 @@ TEST_F(TCPClientServerConnectionTest, ServerLoopOnGlobal) {
   shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
   TCPServer sv(sh, g_loop);
 
-  Error e = sv.Start(TEST_ADDR, TEST_PORT);
+  Error e = sv.Start(TEST_ADDR, TEST_PORT + 1);
   ASSERT_EQ(LNR_OK, e.Code());
 
-  linear::TCPSocket cs = cl.CreateSocket(TEST_ADDR, TEST_PORT);
+  linear::TCPSocket cs = cl.CreateSocket(TEST_ADDR, TEST_PORT + 1);
 
   EXPECT_CALL(*sh, OnConnectMock(_)).Times(::testing::AtLeast(0)).WillOnce(WithArg<0>(Disconnect()));
   EXPECT_CALL(*sh, OnDisconnectMock(_, _)).WillOnce(Assign(&srv_finished, true));
