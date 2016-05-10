@@ -303,6 +303,60 @@ TEST(AnyTest, msgpack_object) {
   }
 }
 
+TEST(AnyTest, stringify) {
+  {
+    int i = 0;
+    float f = 3.14;
+    std::string s = "string";
+    linear::type::binary b("\x00\x01\x02", 3);
+    std::vector<linear::type::any> iv;
+    iv.push_back(i);
+    iv.push_back(f);
+    iv.push_back(s);
+    std::map<std::string, linear::type::any> im;
+    im.insert(std::make_pair("k1", i));
+    im.insert(std::make_pair("k2", f));
+    im.insert(std::make_pair("k3", s));
+    im.insert(std::make_pair("k4", iv));
+
+    std::map<std::string, linear::type::any> m;
+    m.insert(std::make_pair("k1", i));
+    m.insert(std::make_pair("k2", f));
+    m.insert(std::make_pair("k3", s));
+    m.insert(std::make_pair("k4", b));
+    m.insert(std::make_pair("k5", iv));
+    m.insert(std::make_pair("k6", im));
+    linear::type::any a1(m);
+
+    std::string bstr("\x00\x01\x02", 3);
+    std::string expect_raw = "{\"k1\":0, \"k2\":3.14, \"k3\":\"string\", \"k4\":\"";
+    expect_raw += bstr;
+    expect_raw += "\", \"k5\":[0, 3.14, \"string\"], \"k6\":{\"k1\":0, \"k2\":3.14, \"k3\":\"string\", \"k4\":[0, 3.14, \"string\"]}}";
+    std::string expect_str = "{\"k1\":0, \"k2\":3.14, \"k3\":\"string\", \"k4\":\"???\", \"k5\":[0, 3.14, \"string\"], \"k6\":{\"k1\":0, \"k2\":3.14, \"k3\":\"string\", \"k4\":[0, 3.14, \"string\"]}}";
+
+    std::string expect_raw_cut = "{\"k1\":0, \"k2\":3.14, \"k3\":\"string\", \"k4\":\"";
+    expect_raw_cut += bstr;
+    expect_raw_cut += "\", \"k5\":[0, 3.14, \"s...(truncated)";
+    std::string expect_str_cut = "{\"k1\":0, \"k2\":3.14, \"k3\":\"string\", \"k4\":\"???\", \"k5\":[0, 3.14, \"s...(truncated)";
+      
+    std::string raw = a1.stringify();
+    std::cout << raw << std::endl;
+    EXPECT_EQ(expect_raw, raw);
+
+    std::string str = a1.stringify(0, true);
+    std::cout << str << std::endl;
+    EXPECT_EQ(expect_str, str);
+
+    std::string raw_cut = a1.stringify(64);
+    std::cout << raw_cut << std::endl;
+    EXPECT_EQ(expect_raw_cut, raw_cut);
+
+    std::string str_cut = a1.stringify(64, true);
+    std::cout << str_cut << std::endl;
+    EXPECT_EQ(expect_str_cut, str_cut);
+  }
+}
+
 int main(int argc, char* argv[]) {
   ::testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();

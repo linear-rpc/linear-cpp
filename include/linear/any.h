@@ -6,10 +6,11 @@
 #ifndef LINEAR_TYPE_ANY_H_
 #define LINEAR_TYPE_ANY_H_
 
+#include <algorithm>
+#include <sstream>
+
 #include "linear/binary.h"
 #include "linear/optional.h"
-
-#include "linear/private/extern.h"
 
 namespace linear {
 
@@ -19,7 +20,7 @@ namespace type {
  * @class any any.h "linear/any.h"
  * represent any type object
  */
-class LINEAR_EXTERN any {
+class any {
  public:
   //! any type indicator
   enum Type {
@@ -130,11 +131,20 @@ class LINEAR_EXTERN any {
   }
   /**
    * stringify any objects
-   * @param length truncate the number of characters except when -1 is specified
+   * @param length truncate the number of characters except when 0 is specified
    * @param printable replace !is_print char into '?'
    * @return stringified object
    */
-  std::string stringify(int length = -1, bool printable = false) const;
+  std::string stringify(size_t length = 0, bool printable = false) const {
+    std::ostringstream os;
+    os << object_;
+    std::string s = os.str();
+    s = (length > 0 && s.size() > length) ? (s.substr(0, length) + "...(truncated)") : s;
+    if (printable) {
+      std::replace_if(s.begin(), s.end(), isnprint, '?');
+    }
+    return s;
+  }
 
   /// @cond hidden
   template <typename Packer>
@@ -152,6 +162,10 @@ class LINEAR_EXTERN any {
   /// @endcond
 
  private:
+  static int isnprint(char c) {
+    return !isprint(c);
+  }
+
   void copy_msgpack_object(const msgpack::object& src, msgpack::object* dst, msgpack::zone& z) const {
     dst->type = src.type;
     switch (src.type) {

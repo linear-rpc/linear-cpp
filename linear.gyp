@@ -59,7 +59,6 @@
       },
       'sources': [
         'src/addrinfo.cpp',
-        'src/any.cpp',
         'src/auth_context.cpp',
         'src/auth_context_impl.cpp',
         'src/condition_variable.cpp',

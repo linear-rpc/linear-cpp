@@ -13,7 +13,6 @@ liblinear_la_LDFLAGS = -version-info 0:0:0
 
 liblinear_la_SOURCES = \
 	addrinfo.cpp \
-	any.cpp \
 	auth_context.cpp \
 	auth_context_impl.cpp \
 	condition_variable.cpp \
