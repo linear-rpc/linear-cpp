@@ -21,19 +21,35 @@ namespace type {
  */
 class LINEAR_EXTERN any {
  public:
+  //! any type indicator
+  enum Type {
+    NIL              = msgpack::type::NIL,              //!< NIL
+    BOOLEAN          = msgpack::type::BOOLEAN,          //!< BOOLEAN
+    POSITIVE_INTEGER = msgpack::type::POSITIVE_INTEGER, //!< POSITIVE_INTEGER
+    NEGATIVE_INTEGER = msgpack::type::NEGATIVE_INTEGER, //!< NEGATIVE_INTEGER
+    FLOAT            = msgpack::type::FLOAT,            //!< FLOAT
+    STR              = msgpack::type::STR,              //!< STRING
+    BIN              = msgpack::type::BIN,              //!< BINARY
+    EXT              = msgpack::type::EXT,              //!< EXT
+    ARRAY            = msgpack::type::ARRAY,            //!< ARRAY
+    MAP              = msgpack::type::MAP               //!< MAP
+  };
+
   /// @cond hidden
-  any() : zone_(), object_() {
+  any() : zone_(), object_(), type(NIL) {
   }
   any(const any& a) : zone_() {
     copy_msgpack_object(a.object_, &object_, zone_);
+    type = static_cast<linear::type::any::Type>(object_.type);
   }
-  any(const linear::type::nil&) : zone_(), object_() {
+  any(const linear::type::nil&) : zone_(), object_(), type(NIL) {
   }
   any(const msgpack::object& o) : zone_() {
     copy_msgpack_object(o, &object_, zone_);
+    type = static_cast<linear::type::any::Type>(object_.type);
   }
   template <typename Value>
-  any(const Value& value) : zone_(), object_(value, &zone_) {
+  any(const Value& value) : zone_(), object_(value, &zone_), type(static_cast<linear::type::any::Type>(object_.type)) {
   }
   ~any() {
   }
@@ -41,16 +57,19 @@ class LINEAR_EXTERN any {
   any& operator=(const Value& value) {
     zone_.clear();
     object_ = msgpack::object(value, &zone_);
+    type = static_cast<linear::type::any::Type>(object_.type);
     return *this;
   }
   any& operator=(const any& a) {
     zone_.clear();
     copy_msgpack_object(a.object_, &object_, zone_);
+    type = static_cast<linear::type::any::Type>(object_.type);
     return *this;
   }
   any& operator=(const msgpack::object& o) {
     zone_.clear();
     copy_msgpack_object(o, &object_, zone_);
+    type = static_cast<linear::type::any::Type>(object_.type);
     return *this;
   }
   bool operator<(const any& a) const {
@@ -91,7 +110,7 @@ class LINEAR_EXTERN any {
 
   /**
    * check nil or not
-   * @return true if object is nil object
+   * @return true if object is a nil object
    */
   bool is_nil() const {
     return object_.is_nil();
@@ -235,6 +254,13 @@ class LINEAR_EXTERN any {
 
   msgpack::zone   zone_;
   msgpack::object object_;
+
+public:
+  /**
+   * any type indicator
+   * @see linear::type::any::Type
+   */
+  Type type;
 };
 
 }  // namespace type

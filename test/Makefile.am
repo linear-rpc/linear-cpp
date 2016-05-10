@@ -20,7 +20,7 @@ TESTS += \
 	log_macro4function_nodebug_test.sh
 endif
 
-TESTS += optional_test
+TESTS += any_test optional_test
 TESTS += run_tests
 
 AM_CPPFLAGS = \
@@ -46,6 +46,7 @@ check_PROGRAMS = \
 	log_macro4stderr_test \
 	log_macro4file_test \
 	log_macro4function_test \
+	any_test \
 	optional_test \
 	run_tests
 
@@ -72,6 +73,9 @@ log_macro4file_test_SOURCES = \
 
 log_macro4function_test_SOURCES = \
 	log_macro4function_test.cpp
+
+any_test_SOURCES = \
+	any_test.cpp
 
 optional_test_SOURCES = \
 	optional_test.cpp
