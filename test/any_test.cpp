@@ -120,7 +120,7 @@ TEST(AnyTest, anyMap) {
     im.insert(std::make_pair("k1", -1));
     im.insert(std::make_pair("k2", 0));
     im.insert(std::make_pair("k3", 1));
-    
+
     std::map<std::string, linear::type::any> m;
     m.insert(std::make_pair("k1", i));
     m.insert(std::make_pair("k2", f));
