@@ -85,15 +85,16 @@ SocketImpl::SocketImpl(tv_stream_t* stream,
     handshaking_ = false;
     state_ = Socket::CONNECTED;
   }
-  struct sockaddr ss;
-  int len = sizeof(struct sockaddr_storage);
-  int ret = tv_getsockname(stream_, &ss, &len);
+  struct sockaddr_storage ss;
+  int len = sizeof(ss);
+  struct sockaddr* sa = reinterpret_cast<struct sockaddr*>(&ss);
+  int ret = tv_getsockname(stream_, sa, &len);
   if (ret == 0) {
-    self_ = Addrinfo(&ss);
+    self_ = Addrinfo(sa);
   }
-  ret = tv_getpeername(stream_, &ss, &len);
+  ret = tv_getpeername(stream_, sa, &len);
   if (ret == 0) {
-    peer_ = Addrinfo(&ss);
+    peer_ = Addrinfo(sa);
   } else {
     LINEAR_LOG(LOG_WARN, "fail to get peerinfo(id = %d) (may disconnected by peer): %s",
                id_, tv_strerror(reinterpret_cast<tv_handle_t*>(stream_), ret));
@@ -314,11 +315,12 @@ void SocketImpl::OnConnect(const shared_ptr<SocketImpl>& socket, tv_stream_t* st
     tv_close(reinterpret_cast<tv_handle_t*>(stream_), EventLoopImpl::OnClose);
     return;
   }
-  struct sockaddr ss;
-  int len = sizeof(struct sockaddr_storage);
-  int ret = tv_getsockname(stream_, &ss, &len);
+  struct sockaddr_storage ss;
+  int len = sizeof(ss);
+  struct sockaddr* sa = reinterpret_cast<struct sockaddr*>(&ss);
+  int ret = tv_getsockname(stream_, sa, &len);
   if (ret == 0) {
-    self_ = Addrinfo(&ss);
+    self_ = Addrinfo(sa);
   }
   // OK.starts to read
   last_error_ = StartRead(ev_);

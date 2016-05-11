@@ -543,3 +543,30 @@ TEST_F(TCPClientServerConnectionTest, SocketOnGlobal) {
   WAIT_TO_FINISH_CALLBACK();
 }
 
+// Connect - Disconnect from Client in front thread ipv6
+TEST_F(TCPClientServerConnectionTest, DisconnectFromClientFTv6) {
+  shared_ptr<MockHandler> ch = linear::shared_ptr<MockHandler>(new MockHandler());
+  TCPClient cl(ch);
+  shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
+  TCPServer sv(sh);
+
+  Error e = sv.Start("::1", TEST_PORT);
+  ASSERT_EQ(LNR_OK, e.Code());
+
+  TCPSocket cs = cl.CreateSocket("::1", TEST_PORT);
+
+  EXPECT_CALL(*sh, OnConnectMock(_)).WillOnce(Assign(&srv_finished, true));
+  EXPECT_CALL(*ch, OnConnectMock(cs)).WillOnce(Assign(&cli_finished, true));
+
+  e = cs.Connect();
+  ASSERT_EQ(LNR_OK, e.Code());
+  WAIT_TO_FINISH_CALLBACK();
+
+  EXPECT_CALL(*sh, OnDisconnectMock(sh->s_, Error(LNR_EOF))).WillOnce(Assign(&srv_finished, true));
+  EXPECT_CALL(*ch, OnDisconnectMock(cs, Error(LNR_OK))).WillOnce(Assign(&cli_finished, true));
+
+  e = cs.Disconnect();
+  ASSERT_EQ(LNR_OK, e.Code());
+  WAIT_TO_FINISH_CALLBACK();
+}
+
