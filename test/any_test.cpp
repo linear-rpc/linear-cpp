@@ -305,21 +305,25 @@ TEST(AnyTest, msgpack_object) {
 
 TEST(AnyTest, stringify) {
   {
+    linear::type::nil n;
     int i = 0;
     float f = 3.14;
     std::string s = "string";
     linear::type::binary b("\x00\x01\x02", 3);
     std::vector<linear::type::any> iv;
+    iv.push_back(n);
     iv.push_back(i);
     iv.push_back(f);
     iv.push_back(s);
     std::map<std::string, linear::type::any> im;
+    im.insert(std::make_pair("k0", n));
     im.insert(std::make_pair("k1", i));
     im.insert(std::make_pair("k2", f));
     im.insert(std::make_pair("k3", s));
     im.insert(std::make_pair("k4", iv));
 
     std::map<std::string, linear::type::any> m;
+    m.insert(std::make_pair("k0", n));
     m.insert(std::make_pair("k1", i));
     m.insert(std::make_pair("k2", f));
     m.insert(std::make_pair("k3", s));
@@ -329,15 +333,15 @@ TEST(AnyTest, stringify) {
     linear::type::any a1(m);
 
     std::string bstr("\x00\x01\x02", 3);
-    std::string expect_raw = "{\"k1\":0, \"k2\":3.14, \"k3\":\"string\", \"k4\":\"";
+    std::string expect_raw = "{\"k0\":null, \"k1\":0, \"k2\":3.14, \"k3\":\"string\", \"k4\":\"";
     expect_raw += bstr;
-    expect_raw += "\", \"k5\":[0, 3.14, \"string\"], \"k6\":{\"k1\":0, \"k2\":3.14, \"k3\":\"string\", \"k4\":[0, 3.14, \"string\"]}}";
-    std::string expect_str = "{\"k1\":0, \"k2\":3.14, \"k3\":\"string\", \"k4\":\"???\", \"k5\":[0, 3.14, \"string\"], \"k6\":{\"k1\":0, \"k2\":3.14, \"k3\":\"string\", \"k4\":[0, 3.14, \"string\"]}}";
+    expect_raw += "\", \"k5\":[null, 0, 3.14, \"string\"], \"k6\":{\"k0\":null, \"k1\":0, \"k2\":3.14, \"k3\":\"string\", \"k4\":[null, 0, 3.14, \"string\"]}}";
+    std::string expect_str = "{\"k0\":null, \"k1\":0, \"k2\":3.14, \"k3\":\"string\", \"k4\":\"???\", \"k5\":[null, 0, 3.14, \"string\"], \"k6\":{\"k0\":null, \"k1\":0, \"k2\":3.14, \"k3\":\"string\", \"k4\":[null, 0, 3.14, \"string\"]}}";
 
-    std::string expect_raw_cut = "{\"k1\":0, \"k2\":3.14, \"k3\":\"string\", \"k4\":\"";
+    std::string expect_raw_cut = "{\"k0\":null, \"k1\":0, \"k2\":3.14, \"k3\":\"string\", \"k4\":\"";
     expect_raw_cut += bstr;
-    expect_raw_cut += "\", \"k5\":[0, 3.14, \"s...(truncated)";
-    std::string expect_str_cut = "{\"k1\":0, \"k2\":3.14, \"k3\":\"string\", \"k4\":\"???\", \"k5\":[0, 3.14, \"s...(truncated)";
+    expect_raw_cut += "\", \"k5\":[...(truncated)";
+    std::string expect_str_cut = "{\"k0\":null, \"k1\":0, \"k2\":3.14, \"k3\":\"string\", \"k4\":\"???\", \"k5\":[...(truncated)";
       
     std::string raw = a1.stringify();
     std::cout << raw << std::endl;

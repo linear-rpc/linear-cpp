@@ -154,8 +154,7 @@ TEST(OptionalTest, DeserializeWorks) {
   msgpack::sbuffer sbuf1;
   msgpack::pack(sbuf1, linear::type::nil());
 
-  msgpack::unpacked result1;
-  msgpack::unpack(&result1, sbuf1.data(), sbuf1.size());
+  msgpack::object_handle result1 = msgpack::unpack(sbuf1.data(), sbuf1.size());
   msgpack::object obj1 = result1.get();
 
   linear::type::optional<int> o1;
@@ -165,8 +164,7 @@ TEST(OptionalTest, DeserializeWorks) {
   msgpack::sbuffer sbuf2;
   msgpack::pack(sbuf2, 1);
 
-  msgpack::unpacked result2;
-  msgpack::unpack(&result2, sbuf2.data(), sbuf2.size());
+  msgpack::object_handle result2 = msgpack::unpack(sbuf2.data(), sbuf2.size());
   msgpack::object obj2 = result2.get();
 
   linear::type::optional<int> o2;

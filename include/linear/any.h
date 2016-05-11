@@ -50,14 +50,14 @@ class any {
     type = static_cast<linear::type::any::Type>(object_.type);
   }
   template <typename Value>
-  any(const Value& value) : zone_(), object_(value, &zone_), type(static_cast<linear::type::any::Type>(object_.type)) {
+  any(const Value& value) : zone_(), object_(value, zone_), type(static_cast<linear::type::any::Type>(object_.type)) {
   }
   ~any() {
   }
   template <typename Value>
   any& operator=(const Value& value) {
     zone_.clear();
-    object_ = msgpack::object(value, &zone_);
+    object_ = msgpack::object(value, zone_);
     type = static_cast<linear::type::any::Type>(object_.type);
     return *this;
   }
