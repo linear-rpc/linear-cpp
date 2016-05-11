@@ -551,6 +551,10 @@ TEST_F(TCPClientServerConnectionTest, DisconnectFromClientFTv6) {
   TCPServer sv(sh);
 
   Error e = sv.Start("::1", TEST_PORT);
+  if (e == Error(LNR_EADDRNOTAVAIL)) {
+    LINEAR_LOG(LOG_DEBUG, "not support v6 network");
+    return;
+  }
   ASSERT_EQ(LNR_OK, e.Code());
 
   TCPSocket cs = cl.CreateSocket("::1", TEST_PORT);
