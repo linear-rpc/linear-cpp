@@ -73,6 +73,18 @@ class any {
     type = static_cast<linear::type::any::Type>(object_.type);
     return *this;
   }
+  bool operator<(const any& a) const {
+    return (stringify() < a.stringify());
+  }
+  bool operator<=(const any& a) const {
+    return (stringify() <= a.stringify());
+  }
+  bool operator>(const any& a) const {
+    return (stringify() > a.stringify());
+  }
+  bool operator>=(const any& a) const {
+    return (stringify() >= a.stringify());
+  }
   bool operator==(const any& a) const {
     return (a.object_ == object_);
   }
