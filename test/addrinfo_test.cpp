@@ -21,6 +21,7 @@ TEST_F(AddrinfoTest, all) {
   linear::Addrinfo ai = linear::Addrinfo(test_addr, test_port);
   ASSERT_EQ(ai.addr, test_addr);
   ASSERT_EQ(ai.port, test_port);
+  ASSERT_EQ(ai.proto, linear::Addrinfo::IPv4);
 
   std::ostringstream os;
   struct addrinfo hints;
@@ -35,9 +36,16 @@ TEST_F(AddrinfoTest, all) {
   ai = linear::Addrinfo(res->ai_addr);
   ASSERT_EQ(ai.addr, test_addr);
   ASSERT_EQ(ai.port, test_port);
+  ASSERT_EQ(ai.proto, linear::Addrinfo::IPv4);
 
   test_addr = "::1";
   test_port = 10002;
+  
+  ai = linear::Addrinfo(test_addr, test_port);
+  ASSERT_EQ(ai.addr, test_addr);
+  ASSERT_EQ(ai.port, test_port);
+  ASSERT_EQ(ai.proto, linear::Addrinfo::IPv6);
+
   os.str("");
   os.clear(std::stringstream::goodbit);
   os << test_port;
@@ -47,4 +55,5 @@ TEST_F(AddrinfoTest, all) {
   ai = linear::Addrinfo(res->ai_addr);
   ASSERT_EQ(ai.addr, test_addr);
   ASSERT_EQ(ai.port, test_port);
+  ASSERT_EQ(ai.proto, linear::Addrinfo::IPv6);
 }
