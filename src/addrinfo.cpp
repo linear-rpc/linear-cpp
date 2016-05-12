@@ -1,3 +1,5 @@
+#include <cstring>
+
 #include "linear/addrinfo.h"
 
 namespace linear {
