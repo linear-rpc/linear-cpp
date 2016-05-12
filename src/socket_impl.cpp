@@ -55,15 +55,14 @@ SocketImpl::SocketImpl(const std::string& host, int port,
     connect_timeout_(0), connect_timer_(loop_),
     max_buffer_size_(Socket::DEFAULT_MAX_BUFFER_SIZE) {
   if (peer_.proto == Addrinfo::UNKNOWN) {
-    LINEAR_LOG(LOG_ERR, "fail to create socket(id = %d, peer = [%s]:%d, type = %s, connectable): address not available",
-               id_,
-               host.c_str(), port, GetTypeString(type_).c_str());
+    LINEAR_LOG(LOG_ERR, "fail to create socket(id = %d, type = %s, peer = [%s]:%d, connectable): address not available",
+               id_, GetTypeString(type_).c_str(),
+               host.c_str(), port);
   } else {
-    LINEAR_LOG(LOG_DEBUG, "socket(id = %d, peer = %s:%d, type = %s, connectable) is created",
-               id_,
+    LINEAR_LOG(LOG_DEBUG, "socket(id = %d, type = %s, peer = %s:%d, connectable) is created",
+               id_, GetTypeString(type_).c_str(),
                (peer_.proto == Addrinfo::IPv4) ? peer_.addr.c_str() : (std::string("[" + peer_.addr + "]")).c_str(),
-               peer_.port,
-               GetTypeString(type_).c_str());
+               peer_.port);
   }
 }
 
@@ -111,20 +110,17 @@ SocketImpl::SocketImpl(tv_stream_t* stream,
     LINEAR_LOG(LOG_WARN, "fail to get peerinfo(id = %d) (may disconnected by peer): %s",
                id_, tv_strerror(reinterpret_cast<tv_handle_t*>(stream_), ret));
   }
-  LINEAR_LOG(LOG_DEBUG, "socket(id = %d, self = %s:%d, peer = %s:%d, type = %s, not connectable) is created",
-             id_,
+  LINEAR_LOG(LOG_DEBUG, "socket(id = %d, type = %s, self = %s:%d, peer = %s:%d, not connectable) is created",
+             id_, GetTypeString(type_).c_str(),
              (self_.proto == Addrinfo::IPv4) ? self_.addr.c_str() : (std::string("[" + self_.addr + "]")).c_str(),
              self_.port,
              (peer_.proto == Addrinfo::IPv4) ? peer_.addr.c_str() : (std::string("[" + peer_.addr + "]")).c_str(),
-             peer_.port,
-             GetTypeString(type_).c_str());
+             peer_.port);
 }
 
 SocketImpl::~SocketImpl() {
   Disconnect(false);
-  LINEAR_LOG(LOG_DEBUG, "socket(id = %d, type = %s, %s) is destroyed",
-             id_, GetTypeString(type_).c_str(),
-             (connectable_ ? "connectable" : "not connectable"));
+  LINEAR_LOG(LOG_DEBUG, "socket(id = %d) is destroyed", id_);
 }
 
 void SocketImpl::SetMaxBufferSize(size_t limit) {
