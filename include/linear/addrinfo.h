@@ -8,8 +8,11 @@
 
 #ifdef _WIN32
 # include <winsock2.h>
+# include <ws2tcpip.h>
 #else
-# include <netinet/in.h>
+# include <sys/types.h>
+# include <sys/socket.h>
+# include <netdb.h>
 #endif
 
 #include <string>
@@ -23,6 +26,14 @@ namespace linear {
  * Address Informations
  */
 struct LINEAR_EXTERN Addrinfo {
+
+  //! address family
+  enum Protocol {
+    UNKNOWN = -1,
+    IPv4,
+    IPv6
+  };
+
   /// @cond hidden
   Addrinfo();
   Addrinfo(const struct sockaddr* sa);
@@ -30,8 +41,9 @@ struct LINEAR_EXTERN Addrinfo {
   ~Addrinfo();
   /// @endcond
 
-  std::string addr; //!< ip address of node
-  int         port; //!< port number of node
+  std::string                   addr;  //!< ip address of node
+  int                           port;  //!< port number of node
+  linear::Addrinfo::Protocol    proto; //!< address family indicator
 };
 
 }  // namespace linear
