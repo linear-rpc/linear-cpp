@@ -25,15 +25,29 @@ Error TCPServerImpl::Start(const std::string& hostname, int port, EventLoopImpl:
   if (state_ == START) {
     return Error(LNR_EALREADY);
   }
+  self_ = Addrinfo(hostname, port);
+  if (self_.proto == Addrinfo::UNKNOWN) {
+    Error err(LNR_EADDRNOTAVAIL);
+    LINEAR_LOG(LOG_ERR, "fail to start server(%s:%d,TCP): %s",
+               hostname.c_str(), port, err.Message().c_str());
+    return err;
+  }
   handle_ = static_cast<tv_tcp_t*>(malloc(sizeof(tv_tcp_t)));
   if (handle_ == NULL) {
-    return Error(LNR_ENOMEM);
+    Error err(LNR_ENOMEM);
+    LINEAR_LOG(LOG_ERR, "fail to start server(%s:%d,TCP): %s",
+               (self_.proto == Addrinfo::IPv4) ? self_.addr.c_str() : (std::string("[" + self_.addr + "]")).c_str(),
+               self_.port,
+               err.Message().c_str());
+    return err;
   }
   int ret = tv_tcp_init(loop_->GetHandle(), handle_);
   if (ret) {
     Error err(ret);
     LINEAR_LOG(LOG_ERR, "fail to start server(%s:%d,TCP): %s",
-               hostname.c_str(), port, err.Message().c_str());
+               (self_.proto == Addrinfo::IPv4) ? self_.addr.c_str() : (std::string("[" + self_.addr + "]")).c_str(),
+               self_.port,
+               err.Message().c_str());
     free(handle_);
     return err;
   }
@@ -45,13 +59,16 @@ Error TCPServerImpl::Start(const std::string& hostname, int port, EventLoopImpl:
   if (ret) {
     Error err(ret);
     LINEAR_LOG(LOG_ERR, "fail to start server(%s:%d,TCP): %s",
-               hostname.c_str(), port, err.Message().c_str());
+               (self_.proto == Addrinfo::IPv4) ? self_.addr.c_str() : (std::string("[" + self_.addr + "]")).c_str(),
+               self_.port,
+               err.Message().c_str());
     free(handle_);
     return err;
   }
   state_ = START;
-  self_ = Addrinfo(hostname, port);
-  LINEAR_LOG(LOG_DEBUG, "start server: %s:%d,TCP", self_.addr.c_str(), self_.port);
+  LINEAR_LOG(LOG_DEBUG, "start server: %s:%d,TCP",
+             (self_.proto == Addrinfo::IPv4) ? self_.addr.c_str() : (std::string("[" + self_.addr + "]")).c_str(),
+             self_.port);
   return Error(LNR_OK);
 }
 
@@ -60,7 +77,9 @@ Error TCPServerImpl::Stop() {
   if (state_ == STOP) {
     return Error(LNR_EALREADY);
   }
-  LINEAR_LOG(LOG_DEBUG, "stop server: %s:%d,TCP", self_.addr.c_str(), self_.port);
+  LINEAR_LOG(LOG_DEBUG, "stop server: %s:%d,TCP",
+             (self_.proto == Addrinfo::IPv4) ? self_.addr.c_str() : (std::string("[" + self_.addr + "]")).c_str(),
+             self_.port);
   state_ = STOP;
   tv_close(reinterpret_cast<tv_handle_t*>(handle_), EventLoopImpl::OnClose);
   pool_.Clear();
@@ -75,13 +94,15 @@ void TCPServerImpl::OnAccept(tv_stream_t* srv_stream, tv_stream_t* cli_stream, i
   assert(status || cli_stream != NULL);
   if (status) {
     LINEAR_LOG(LOG_ERR, "fail to accept at %s:%d,TCP, reason = %s",
-               self_.addr.c_str(), self_.port,
+               (self_.proto == Addrinfo::IPv4) ? self_.addr.c_str() : (std::string("[" + self_.addr + "]")).c_str(),
+               self_.port,
                tv_strerror(reinterpret_cast<tv_handle_t*>(srv_stream), status));
     return;
   } else if (cli_stream == NULL) {
     // TODO: LNR_EINTENAL or LNR_ENOMEM?
     LINEAR_LOG(LOG_ERR, "BUG?: fail to accept at %s:%d,TCP, reason = Internal Server Error",
-               self_.addr.c_str(), self_.port);
+               (self_.proto == Addrinfo::IPv4) ? self_.addr.c_str() : (std::string("[" + self_.addr + "]")).c_str(),
+               self_.port);
     return;
   }
   try {
@@ -99,7 +120,9 @@ void TCPServerImpl::OnAccept(tv_stream_t* srv_stream, tv_stream_t* cli_stream, i
     OnConnect(shared);
   } catch(...) {
     LINEAR_LOG(LOG_ERR, "fail to accept at %s:%d,TCP, reason = %s",
-               self_.addr.c_str(), self_.port, Error(LNR_ENOMEM).Message().c_str());
+               (self_.proto == Addrinfo::IPv4) ? self_.addr.c_str() : (std::string("[" + self_.addr + "]")).c_str(),
+               self_.port,
+               Error(LNR_ENOMEM).Message().c_str());
   }
 }
 

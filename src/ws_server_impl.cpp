@@ -26,15 +26,29 @@ Error WSServerImpl::Start(const std::string& hostname, int port, EventLoopImpl::
   if (state_ == START) {
     return Error(LNR_EALREADY);
   }
+  self_ = Addrinfo(hostname, port);
+  if (self_.proto == Addrinfo::UNKNOWN) {
+    Error err(LNR_EADDRNOTAVAIL);
+    LINEAR_LOG(LOG_ERR, "fail to start server(%s:%d,WS): %s",
+               hostname.c_str(), port, err.Message().c_str());
+    return err;
+  }
   handle_ = static_cast<tv_ws_t*>(malloc(sizeof(tv_ws_t)));
   if (handle_ == NULL) {
-    return Error(LNR_ENOMEM);
+    Error err(LNR_ENOMEM);
+    LINEAR_LOG(LOG_ERR, "fail to start server(%s:%d,WS): %s",
+               (self_.proto == Addrinfo::IPv4) ? self_.addr.c_str() : (std::string("[" + self_.addr + "]")).c_str(),
+               self_.port,
+               err.Message().c_str());
+    return err;
   }
   int ret = tv_ws_init(loop_->GetHandle(), handle_);
   if (ret) {
     Error err(ret);
     LINEAR_LOG(LOG_ERR, "fail to start server(%s:%d,WS): %s",
-               hostname.c_str(), port, err.Message().c_str());
+               (self_.proto == Addrinfo::IPv4) ? self_.addr.c_str() : (std::string("[" + self_.addr + "]")).c_str(),
+               self_.port,
+               err.Message().c_str());
     free(handle_);
     return err;
   }
@@ -46,13 +60,16 @@ Error WSServerImpl::Start(const std::string& hostname, int port, EventLoopImpl::
   if (ret) {
     Error err(ret);
     LINEAR_LOG(LOG_ERR, "fail to start server(%s:%d,WS): %s",
-               hostname.c_str(), port, err.Message().c_str());
+               (self_.proto == Addrinfo::IPv4) ? self_.addr.c_str() : (std::string("[" + self_.addr + "]")).c_str(),
+               self_.port,
+               err.Message().c_str());
     free(handle_);
     return err;
   }
   state_ = START;
-  self_ = Addrinfo(hostname, port);
-  LINEAR_LOG(LOG_DEBUG, "start server: %s:%d,WS", self_.addr.c_str(), self_.port);
+  LINEAR_LOG(LOG_DEBUG, "start server: %s:%d,WS",
+             (self_.proto == Addrinfo::IPv4) ? self_.addr.c_str() : (std::string("[" + self_.addr + "]")).c_str(),
+             self_.port);
   return Error(LNR_OK);
 }
 
@@ -61,7 +78,9 @@ Error WSServerImpl::Stop() {
   if (state_ == STOP) {
     return Error(LNR_EALREADY);
   }
-  LINEAR_LOG(LOG_DEBUG, "stop server: %s:%d,WS", self_.addr.c_str(), self_.port);
+  LINEAR_LOG(LOG_DEBUG, "stop server: %s:%d,WS",
+             (self_.proto == Addrinfo::IPv4) ? self_.addr.c_str() : (std::string("[" + self_.addr + "]")).c_str(),
+             self_.port);
   state_ = STOP;
   tv_close(reinterpret_cast<tv_handle_t*>(handle_), EventLoopImpl::OnClose);
   pool_.Clear();
@@ -76,13 +95,15 @@ void WSServerImpl::OnAccept(tv_stream_t* srv_stream, tv_stream_t* cli_stream, in
   assert(status || cli_stream != NULL);
   if (status) {
     LINEAR_LOG(LOG_ERR, "fail to accept at %s:%d,WS, reason = %s",
-               self_.addr.c_str(), self_.port,
+               (self_.proto == Addrinfo::IPv4) ? self_.addr.c_str() : (std::string("[" + self_.addr + "]")).c_str(),
+               self_.port,
                tv_strerror(reinterpret_cast<tv_handle_t*>(srv_stream), status));
     return;
   } else if (cli_stream == NULL) {
     // TODO: LNR_EINTENAL or LNR_ENOMEM?
     LINEAR_LOG(LOG_ERR, "BUG?: fail to accept at %s:%d,WS, reason = Internal Server Error",
-               self_.addr.c_str(), self_.port);
+               (self_.proto == Addrinfo::IPv4) ? self_.addr.c_str() : (std::string("[" + self_.addr + "]")).c_str(),
+               self_.port);
     return;
   }
   try {
@@ -115,7 +136,9 @@ void WSServerImpl::OnAccept(tv_stream_t* srv_stream, tv_stream_t* cli_stream, in
         const buffer* auth_val = buffer_kvs_case_find(&handle->handshake.request.headers, CONST_STRING("authorization"));
         if (auth_val == NULL) { // not found Authorization header
           LINEAR_LOG(LOG_WARN, "need %s authentication at %s:%d,WS",
-                     (auth_type_ == AuthContext::BASIC ? "basic" : "digest"), self_.addr.c_str(), self_.port);
+                     (auth_type_ == AuthContext::BASIC ? "basic" : "digest"),
+                     (self_.proto == Addrinfo::IPv4) ? self_.addr.c_str() : (std::string("[" + self_.addr + "]")).c_str(),
+                     self_.port);
           CreateAuthenticationHeader(handle);
           return;
         }
@@ -164,11 +187,15 @@ void WSServerImpl::OnAccept(tv_stream_t* srv_stream, tv_stream_t* cli_stream, in
       }
     } else {
       LINEAR_LOG(LOG_WARN, "fail to accept at %s:%d,WS, reason = %s",
-                 self_.addr.c_str(), self_.port, Error(LNR_EPROTO).Message().c_str());
+                 (self_.proto == Addrinfo::IPv4) ? self_.addr.c_str() : (std::string("[" + self_.addr + "]")).c_str(),
+                 self_.port,
+                 Error(LNR_EPROTO).Message().c_str());
     }
   } catch(...) {
     LINEAR_LOG(LOG_ERR, "fail to accept at %s:%d,WS, reason = %s",
-               self_.addr.c_str(), self_.port, Error(LNR_ENOMEM).Message().c_str());
+               (self_.proto == Addrinfo::IPv4) ? self_.addr.c_str() : (std::string("[" + self_.addr + "]")).c_str(),
+               self_.port,
+               Error(LNR_ENOMEM).Message().c_str());
     reinterpret_cast<tv_ws_t*>(cli_stream)->handshake.response.code = WSHS_INTERNAL_SERVER_ERROR;
   }
 }

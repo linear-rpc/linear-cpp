@@ -103,8 +103,11 @@ SocketImpl::SocketImpl(tv_stream_t* stream,
   }
   LINEAR_LOG(LOG_DEBUG, "incoming peer(id = %d): %s:%d <-- %s --- %s:%d",
              id_,
-             self_.addr.c_str(), self_.port, GetTypeString(type_).c_str(),
-             peer_.addr.c_str(), peer_.port);
+             (self_.proto == Addrinfo::IPv4) ? self_.addr.c_str() : (std::string("[" + self_.addr + "]")).c_str(),
+             self_.port,
+             GetTypeString(type_).c_str(),
+             (peer_.proto == Addrinfo::IPv4) ? peer_.addr.c_str() : (std::string("[" + peer_.addr + "]")).c_str(),
+             peer_.port);
 }
 
 SocketImpl::~SocketImpl() {
@@ -135,7 +138,9 @@ Error SocketImpl::Connect(unsigned int timeout, EventLoopImpl::SocketEvent* ev) 
   }
   LINEAR_LOG(LOG_DEBUG, "try to connect(id = %d): --- %s --> %s:%d",
              id_,
-             GetTypeString(type_).c_str(), peer_.addr.c_str(), peer_.port);
+             GetTypeString(type_).c_str(),
+             (peer_.proto == Addrinfo::IPv4) ? peer_.addr.c_str() : (std::string("[" + peer_.addr + "]")).c_str(),
+             peer_.port);
   ev_ = ev;
   Error err;
   shared_ptr<HandlerDelegate> delegate = delegate_.lock();
@@ -274,8 +279,11 @@ Error SocketImpl::StartRead(EventLoopImpl::SocketEvent* ev) {
   }
   LINEAR_LOG(LOG_DEBUG, "connected(id = %d): %s:%d <-- %s --> %s:%d",
              id_,
-             self_.addr.c_str(), self_.port, GetTypeString(type_).c_str(),
-             peer_.addr.c_str(), peer_.port);
+             (self_.proto == Addrinfo::IPv4) ? self_.addr.c_str() : (std::string("[" + self_.addr + "]")).c_str(),
+             self_.port,
+             GetTypeString(type_).c_str(),
+             (peer_.proto == Addrinfo::IPv4) ? peer_.addr.c_str() : (std::string("[" + peer_.addr + "]")).c_str(),
+             peer_.port);
   return Error(LNR_OK);
 }
 
@@ -288,7 +296,9 @@ void SocketImpl::OnConnect(const shared_ptr<SocketImpl>& socket, tv_stream_t* st
   if (state_ != Socket::CONNECTING) {
     LINEAR_LOG(LOG_DEBUG, "connect(id = %d) is cancelled: x-- %s --> %s:%d",
                id_,
-               GetTypeString(type_).c_str(), peer_.addr.c_str(), peer_.port);
+               GetTypeString(type_).c_str(),
+               (peer_.proto == Addrinfo::IPv4) ? peer_.addr.c_str() : (std::string("[" + peer_.addr + "]")).c_str(),
+               peer_.port);
     return;
   }
   if (status) {
@@ -312,7 +322,9 @@ void SocketImpl::OnConnect(const shared_ptr<SocketImpl>& socket, tv_stream_t* st
     LINEAR_LOG(LOG_DEBUG, "fail to connect(id = %d), %s: --- %s --x %s:%d",
                id_,
                last_error_.Message().c_str(),
-               GetTypeString(type_).c_str(), peer_.addr.c_str(), peer_.port);
+               GetTypeString(type_).c_str(),
+               (peer_.proto == Addrinfo::IPv4) ? peer_.addr.c_str() : (std::string("[" + peer_.addr + "]")).c_str(),
+               peer_.port);
     state_lock.unlock();
     tv_close(reinterpret_cast<tv_handle_t*>(stream_), EventLoopImpl::OnClose);
     return;
@@ -332,8 +344,11 @@ void SocketImpl::OnConnect(const shared_ptr<SocketImpl>& socket, tv_stream_t* st
     LINEAR_LOG(LOG_DEBUG, "fail to connect(id = %d), %s: %s:%d --- %s --x %s:%d",
                id_,
                last_error_.Message().c_str(),
-               self_.addr.c_str(), self_.port, GetTypeString(type_).c_str(),
-               peer_.addr.c_str(), peer_.port);
+               (self_.proto == Addrinfo::IPv4) ? self_.addr.c_str() : (std::string("[" + self_.addr + "]")).c_str(),
+               self_.port,
+               GetTypeString(type_).c_str(),
+               (peer_.proto == Addrinfo::IPv4) ? peer_.addr.c_str() : (std::string("[" + peer_.addr + "]")).c_str(),
+               peer_.port);
     return;
   }
   state_lock.unlock();
@@ -370,8 +385,11 @@ void SocketImpl::OnDisconnect(const shared_ptr<SocketImpl>& socket) {
   }
   LINEAR_LOG(LOG_DEBUG, "disconnected(id = %d): %s:%d x-- %s --x %s:%d",
              id_,
-             self_.addr.c_str(), self_.port, GetTypeString(type_).c_str(),
-             peer_.addr.c_str(), peer_.port);
+             (self_.proto == Addrinfo::IPv4) ? self_.addr.c_str() : (std::string("[" + self_.addr + "]")).c_str(),
+             self_.port,
+             GetTypeString(type_).c_str(),
+             (peer_.proto == Addrinfo::IPv4) ? peer_.addr.c_str() : (std::string("[" + peer_.addr + "]")).c_str(),
+             peer_.port);
   state_ = Socket::DISCONNECTED;
   state_lock.unlock();
   shared_ptr<HandlerDelegate> delegate = delegate_.lock();
@@ -472,8 +490,13 @@ void SocketImpl::OnRead(const shared_ptr<SocketImpl>& socket, const tv_buf_t* bu
   assert(nread != 0);
   if (nread <= 0) {
     LINEAR_LOG(LOG_DEBUG, "%s(id = %d): %s:%d --- %s --x %s:%d",
-               tv_strerror(reinterpret_cast<tv_handle_t*>(stream_), nread), id_,
-               self_.addr.c_str(), self_.port, GetTypeString(type_).c_str(), peer_.addr.c_str(), peer_.port);
+               tv_strerror(reinterpret_cast<tv_handle_t*>(stream_), nread),
+               id_,
+               (self_.proto == Addrinfo::IPv4) ? self_.addr.c_str() : (std::string("[" + self_.addr + "]")).c_str(),
+               self_.port,
+               GetTypeString(type_).c_str(),
+               (peer_.proto == Addrinfo::IPv4) ? peer_.addr.c_str() : (std::string("[" + peer_.addr + "]")).c_str(),
+               peer_.port);
     // error or EOF
     Disconnect(handshaking_);
     last_error_ = e;
@@ -498,7 +521,11 @@ void SocketImpl::OnRead(const shared_ptr<SocketImpl>& socket, const tv_buf_t* bu
           LINEAR_LOG(LOG_DEBUG, "recv request(id = %d): msgid = %u, method = \"%s\", params = %s, %s:%d <-- %s --- %s:%d",
                      id_, request.msgid,
                      request.method.c_str(), LINEAR_LOG_PRINTABLE_STRING(request.params).c_str(),
-                     self_.addr.c_str(), self_.port, GetTypeString(type_).c_str(), peer_.addr.c_str(), peer_.port);
+                     (self_.proto == Addrinfo::IPv4) ? self_.addr.c_str() : (std::string("[" + self_.addr + "]")).c_str(),
+                     self_.port,
+                     GetTypeString(type_).c_str(),
+                     (peer_.proto == Addrinfo::IPv4) ? peer_.addr.c_str() : (std::string("[" + peer_.addr + "]")).c_str(),
+                     peer_.port);
           if (delegate) {
             delegate->OnMessage(socket, request);
           }
@@ -511,7 +538,11 @@ void SocketImpl::OnRead(const shared_ptr<SocketImpl>& socket, const tv_buf_t* bu
                      id_, _response.msgid,
                      LINEAR_LOG_PRINTABLE_STRING(_response.result).c_str(),
                      LINEAR_LOG_PRINTABLE_STRING(_response.error).c_str(),
-                     self_.addr.c_str(), self_.port, GetTypeString(type_).c_str(), peer_.addr.c_str(), peer_.port);
+                     (self_.proto == Addrinfo::IPv4) ? self_.addr.c_str() : (std::string("[" + self_.addr + "]")).c_str(),
+                     self_.port,
+                     GetTypeString(type_).c_str(),
+                     (peer_.proto == Addrinfo::IPv4) ? peer_.addr.c_str() : (std::string("[" + peer_.addr + "]")).c_str(),
+                     peer_.port);
           unique_lock<mutex> request_timer_lock(request_timer_mutex_);
           for (std::vector<SocketImpl::RequestTimer*>::iterator it = request_timers_.begin();
                it != request_timers_.end(); it++) {
@@ -535,7 +566,11 @@ void SocketImpl::OnRead(const shared_ptr<SocketImpl>& socket, const tv_buf_t* bu
           LINEAR_LOG(LOG_DEBUG, "recv notify(id = %d): method = \"%s\", params = %s, %s:%d <-- %s --- %s:%d",
                      id_,
                      notify.method.c_str(), LINEAR_LOG_PRINTABLE_STRING(notify.params).c_str(),
-                     self_.addr.c_str(), self_.port, GetTypeString(type_).c_str(), peer_.addr.c_str(), peer_.port);
+                     (self_.proto == Addrinfo::IPv4) ? self_.addr.c_str() : (std::string("[" + self_.addr + "]")).c_str(),
+                     self_.port,
+                     GetTypeString(type_).c_str(),
+                     (peer_.proto == Addrinfo::IPv4) ? peer_.addr.c_str() : (std::string("[" + peer_.addr + "]")).c_str(),
+                     peer_.port);
           if (delegate) {
             delegate->OnMessage(socket, notify);
           }
@@ -552,14 +587,20 @@ void SocketImpl::OnRead(const shared_ptr<SocketImpl>& socket, const tv_buf_t* bu
   } catch (const std::bad_cast&) {
     LINEAR_LOG(LOG_WARN, "recv invalid message(id = %d): %s:%d <-- %s -- %s:%d",
                id_,
-               self_.addr.c_str(), self_.port, GetTypeString(type_).c_str(),
-               peer_.addr.c_str(), peer_.port);
+               (self_.proto == Addrinfo::IPv4) ? self_.addr.c_str() : (std::string("[" + self_.addr + "]")).c_str(),
+               self_.port,
+               GetTypeString(type_).c_str(),
+               (peer_.proto == Addrinfo::IPv4) ? peer_.addr.c_str() : (std::string("[" + peer_.addr + "]")).c_str(),
+               peer_.port);
     Disconnect();
   } catch (...) {
     LINEAR_LOG(LOG_ERR, "recv malformed or big message(id = %d): %s:%d <-- %s -- %s:%d",
                id_,
-               self_.addr.c_str(), self_.port, GetTypeString(type_).c_str(),
-               peer_.addr.c_str(), peer_.port);
+               (self_.proto == Addrinfo::IPv4) ? self_.addr.c_str() : (std::string("[" + self_.addr + "]")).c_str(),
+               self_.port,
+               GetTypeString(type_).c_str(),
+               (peer_.proto == Addrinfo::IPv4) ? peer_.addr.c_str() : (std::string("[" + peer_.addr + "]")).c_str(),
+               peer_.port);
     Disconnect();
   }
 }
@@ -621,7 +662,11 @@ Error SocketImpl::_Send(Message* message) {
       LINEAR_LOG(LOG_DEBUG, "send request(id = %d): msgid = %u, method = \"%s\", params = %s, %s:%d --- %s --> %s:%d",
                  id_,
                  request->msgid, request->method.c_str(), LINEAR_LOG_PRINTABLE_STRING(request->params).c_str(),
-                 self_.addr.c_str(), self_.port, GetTypeString(type_).c_str(), peer_.addr.c_str(), peer_.port);
+                 (self_.proto == Addrinfo::IPv4) ? self_.addr.c_str() : (std::string("[" + self_.addr + "]")).c_str(),
+                 self_.port,
+                 GetTypeString(type_).c_str(),
+                 (peer_.proto == Addrinfo::IPv4) ? peer_.addr.c_str() : (std::string("[" + peer_.addr + "]")).c_str(),
+                 peer_.port);
       msgpack::pack(sbuf, *request);
       break;
     }
@@ -633,7 +678,11 @@ Error SocketImpl::_Send(Message* message) {
                  response->msgid,
                  LINEAR_LOG_PRINTABLE_STRING(response->result).c_str(),
                  LINEAR_LOG_PRINTABLE_STRING(response->error).c_str(),
-                 self_.addr.c_str(), self_.port, GetTypeString(type_).c_str(), peer_.addr.c_str(), peer_.port);
+                 (self_.proto == Addrinfo::IPv4) ? self_.addr.c_str() : (std::string("[" + self_.addr + "]")).c_str(),
+                 self_.port,
+                 GetTypeString(type_).c_str(),
+                 (peer_.proto == Addrinfo::IPv4) ? peer_.addr.c_str() : (std::string("[" + peer_.addr + "]")).c_str(),
+                 peer_.port);
       msgpack::pack(sbuf, *response);
       break;
     }
@@ -643,7 +692,11 @@ Error SocketImpl::_Send(Message* message) {
       LINEAR_LOG(LOG_DEBUG, "send notify(id = %d): method = \"%s\", params = %s, %s:%d --- %s --> %s:%d",
                  id_,
                  notify->method.c_str(), LINEAR_LOG_PRINTABLE_STRING(notify->params).c_str(),
-                 self_.addr.c_str(), self_.port, GetTypeString(type_).c_str(), peer_.addr.c_str(), peer_.port);
+                 (self_.proto == Addrinfo::IPv4) ? self_.addr.c_str() : (std::string("[" + self_.addr + "]")).c_str(),
+                 self_.port,
+                 GetTypeString(type_).c_str(),
+                 (peer_.proto == Addrinfo::IPv4) ? peer_.addr.c_str() : (std::string("[" + peer_.addr + "]")).c_str(),
+                 peer_.port);
       msgpack::pack(sbuf, *notify);
       break;
     }

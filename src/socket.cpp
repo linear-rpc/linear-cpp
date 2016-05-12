@@ -102,8 +102,11 @@ Error Socket::Disconnect() const {
   const linear::Addrinfo& peer = GetPeerInfo();
   LINEAR_LOG(LOG_DEBUG, "try to disconnect(id = %d): %s:%d x-- %s --- %s:%d",
              GetId(),
-             self.addr.c_str(), self.port, GetTypeString(GetType()).c_str(),
-             peer.addr.c_str(), peer.port);
+             (self.proto == Addrinfo::IPv4) ? self.addr.c_str() : (std::string("[" + self.addr + "]")).c_str(),
+             self.port,
+             GetTypeString(GetType()).c_str(),
+             (peer.proto == Addrinfo::IPv4) ? peer.addr.c_str() : (std::string("[" + peer.addr + "]")).c_str(),
+             peer.port);
   return socket_->Disconnect();
 }
 
