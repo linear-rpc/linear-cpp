@@ -12,7 +12,6 @@ Addrinfo::Addrinfo(const std::string& a, int p) : addr("undefined"), port(-1), p
   struct addrinfo* res = NULL;
   memset(&hints, 0, sizeof(hints));
   hints.ai_family = AF_INET;
-  hints.ai_flags = AI_NUMERICHOST;
   int r = getaddrinfo(a.c_str(), NULL, &hints, &res);
   if (r == 0) {
     addr = a;
