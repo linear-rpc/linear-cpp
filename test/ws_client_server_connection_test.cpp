@@ -222,7 +222,7 @@ TEST_F(WSClientServerConnectionTest, DisconnectFromServerBT) {
   {
     InSequence dummy;
     // never called OnConnect: fail handshake
-    EXPECT_CALL(*ch, OnDisconnectMock(cs, Error(LNR_ECONNRESET))).WillOnce(Assign(&cli_finished, true));;
+    EXPECT_CALL(*ch, OnDisconnectMock(cs, Error(LNR_EWS))).WillOnce(Assign(&cli_finished, true));;
   }
 
   e = cs.Connect();
@@ -252,9 +252,9 @@ TEST_F(WSClientServerConnectionTest, Reconnect) {
   {
     InSequence dummy;
     // never called OnConnect: fail handshake
-    EXPECT_CALL(*ch, OnDisconnectMock(cs, Error(LNR_ECONNRESET))).WillOnce(WithArg<0>(Connect()));
+    EXPECT_CALL(*ch, OnDisconnectMock(cs, Error(LNR_EWS))).WillOnce(WithArg<0>(Connect()));
     // never called OnConnect: fail handshake
-    EXPECT_CALL(*ch, OnDisconnectMock(cs, Error(LNR_ECONNRESET))).WillOnce(Assign(&cli_finished, true));
+    EXPECT_CALL(*ch, OnDisconnectMock(cs, Error(LNR_EWS))).WillOnce(Assign(&cli_finished, true));
   }
 
   e = cs.Connect();
@@ -330,7 +330,7 @@ TEST_F(WSClientServerConnectionTest, DelayedSocketDestruct) {
   {
     InSequence dummy;
     // never called OnConnect: fail handshake
-    EXPECT_CALL(*ch, OnDisconnectMock(cs, Error(LNR_ECONNRESET))).WillOnce(Assign(&cli_finished, true));
+    EXPECT_CALL(*ch, OnDisconnectMock(cs, Error(LNR_EWS))).WillOnce(Assign(&cli_finished, true));
   }
 
   e = cs.Connect();
