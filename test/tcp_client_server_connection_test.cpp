@@ -81,7 +81,14 @@ TEST_F(TCPClientServerConnectionTest, ConnectEalready) {
   shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
   TCPServer sv(sh);
 
-  Error e = sv.Start(TEST_ADDR, TEST_PORT);
+  Error e;
+  for (int i = 0; i < 3; i++) {
+    e = sv.Start(TEST_ADDR, TEST_PORT);
+    if (e == linear::Error(LNR_OK)) {
+      break;
+    }
+    sleep(1);
+  }
   ASSERT_EQ(LNR_OK, e.Code());
 
   TCPSocket cs = cl.CreateSocket(TEST_ADDR, TEST_PORT);
@@ -104,7 +111,14 @@ TEST_F(TCPClientServerConnectionTest, ConnectEinval) {
   shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
   TCPServer sv(sh);
 
-  Error e = sv.Start(TEST_ADDR, TEST_PORT);
+  Error e;
+  for (int i = 0; i < 3; i++) {
+    e = sv.Start(TEST_ADDR, TEST_PORT);
+    if (e == linear::Error(LNR_OK)) {
+      break;
+    }
+    sleep(1);
+  }
   ASSERT_EQ(LNR_OK, e.Code());
 
   TCPSocket cs = cl.CreateSocket(TEST_ADDR, TEST_PORT);
@@ -127,7 +141,14 @@ TEST_F(TCPClientServerConnectionTest, DisconnectFromClientFT) {
   shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
   TCPServer sv(sh);
 
-  Error e = sv.Start(TEST_ADDR, TEST_PORT);
+  Error e;
+  for (int i = 0; i < 3; i++) {
+    e = sv.Start(TEST_ADDR, TEST_PORT);
+    if (e == linear::Error(LNR_OK)) {
+      break;
+    }
+    sleep(1);
+  }
   ASSERT_EQ(LNR_OK, e.Code());
 
   TCPSocket cs = cl.CreateSocket(TEST_ADDR, TEST_PORT);
@@ -154,7 +175,14 @@ TEST_F(TCPClientServerConnectionTest, DisconnectFromServerFT) {
   shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
   TCPServer sv(sh);
 
-  Error e = sv.Start(TEST_ADDR, TEST_PORT);
+  Error e;
+  for (int i = 0; i < 3; i++) {
+    e = sv.Start(TEST_ADDR, TEST_PORT);
+    if (e == linear::Error(LNR_OK)) {
+      break;
+    }
+    sleep(1);
+  }
   ASSERT_EQ(LNR_OK, e.Code());
 
   TCPSocket cs = cl.CreateSocket(TEST_ADDR, TEST_PORT);
@@ -180,7 +208,14 @@ TEST_F(TCPClientServerConnectionTest, DisconnectFromClientBT) {
   shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
   TCPServer sv(sh);
 
-  Error e = sv.Start(TEST_ADDR, TEST_PORT);
+  Error e;
+  for (int i = 0; i < 3; i++) {
+    e = sv.Start(TEST_ADDR, TEST_PORT);
+    if (e == linear::Error(LNR_OK)) {
+      break;
+    }
+    sleep(1);
+  }
   ASSERT_EQ(LNR_OK, e.Code());
 
   TCPSocket cs = cl.CreateSocket(TEST_ADDR, TEST_PORT);
@@ -208,7 +243,14 @@ TEST_F(TCPClientServerConnectionTest, DisconnectFromServerBT) {
   shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
   TCPServer sv(sh);
 
-  Error e = sv.Start(TEST_ADDR, TEST_PORT);
+  Error e;
+  for (int i = 0; i < 3; i++) {
+    e = sv.Start(TEST_ADDR, TEST_PORT);
+    if (e == linear::Error(LNR_OK)) {
+      break;
+    }
+    sleep(1);
+  }
   ASSERT_EQ(LNR_OK, e.Code());
 
   TCPSocket cs = cl.CreateSocket(TEST_ADDR, TEST_PORT);
@@ -237,7 +279,14 @@ TEST_F(TCPClientServerConnectionTest, Reconnect) {
   shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
   TCPServer sv(sh);
 
-  Error e = sv.Start(TEST_ADDR, TEST_PORT);
+  Error e;
+  for (int i = 0; i < 3; i++) {
+    e = sv.Start(TEST_ADDR, TEST_PORT);
+    if (e == linear::Error(LNR_OK)) {
+      break;
+    }
+    sleep(1);
+  }
   ASSERT_EQ(LNR_OK, e.Code());
 
   TCPSocket cs = cl.CreateSocket(TEST_ADDR, TEST_PORT);
@@ -279,7 +328,14 @@ TEST_F(TCPClientServerConnectionTest, DelayedSocketDestruct) {
     EXPECT_CALL(*sh, OnDisconnectMock(Eq(ByRef(sh->s_)), Error(LNR_OK))).WillOnce(Assign(&srv_finished, true));
   }
 
-  Error e = sv.Start(TEST_ADDR, TEST_PORT);
+  Error e;
+  for (int i = 0; i < 3; i++) {
+    e = sv.Start(TEST_ADDR, TEST_PORT);
+    if (e == linear::Error(LNR_OK)) {
+      break;
+    }
+    sleep(1);
+  }
   ASSERT_EQ(LNR_OK, e.Code());
   TCPSocket cs = cl.CreateSocket(TEST_ADDR, TEST_PORT);
 
@@ -334,7 +390,14 @@ TEST_F(TCPClientServerConnectionTest, OnConnectAndDisconnectFromOtherTherad) {
     EXPECT_CALL(*sh, OnDisconnectMock(Eq(ByRef(sh->s_)), Error(LNR_EOF))).WillOnce(Assign(&srv_finished, true));
   }
 
-  Error e = sv.Start(TEST_ADDR, TEST_PORT);
+  Error e;
+  for (int i = 0; i < 3; i++) {
+    e = sv.Start(TEST_ADDR, TEST_PORT);
+    if (e == linear::Error(LNR_OK)) {
+      break;
+    }
+    sleep(1);
+  }
   ASSERT_EQ(LNR_OK, e.Code());
   TCPSocket cs = cl.CreateSocket(TEST_ADDR, TEST_PORT);
 
@@ -360,7 +423,14 @@ TEST_F(TCPClientServerConnectionTest, ConnectStop) {
   shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
   TCPServer sv(sh);
 
-  Error e = sv.Start(TEST_ADDR, TEST_PORT);
+  Error e;
+  for (int i = 0; i < 3; i++) {
+    e = sv.Start(TEST_ADDR, TEST_PORT);
+    if (e == linear::Error(LNR_OK)) {
+      break;
+    }
+    sleep(1);
+  }
   ASSERT_EQ(LNR_OK, e.Code());
 
   TCPSocket cs = cl.CreateSocket(TEST_ADDR, TEST_PORT);
@@ -386,7 +456,14 @@ TEST_F(TCPClientServerConnectionTest, ClientLoop) {
   shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
   TCPServer sv(sh);
 
-  Error e = sv.Start(TEST_ADDR, TEST_PORT);
+  Error e;
+  for (int i = 0; i < 3; i++) {
+    e = sv.Start(TEST_ADDR, TEST_PORT);
+    if (e == linear::Error(LNR_OK)) {
+      break;
+    }
+    sleep(1);
+  }
   ASSERT_EQ(LNR_OK, e.Code());
 
   linear::TCPSocket cs = cl.CreateSocket(TEST_ADDR, TEST_PORT);
@@ -409,7 +486,14 @@ TEST_F(TCPClientServerConnectionTest, ServerLoop) {
   shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
   TCPServer sv(sh, loop);
 
-  Error e = sv.Start(TEST_ADDR, TEST_PORT);
+  Error e;
+  for (int i = 0; i < 3; i++) {
+    e = sv.Start(TEST_ADDR, TEST_PORT);
+    if (e == linear::Error(LNR_OK)) {
+      break;
+    }
+    sleep(1);
+  }
   ASSERT_EQ(LNR_OK, e.Code());
 
   linear::TCPSocket cs = cl.CreateSocket(TEST_ADDR, TEST_PORT);
@@ -433,7 +517,14 @@ TEST_F(TCPClientServerConnectionTest, ClientLoopOnGlobal) {
   shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
   TCPServer sv(sh);
 
-  Error e = sv.Start(TEST_ADDR, TEST_PORT);
+  Error e;
+  for (int i = 0; i < 3; i++) {
+    e = sv.Start(TEST_ADDR, TEST_PORT);
+    if (e == linear::Error(LNR_OK)) {
+      break;
+    }
+    sleep(1);
+  }
   ASSERT_EQ(LNR_OK, e.Code());
 
   linear::TCPSocket cs = cl.CreateSocket(TEST_ADDR, TEST_PORT);
@@ -456,7 +547,14 @@ TEST_F(TCPClientServerConnectionTest, ServerLoopOnGlobal) {
   shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
   TCPServer sv(sh, g_loop);
 
-  Error e = sv.Start(TEST_ADDR, TEST_PORT + 1);
+  Error e;
+  for (int i = 0; i < 3; i++) {
+    e = sv.Start(TEST_ADDR, TEST_PORT + 1);
+    if (e == linear::Error(LNR_OK)) {
+      break;
+    }
+    sleep(1);
+  }
   ASSERT_EQ(LNR_OK, e.Code());
 
   linear::TCPSocket cs = cl.CreateSocket(TEST_ADDR, TEST_PORT + 1);
@@ -480,7 +578,14 @@ TEST_F(TCPClientServerConnectionTest, ClientOnGlobal) {
   shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
   TCPServer sv(sh);
 
-  Error e = sv.Start(TEST_ADDR, TEST_PORT);
+  Error e;
+  for (int i = 0; i < 3; i++) {
+    e = sv.Start(TEST_ADDR, TEST_PORT);
+    if (e == linear::Error(LNR_OK)) {
+      break;
+    }
+    sleep(1);
+  }
   ASSERT_EQ(LNR_OK, e.Code());
 
   linear::TCPSocket cs = g_cl->CreateSocket(TEST_ADDR, TEST_PORT);
@@ -504,7 +609,14 @@ TEST_F(TCPClientServerConnectionTest, ServerOnGlobal) {
   shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
   g_sv = new TCPServer(sh);
 
-  Error e = g_sv->Start(TEST_ADDR, TEST_PORT);
+  Error e;
+  for (int i = 0; i < 3; i++) {
+    e = g_sv->Start(TEST_ADDR, TEST_PORT);
+    if (e == linear::Error(LNR_OK)) {
+      break;
+    }
+    sleep(1);
+  }
   ASSERT_EQ(LNR_OK, e.Code());
 
   linear::TCPSocket cs = cl.CreateSocket(TEST_ADDR, TEST_PORT);
@@ -528,7 +640,14 @@ TEST_F(TCPClientServerConnectionTest, SocketOnGlobal) {
   shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
   TCPServer sv(sh);
 
-  Error e = sv.Start(TEST_ADDR, TEST_PORT);
+  Error e;
+  for (int i = 0; i < 3; i++) {
+    e = sv.Start(TEST_ADDR, TEST_PORT);
+    if (e == linear::Error(LNR_OK)) {
+      break;
+    }
+    sleep(1);
+  }
   ASSERT_EQ(LNR_OK, e.Code());
 
   g_cs = cl.CreateSocket(TEST_ADDR, TEST_PORT);

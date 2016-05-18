@@ -124,7 +124,14 @@ TEST_F(WSSClientServerConnectionTest, ConnectEalready) {
   server_context.SetVerifyMode(SSLContext::VERIFY_PEER);
   WSSServer sv(sh, server_context);
 
-  Error e = sv.Start(TEST_ADDR, TEST_PORT);
+  Error e;
+  for (int i = 0; i < 3; i++) {
+    e = sv.Start(TEST_ADDR, TEST_PORT);
+    if (e == linear::Error(LNR_OK)) {
+      break;
+    }
+    sleep(1);
+  }
   ASSERT_EQ(LNR_OK, e.Code());
 
   WSSSocket cs = cl.CreateSocket(TEST_ADDR, TEST_PORT);
@@ -159,7 +166,14 @@ TEST_F(WSSClientServerConnectionTest, ConnectEinval) {
   server_context.SetVerifyMode(SSLContext::VERIFY_PEER);
   WSSServer sv(sh, server_context);
 
-  Error e = sv.Start(TEST_ADDR, TEST_PORT);
+  Error e;
+  for (int i = 0; i < 3; i++) {
+    e = sv.Start(TEST_ADDR, TEST_PORT);
+    if (e == linear::Error(LNR_OK)) {
+      break;
+    }
+    sleep(1);
+  }
   ASSERT_EQ(LNR_OK, e.Code());
 
   WSSSocket cs = cl.CreateSocket(TEST_ADDR, TEST_PORT);
@@ -194,7 +208,14 @@ TEST_F(WSSClientServerConnectionTest, DisconnectFromClientFT) {
   server_context.SetVerifyMode(SSLContext::VERIFY_PEER);
   WSSServer sv(sh, server_context);
 
-  Error e = sv.Start(TEST_ADDR, TEST_PORT);
+  Error e;
+  for (int i = 0; i < 3; i++) {
+    e = sv.Start(TEST_ADDR, TEST_PORT);
+    if (e == linear::Error(LNR_OK)) {
+      break;
+    }
+    sleep(1);
+  }
   ASSERT_EQ(LNR_OK, e.Code());
 
   WSSSocket cs = cl.CreateSocket(TEST_ADDR, TEST_PORT);
@@ -233,7 +254,14 @@ TEST_F(WSSClientServerConnectionTest, DisconnectFromServerFT) {
   server_context.SetVerifyMode(SSLContext::VERIFY_PEER);
   WSSServer sv(sh, server_context);
 
-  Error e = sv.Start(TEST_ADDR, TEST_PORT);
+  Error e;
+  for (int i = 0; i < 3; i++) {
+    e = sv.Start(TEST_ADDR, TEST_PORT);
+    if (e == linear::Error(LNR_OK)) {
+      break;
+    }
+    sleep(1);
+  }
   ASSERT_EQ(LNR_OK, e.Code());
 
   WSSSocket cs = cl.CreateSocket(TEST_ADDR, TEST_PORT);
@@ -271,7 +299,14 @@ TEST_F(WSSClientServerConnectionTest, DisconnectFromClientBT) {
   server_context.SetVerifyMode(SSLContext::VERIFY_PEER);
   WSSServer sv(sh, server_context);
 
-  Error e = sv.Start(TEST_ADDR, TEST_PORT);
+  Error e;
+  for (int i = 0; i < 3; i++) {
+    e = sv.Start(TEST_ADDR, TEST_PORT);
+    if (e == linear::Error(LNR_OK)) {
+      break;
+    }
+    sleep(1);
+  }
   ASSERT_EQ(LNR_OK, e.Code());
 
   WSSSocket cs = cl.CreateSocket(TEST_ADDR, TEST_PORT);
@@ -311,7 +346,14 @@ TEST_F(WSSClientServerConnectionTest, DisconnectFromServerBT) {
   server_context.SetVerifyMode(SSLContext::VERIFY_PEER);
   WSSServer sv(sh, server_context);
 
-  Error e = sv.Start(TEST_ADDR, TEST_PORT);
+  Error e;
+  for (int i = 0; i < 3; i++) {
+    e = sv.Start(TEST_ADDR, TEST_PORT);
+    if (e == linear::Error(LNR_OK)) {
+      break;
+    }
+    sleep(1);
+  }
   ASSERT_EQ(LNR_OK, e.Code());
 
   WSSSocket cs = cl.CreateSocket(TEST_ADDR, TEST_PORT);
@@ -352,7 +394,14 @@ TEST_F(WSSClientServerConnectionTest, Reconnect) {
   server_context.SetVerifyMode(SSLContext::VERIFY_PEER);
   WSSServer sv(sh, server_context);
 
-  Error e = sv.Start(TEST_ADDR, TEST_PORT);
+  Error e;
+  for (int i = 0; i < 3; i++) {
+    e = sv.Start(TEST_ADDR, TEST_PORT);
+    if (e == linear::Error(LNR_OK)) {
+      break;
+    }
+    sleep(1);
+  }
   ASSERT_EQ(LNR_OK, e.Code());
 
   WSSSocket cs = cl.CreateSocket(TEST_ADDR, TEST_PORT);
@@ -412,7 +461,14 @@ TEST_F(WSSClientServerConnectionTest, AutoReconnect) {
   server_context.SetVerifyMode(SSLContext::VERIFY_PEER);
   WSSServer sv(sh, server_context, linear::AuthContext::DIGEST, "realm is here");
 
-  Error e = sv.Start(TEST_ADDR, TEST_PORT);
+  Error e;
+  for (int i = 0; i < 3; i++) {
+    e = sv.Start(TEST_ADDR, TEST_PORT);
+    if (e == linear::Error(LNR_OK)) {
+      break;
+    }
+    sleep(1);
+  }
   ASSERT_EQ(LNR_OK, e.Code());
 
   WSSSocket cs = cl.CreateSocket(TEST_ADDR, TEST_PORT);
@@ -462,7 +518,14 @@ TEST_F(WSSClientServerConnectionTest, DelayedSocketDestruct) {
     EXPECT_CALL(*sh, OnDisconnectMock(Eq(ByRef(sh->s_)), Error(LNR_OK))).WillOnce(Assign(&srv_finished, true));
   }
 
-  Error e = sv.Start(TEST_ADDR, TEST_PORT);
+  Error e;
+  for (int i = 0; i < 3; i++) {
+    e = sv.Start(TEST_ADDR, TEST_PORT);
+    if (e == linear::Error(LNR_OK)) {
+      break;
+    }
+    sleep(1);
+  }
   ASSERT_EQ(LNR_OK, e.Code());
   WSSSocket cs = cl.CreateSocket(TEST_ADDR, TEST_PORT);
 
@@ -532,7 +595,14 @@ TEST_F(WSSClientServerConnectionTest, OnConnectAndDisconnectFromOtherTherad) {
     EXPECT_CALL(*sh, OnDisconnectMock(Eq(ByRef(sh->s_)), Error(LNR_ECONNRESET))).WillOnce(Assign(&srv_finished, true));
   }
 
-  Error e = sv.Start(TEST_ADDR, TEST_PORT);
+  Error e;
+  for (int i = 0; i < 3; i++) {
+    e = sv.Start(TEST_ADDR, TEST_PORT);
+    if (e == linear::Error(LNR_OK)) {
+      break;
+    }
+    sleep(1);
+  }
   ASSERT_EQ(LNR_OK, e.Code());
   WSSSocket cs = cl.CreateSocket(TEST_ADDR, TEST_PORT);
 
@@ -575,7 +645,14 @@ TEST_F(WSSClientServerConnectionTest, VerifyServerCert) {
   server_context.SetVerifyMode(SSLContext::VERIFY_PEER);
   WSSServer sv(sh, server_context);
 
-  Error e = sv.Start(TEST_ADDR, TEST_PORT);
+  Error e;
+  for (int i = 0; i < 3; i++) {
+    e = sv.Start(TEST_ADDR, TEST_PORT);
+    if (e == linear::Error(LNR_OK)) {
+      break;
+    }
+    sleep(1);
+  }
   ASSERT_EQ(LNR_OK, e.Code());
 
   WSSSocket cs = cl.CreateSocket(TEST_ADDR, TEST_PORT);
@@ -606,7 +683,14 @@ TEST_F(WSSClientServerConnectionTest, VerifyClientCert) {
   server_context.SetVerifyMode(SSLContext::VERIFY_PEER);
   WSSServer sv(sh, server_context);
 
-  Error e = sv.Start(TEST_ADDR, TEST_PORT);
+  Error e;
+  for (int i = 0; i < 3; i++) {
+    e = sv.Start(TEST_ADDR, TEST_PORT);
+    if (e == linear::Error(LNR_OK)) {
+      break;
+    }
+    sleep(1);
+  }
   ASSERT_EQ(LNR_OK, e.Code());
 
   WSSSocket cs = cl.CreateSocket(TEST_ADDR, TEST_PORT);

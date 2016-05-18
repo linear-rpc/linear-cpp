@@ -22,7 +22,14 @@ TEST_F(WSClientServerSendRecvTest, RequestFromClientFTResponseFromServerBT) {
   shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
   WSServer sv(sh);
 
-  Error e = sv.Start(TEST_ADDR, TEST_PORT);
+  Error e;
+  for (int i = 0; i < 3; i++) {
+    e = sv.Start(TEST_ADDR, TEST_PORT);
+    if (e == linear::Error(LNR_OK)) {
+      break;
+    }
+    sleep(1);
+  }
   ASSERT_EQ(LNR_OK, e.Code());
 
   WSSocket cs = cl.CreateSocket(TEST_ADDR, TEST_PORT);
@@ -70,7 +77,14 @@ TEST_F(WSClientServerSendRecvTest, RequestFromServerFTResponseFromClientBT) {
   shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
   WSServer sv(sh);
 
-  Error e = sv.Start(TEST_ADDR, TEST_PORT);
+  Error e;
+  for (int i = 0; i < 3; i++) {
+    e = sv.Start(TEST_ADDR, TEST_PORT);
+    if (e == linear::Error(LNR_OK)) {
+      break;
+    }
+    sleep(1);
+  }
   ASSERT_EQ(LNR_OK, e.Code());
 
   WSSocket cs = cl.CreateSocket(TEST_ADDR, TEST_PORT);
@@ -114,7 +128,14 @@ TEST_F(WSClientServerSendRecvTest, RequestFromClientBTResponseFromServerBT) {
   shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
   WSServer sv(sh);
 
-  Error e = sv.Start(TEST_ADDR, TEST_PORT);
+  Error e;
+  for (int i = 0; i < 3; i++) {
+    e = sv.Start(TEST_ADDR, TEST_PORT);
+    if (e == linear::Error(LNR_OK)) {
+      break;
+    }
+    sleep(1);
+  }
   ASSERT_EQ(LNR_OK, e.Code());
 
   WSSocket cs = cl.CreateSocket(TEST_ADDR, TEST_PORT);
@@ -155,7 +176,14 @@ TEST_F(WSClientServerSendRecvTest, RequestFromServerBTResponseFromClientBT) {
   shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
   WSServer sv(sh);
 
-  Error e = sv.Start(TEST_ADDR, TEST_PORT);
+  Error e;
+  for (int i = 0; i < 3; i++) {
+    e = sv.Start(TEST_ADDR, TEST_PORT);
+    if (e == linear::Error(LNR_OK)) {
+      break;
+    }
+    sleep(1);
+  }
   ASSERT_EQ(LNR_OK, e.Code());
 
   WSSocket cs = cl.CreateSocket(TEST_ADDR, TEST_PORT);
@@ -196,7 +224,14 @@ TEST_F(WSClientServerSendRecvTest, RequestFromClientFTNotResponseFromServer) {
   shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
   WSServer sv(sh);
 
-  Error e = sv.Start(TEST_ADDR, TEST_PORT);
+  Error e;
+  for (int i = 0; i < 3; i++) {
+    e = sv.Start(TEST_ADDR, TEST_PORT);
+    if (e == linear::Error(LNR_OK)) {
+      break;
+    }
+    sleep(1);
+  }
   ASSERT_EQ(LNR_OK, e.Code());
 
   WSSocket cs = cl.CreateSocket(TEST_ADDR, TEST_PORT);
@@ -238,7 +273,14 @@ TEST_F(WSClientServerSendRecvTest, RequestFromServerFTNotResponseFromClient) {
   shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
   WSServer sv(sh);
 
-  Error e = sv.Start(TEST_ADDR, TEST_PORT);
+  Error e;
+  for (int i = 0; i < 3; i++) {
+    e = sv.Start(TEST_ADDR, TEST_PORT);
+    if (e == linear::Error(LNR_OK)) {
+      break;
+    }
+    sleep(1);
+  }
   ASSERT_EQ(LNR_OK, e.Code());
 
   WSSocket cs = cl.CreateSocket(TEST_ADDR, TEST_PORT);
@@ -312,7 +354,14 @@ TEST_F(WSClientServerSendRecvTest, CancelRequestWithTimeoutFromClientFT) {
   shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
   WSServer sv(sh);
 
-  Error e = sv.Start(TEST_ADDR, TEST_PORT);
+  Error e;
+  for (int i = 0; i < 3; i++) {
+    e = sv.Start(TEST_ADDR, TEST_PORT);
+    if (e == linear::Error(LNR_OK)) {
+      break;
+    }
+    sleep(1);
+  }
   ASSERT_EQ(LNR_OK, e.Code());
 
   WSSocket cs = cl.CreateSocket(TEST_ADDR, TEST_PORT);
@@ -353,7 +402,14 @@ TEST_F(WSClientServerSendRecvTest, CancelRequestWithDisconnectedFromClientFT) {
   shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
   WSServer sv(sh);
 
-  Error e = sv.Start(TEST_ADDR, TEST_PORT);
+  Error e;
+  for (int i = 0; i < 3; i++) {
+    e = sv.Start(TEST_ADDR, TEST_PORT);
+    if (e == linear::Error(LNR_OK)) {
+      break;
+    }
+    sleep(1);
+  }
   ASSERT_EQ(LNR_OK, e.Code());
 
   WSSocket cs = cl.CreateSocket(TEST_ADDR, TEST_PORT);
@@ -401,7 +457,14 @@ TEST_F(WSClientServerSendRecvTest, NotifyFromClientFT) {
   shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
   WSServer sv(sh);
 
-  Error e = sv.Start(TEST_ADDR, TEST_PORT);
+  Error e;
+  for (int i = 0; i < 3; i++) {
+    e = sv.Start(TEST_ADDR, TEST_PORT);
+    if (e == linear::Error(LNR_OK)) {
+      break;
+    }
+    sleep(1);
+  }
   ASSERT_EQ(LNR_OK, e.Code());
   WSSocket cs = cl.CreateSocket(TEST_ADDR, TEST_PORT);
 
@@ -436,7 +499,14 @@ TEST_F(WSClientServerSendRecvTest, NotifyFromServerFT) {
   shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
   WSServer sv(sh);
 
-  Error e = sv.Start(TEST_ADDR, TEST_PORT);
+  Error e;
+  for (int i = 0; i < 3; i++) {
+    e = sv.Start(TEST_ADDR, TEST_PORT);
+    if (e == linear::Error(LNR_OK)) {
+      break;
+    }
+    sleep(1);
+  }
   ASSERT_EQ(LNR_OK, e.Code());
   WSSocket cs = cl.CreateSocket(TEST_ADDR, TEST_PORT);
 
@@ -471,7 +541,14 @@ TEST_F(WSClientServerSendRecvTest, NotifyFromClientBT) {
   shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
   WSServer sv(sh);
 
-  Error e = sv.Start(TEST_ADDR, TEST_PORT);
+  Error e;
+  for (int i = 0; i < 3; i++) {
+    e = sv.Start(TEST_ADDR, TEST_PORT);
+    if (e == linear::Error(LNR_OK)) {
+      break;
+    }
+    sleep(1);
+  }
   ASSERT_EQ(LNR_OK, e.Code());
 
   WSSocket cs = cl.CreateSocket(TEST_ADDR, TEST_PORT);
@@ -508,7 +585,14 @@ TEST_F(WSClientServerSendRecvTest, NotifyFromServerBT) {
   shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
   WSServer sv(sh);
 
-  Error e = sv.Start(TEST_ADDR, TEST_PORT);
+  Error e;
+  for (int i = 0; i < 3; i++) {
+    e = sv.Start(TEST_ADDR, TEST_PORT);
+    if (e == linear::Error(LNR_OK)) {
+      break;
+    }
+    sleep(1);
+  }
   ASSERT_EQ(LNR_OK, e.Code());
 
   WSSocket cs = cl.CreateSocket(TEST_ADDR, TEST_PORT);
@@ -547,7 +631,14 @@ TEST_F(WSClientServerSendRecvTest, NotifyFromServerToGroup) {
   shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
   WSServer sv(sh);
 
-  Error e = sv.Start(TEST_ADDR, TEST_PORT);
+  Error e;
+  for (int i = 0; i < 3; i++) {
+    e = sv.Start(TEST_ADDR, TEST_PORT);
+    if (e == linear::Error(LNR_OK)) {
+      break;
+    }
+    sleep(1);
+  }
   ASSERT_EQ(LNR_OK, e.Code());
 
   WSSocket cs1 = cl1.CreateSocket(TEST_ADDR, TEST_PORT);
@@ -627,7 +718,14 @@ TEST_F(WSClientServerSendRecvTest, NotifyFromClientToGroup) {
   shared_ptr<MockHandler> sh3 = linear::shared_ptr<MockHandler>(new MockHandler());
   WSServer sv1(sh1), sv2(sh2), sv3(sh3);
 
-  Error e = sv1.Start(TEST_ADDR, TEST_PORT);
+  Error e;
+  for (int i = 0; i < 3; i++) {
+    e = sv1.Start(TEST_ADDR, TEST_PORT);
+    if (e == linear::Error(LNR_OK)) {
+      break;
+    }
+    sleep(1);
+  }
   ASSERT_EQ(LNR_OK, e.Code());
   e = sv2.Start(TEST_ADDR, TEST_PORT2);
   ASSERT_EQ(LNR_OK, e.Code());
@@ -708,7 +806,14 @@ TEST_F(WSClientServerSendRecvTest, ZeroLengthPacket) {
   shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
   WSServer sv(sh);
 
-  Error e = sv.Start(TEST_ADDR, TEST_PORT);
+  Error e;
+  for (int i = 0; i < 3; i++) {
+    e = sv.Start(TEST_ADDR, TEST_PORT);
+    if (e == linear::Error(LNR_OK)) {
+      break;
+    }
+    sleep(1);
+  }
   ASSERT_EQ(LNR_OK, e.Code());
 
   EXPECT_CALL(*sh, OnConnectMock(_));
@@ -739,7 +844,14 @@ TEST_F(WSClientServerSendRecvTest, MalformedPacket) {
   shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
   WSServer sv(sh);
 
-  Error e = sv.Start(TEST_ADDR, TEST_PORT);
+  Error e;
+  for (int i = 0; i < 3; i++) {
+    e = sv.Start(TEST_ADDR, TEST_PORT);
+    if (e == linear::Error(LNR_OK)) {
+      break;
+    }
+    sleep(1);
+  }
   ASSERT_EQ(LNR_OK, e.Code());
 
   EXPECT_CALL(*sh, OnConnectMock(_)).Times(1);

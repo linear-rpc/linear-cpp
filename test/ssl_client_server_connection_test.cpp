@@ -131,7 +131,14 @@ TEST_F(SSLClientServerConnectionTest, ConnectEalready) {
   server_context.SetVerifyMode(SSLContext::VERIFY_PEER);
   SSLServer sv(sh, server_context);
 
-  Error e = sv.Start(TEST_ADDR, TEST_PORT);
+  Error e;
+  for (int i = 0; i < 3; i++) {
+    e = sv.Start(TEST_ADDR, TEST_PORT);
+    if (e == linear::Error(LNR_OK)) {
+      break;
+    }
+    sleep(1);
+  }
   ASSERT_EQ(LNR_OK, e.Code());
 
   SSLSocket cs = cl.CreateSocket(TEST_ADDR, TEST_PORT);
@@ -166,7 +173,14 @@ TEST_F(SSLClientServerConnectionTest, ConnectEinval) {
   server_context.SetVerifyMode(SSLContext::VERIFY_PEER);
   SSLServer sv(sh, server_context);
 
-  Error e = sv.Start(TEST_ADDR, TEST_PORT);
+  Error e;
+  for (int i = 0; i < 3; i++) {
+    e = sv.Start(TEST_ADDR, TEST_PORT);
+    if (e == linear::Error(LNR_OK)) {
+      break;
+    }
+    sleep(1);
+  }
   ASSERT_EQ(LNR_OK, e.Code());
 
   SSLSocket cs = cl.CreateSocket(TEST_ADDR, TEST_PORT);
@@ -201,7 +215,14 @@ TEST_F(SSLClientServerConnectionTest, DisconnectFromClientFT) {
   server_context.SetVerifyMode(SSLContext::VERIFY_PEER);
   SSLServer sv(sh, server_context);
 
-  Error e = sv.Start(TEST_ADDR, TEST_PORT);
+  Error e;
+  for (int i = 0; i < 3; i++) {
+    e = sv.Start(TEST_ADDR, TEST_PORT);
+    if (e == linear::Error(LNR_OK)) {
+      break;
+    }
+    sleep(1);
+  }
   ASSERT_EQ(LNR_OK, e.Code());
 
   SSLSocket cs = cl.CreateSocket(TEST_ADDR, TEST_PORT);
@@ -240,7 +261,14 @@ TEST_F(SSLClientServerConnectionTest, DisconnectFromServerFT) {
   server_context.SetVerifyMode(SSLContext::VERIFY_PEER);
   SSLServer sv(sh, server_context);
 
-  Error e = sv.Start(TEST_ADDR, TEST_PORT);
+  Error e;
+  for (int i = 0; i < 3; i++) {
+    e = sv.Start(TEST_ADDR, TEST_PORT);
+    if (e == linear::Error(LNR_OK)) {
+      break;
+    }
+    sleep(1);
+  }
   ASSERT_EQ(LNR_OK, e.Code());
 
   SSLSocket cs = cl.CreateSocket(TEST_ADDR, TEST_PORT);
@@ -278,7 +306,14 @@ TEST_F(SSLClientServerConnectionTest, DisconnectFromClientBT) {
   server_context.SetVerifyMode(SSLContext::VERIFY_PEER);
   SSLServer sv(sh, server_context);
 
-  Error e = sv.Start(TEST_ADDR, TEST_PORT);
+  Error e;
+  for (int i = 0; i < 3; i++) {
+    e = sv.Start(TEST_ADDR, TEST_PORT);
+    if (e == linear::Error(LNR_OK)) {
+      break;
+    }
+    sleep(1);
+  }
   ASSERT_EQ(LNR_OK, e.Code());
 
   SSLSocket cs = cl.CreateSocket(TEST_ADDR, TEST_PORT);
@@ -318,7 +353,14 @@ TEST_F(SSLClientServerConnectionTest, DisconnectFromServerBT) {
   server_context.SetVerifyMode(SSLContext::VERIFY_PEER);
   SSLServer sv(sh, server_context);
 
-  Error e = sv.Start(TEST_ADDR, TEST_PORT);
+  Error e;
+  for (int i = 0; i < 3; i++) {
+    e = sv.Start(TEST_ADDR, TEST_PORT);
+    if (e == linear::Error(LNR_OK)) {
+      break;
+    }
+    sleep(1);
+  }
   ASSERT_EQ(LNR_OK, e.Code());
 
   SSLSocket cs = cl.CreateSocket(TEST_ADDR, TEST_PORT);
@@ -359,7 +401,14 @@ TEST_F(SSLClientServerConnectionTest, Reconnect) {
   server_context.SetVerifyMode(SSLContext::VERIFY_PEER);
   SSLServer sv(sh, server_context);
 
-  Error e = sv.Start(TEST_ADDR, TEST_PORT);
+  Error e;
+  for (int i = 0; i < 3; i++) {
+    e = sv.Start(TEST_ADDR, TEST_PORT);
+    if (e == linear::Error(LNR_OK)) {
+      break;
+    }
+    sleep(1);
+  }
   ASSERT_EQ(LNR_OK, e.Code());
 
   SSLSocket cs = cl.CreateSocket(TEST_ADDR, TEST_PORT);
@@ -413,7 +462,14 @@ TEST_F(SSLClientServerConnectionTest, DelayedSocketDestruct) {
     EXPECT_CALL(*sh, OnDisconnectMock(Eq(ByRef(sh->s_)), Error(LNR_OK))).WillOnce(Assign(&srv_finished, true));
   }
 
-  Error e = sv.Start(TEST_ADDR, TEST_PORT);
+  Error e;
+  for (int i = 0; i < 3; i++) {
+    e = sv.Start(TEST_ADDR, TEST_PORT);
+    if (e == linear::Error(LNR_OK)) {
+      break;
+    }
+    sleep(1);
+  }
   ASSERT_EQ(LNR_OK, e.Code());
   SSLSocket cs = cl.CreateSocket(TEST_ADDR, TEST_PORT);
 
@@ -483,7 +539,14 @@ TEST_F(SSLClientServerConnectionTest, OnConnectAndDisconnectFromOtherTherad) {
     EXPECT_CALL(*sh, OnDisconnectMock(Eq(ByRef(sh->s_)), Error(LNR_EOF))).WillOnce(Assign(&srv_finished, true));
   }
 
-  Error e = sv.Start(TEST_ADDR, TEST_PORT);
+  Error e;
+  for (int i = 0; i < 3; i++) {
+    e = sv.Start(TEST_ADDR, TEST_PORT);
+    if (e == linear::Error(LNR_OK)) {
+      break;
+    }
+    sleep(1);
+  }
   ASSERT_EQ(LNR_OK, e.Code());
   SSLSocket cs = cl.CreateSocket(TEST_ADDR, TEST_PORT);
 
@@ -526,7 +589,14 @@ TEST_F(SSLClientServerConnectionTest, VerifyCertsPEM) {
   server_context.SetVerifyMode(SSLContext::VERIFY_PEER);
   SSLServer sv(sh, server_context);
 
-  Error e = sv.Start(TEST_ADDR, TEST_PORT);
+  Error e;
+  for (int i = 0; i < 3; i++) {
+    e = sv.Start(TEST_ADDR, TEST_PORT);
+    if (e == linear::Error(LNR_OK)) {
+      break;
+    }
+    sleep(1);
+  }
   ASSERT_EQ(LNR_OK, e.Code());
 
   SSLSocket cs = cl.CreateSocket(TEST_ADDR, TEST_PORT);
@@ -557,7 +627,14 @@ TEST_F(SSLClientServerConnectionTest, VerifyCertsDER) {
   server_context.SetVerifyMode(SSLContext::VERIFY_PEER);
   SSLServer sv(sh, server_context);
 
-  Error e = sv.Start(TEST_ADDR, TEST_PORT);
+  Error e;
+  for (int i = 0; i < 3; i++) {
+    e = sv.Start(TEST_ADDR, TEST_PORT);
+    if (e == linear::Error(LNR_OK)) {
+      break;
+    }
+    sleep(1);
+  }
   ASSERT_EQ(LNR_OK, e.Code());
 
   SSLSocket cs = cl.CreateSocket(TEST_ADDR, TEST_PORT);
@@ -589,7 +666,14 @@ TEST_F(SSLClientServerConnectionTest, VerifyCertsCAPath) {
   server_context.SetVerifyMode(SSLContext::VERIFY_PEER);
   SSLServer sv(sh, server_context);
 
-  Error e = sv.Start(TEST_ADDR, TEST_PORT);
+  Error e;
+  for (int i = 0; i < 3; i++) {
+    e = sv.Start(TEST_ADDR, TEST_PORT);
+    if (e == linear::Error(LNR_OK)) {
+      break;
+    }
+    sleep(1);
+  }
   ASSERT_EQ(LNR_OK, e.Code());
 
   SSLSocket cs = cl.CreateSocket(TEST_ADDR, TEST_PORT);
@@ -627,7 +711,14 @@ TEST_F(SSLClientServerConnectionTest, VerifyCertsWPassPEM) {
   server_context.SetVerifyMode(SSLContext::VERIFY_PEER);
   SSLServer sv(sh, server_context);
 
-  Error e = sv.Start(TEST_ADDR, TEST_PORT);
+  Error e;
+  for (int i = 0; i < 3; i++) {
+    e = sv.Start(TEST_ADDR, TEST_PORT);
+    if (e == linear::Error(LNR_OK)) {
+      break;
+    }
+    sleep(1);
+  }
   ASSERT_EQ(LNR_OK, e.Code());
 
   SSLSocket cs = cl.CreateSocket(TEST_ADDR, TEST_PORT);
@@ -663,7 +754,14 @@ TEST_F(SSLClientServerConnectionTest, VerifyFailSelfSignedAuto) {
   server_context.SetVerifyMode(SSLContext::VERIFY_PEER);
   SSLServer sv(sh, server_context);
 
-  Error e = sv.Start(TEST_ADDR, TEST_PORT);
+  Error e;
+  for (int i = 0; i < 3; i++) {
+    e = sv.Start(TEST_ADDR, TEST_PORT);
+    if (e == linear::Error(LNR_OK)) {
+      break;
+    }
+    sleep(1);
+  }
   ASSERT_EQ(LNR_OK, e.Code());
 
   SSLSocket cs = cl.CreateSocket(TEST_ADDR, TEST_PORT);
@@ -710,7 +808,14 @@ TEST_F(SSLClientServerConnectionTest, VerifyFailSelfSigned) {
   server_context.SetVerifyMode(SSLContext::VERIFY_NONE);
   SSLServer sv(sh, server_context);
 
-  Error e = sv.Start(TEST_ADDR, TEST_PORT);
+  Error e;
+  for (int i = 0; i < 3; i++) {
+    e = sv.Start(TEST_ADDR, TEST_PORT);
+    if (e == linear::Error(LNR_OK)) {
+      break;
+    }
+    sleep(1);
+  }
   ASSERT_EQ(LNR_OK, e.Code());
 
   SSLSocket cs = cl.CreateSocket(TEST_ADDR, TEST_PORT);
