@@ -32,7 +32,7 @@
 #endif
 
 #define LINEAR_LOG_PRINTABLE_STRING(any) \
-  ((linear::log::GetLevel() == linear::log::LOG_FULL) ? any.stringify() : any.stringify(64, true))
+  ((linear::log::GetLevel() == linear::log::LOG_FULL) ? any.stringify() : any.stringify(64))
 /// @endcond
 
 namespace linear {

@@ -308,8 +308,8 @@ TEST(AnyTest, stringify) {
     linear::type::nil n;
     int i = 0;
     float f = 3.14;
-    std::string s = "string";
-    linear::type::binary b("\x00\x01\x02", 3);
+    std::string s = "Abｶﾅ漢字,～－<>&$①Ⅰ㍉覬鎹";
+    linear::type::binary b("\x00\x01\x02\",", 5);
     std::vector<linear::type::any> iv;
     iv.push_back(n);
     iv.push_back(i);
@@ -332,32 +332,17 @@ TEST(AnyTest, stringify) {
     m.insert(std::make_pair("k6", im));
     linear::type::any a1(m);
 
-    std::string bstr("\x00\x01\x02", 3);
-    std::string expect_raw = "{\"k0\":null, \"k1\":0, \"k2\":3.14, \"k3\":\"string\", \"k4\":\"";
-    expect_raw += bstr;
-    expect_raw += "\", \"k5\":[null, 0, 3.14, \"string\"], \"k6\":{\"k0\":null, \"k1\":0, \"k2\":3.14, \"k3\":\"string\", \"k4\":[null, 0, 3.14, \"string\"]}}";
-    std::string expect_str = "{\"k0\":null, \"k1\":0, \"k2\":3.14, \"k3\":\"string\", \"k4\":\"???\", \"k5\":[null, 0, 3.14, \"string\"], \"k6\":{\"k0\":null, \"k1\":0, \"k2\":3.14, \"k3\":\"string\", \"k4\":[null, 0, 3.14, \"string\"]}}";
+    std::string expect = "{\"k0\":null, \"k1\":0, \"k2\":3.14, \"k3\":\"Abｶﾅ漢字,～－<>&$①Ⅰ㍉覬鎹\", \"k4\":\"\\x00\\x01\\x02\\x22\\x2c\", \"k5\":[null, 0, 3.14, \"Abｶﾅ漢字,～－<>&$①Ⅰ㍉覬鎹\"], \"k6\":{\"k0\":null, \"k1\":0, \"k2\":3.14, \"k3\":\"Abｶﾅ漢字,～－<>&$①Ⅰ㍉覬鎹\", \"k4\":[null, 0, 3.14, \"Abｶﾅ漢字,～－<>&$①Ⅰ㍉覬鎹\"]}}";
 
-    std::string expect_raw_cut = "{\"k0\":null, \"k1\":0, \"k2\":3.14, \"k3\":\"string\", \"k4\":\"";
-    expect_raw_cut += bstr;
-    expect_raw_cut += "\", \"k5\":[...(truncated)";
-    std::string expect_str_cut = "{\"k0\":null, \"k1\":0, \"k2\":3.14, \"k3\":\"string\", \"k4\":\"???\", \"k5\":[...(truncated)";
+    std::string expect_cut = "{\"k0\":null, \"k1\":0, \"k2\":3.14, \"k3\":\"Abｶﾅ漢字,～－<>&$①Ⅰ㍉覬鎹\", \"k4\":\"\\x00\\x01\\x02\\x22\\x2c\", \"k5\":[null, 0, 3.14...(truncated)";
       
     std::string raw = a1.stringify();
     std::cout << raw << std::endl;
-    EXPECT_EQ(expect_raw, raw);
+    EXPECT_EQ(expect, raw);
 
-    std::string str = a1.stringify(0, true);
-    std::cout << str << std::endl;
-    EXPECT_EQ(expect_str, str);
-
-    std::string raw_cut = a1.stringify(64);
+    std::string raw_cut = a1.stringify(128);
     std::cout << raw_cut << std::endl;
-    EXPECT_EQ(expect_raw_cut, raw_cut);
-
-    std::string str_cut = a1.stringify(64, true);
-    std::cout << str_cut << std::endl;
-    EXPECT_EQ(expect_str_cut, str_cut);
+    EXPECT_EQ(expect_cut, raw_cut);
   }
 }
 

@@ -144,19 +144,9 @@ class any {
   /**
    * stringify any objects
    * @param length truncate the number of characters except when 0 is specified
-   * @param printable replace !is_print char into '?'
    * @return stringified object
    */
-  std::string stringify(size_t length = 0, bool printable = false) const {
-    std::ostringstream os;
-    os << object_;
-    std::string s = os.str();
-    s = (length > 0 && s.size() > length) ? (s.substr(0, length) + "...(truncated)") : s;
-    if (printable) {
-      std::replace_if(s.begin(), s.end(), isnprint, '?');
-    }
-    return s;
-  }
+  inline std::string stringify(size_t length = 0) const;
 
   /// @cond hidden
   template <typename Packer>
@@ -276,6 +266,132 @@ public:
    */
   Type type;
 };
+
+inline std::ostream& operator<< (std::ostream& s, const linear::type::any& a) {
+  const msgpack::object& o = a.object();
+  switch(o.type) {
+  case msgpack::type::NIL:
+    s << "null";
+    break;
+
+  case msgpack::type::BOOLEAN:
+    s << (o.via.boolean ? "true" : "false");
+    break;
+
+  case msgpack::type::POSITIVE_INTEGER:
+    s << o.via.u64;
+    break;
+
+  case msgpack::type::NEGATIVE_INTEGER:
+    s << o.via.i64;
+    break;
+
+  case msgpack::type::FLOAT:
+    s << o.via.f64;
+    break;
+
+  case msgpack::type::STR:
+    s << '"';
+    for (uint32_t i = 0; i < o.via.str.size; ++i) {
+      char c = o.via.str.ptr[i];
+      switch (c) {
+      case '\\':
+        s << "\\\\";
+        break;
+      case '"':
+        s << "\\\"";
+        break;
+      case '/':
+        s << "\\/";
+        break;
+      case '\b':
+        s << "\\b";
+        break;
+      case '\f':
+        s << "\\f";
+        break;
+      case '\n':
+        s << "\\n";
+        break;
+      case '\r':
+        s << "\\r";
+        break;
+      case '\t':
+        s << "\\t";
+        break;
+      default: {
+        unsigned int code = static_cast<unsigned int>(c);
+        if (code < 0x20 || code == 0x7f) {
+          s << "\\u" << std::hex << std::setw(4) << std::setfill('0') << (code & 0xff);
+        }
+        else {
+          s << c;
+        }
+      } break;
+      }
+    }
+    s << '"';
+    break;
+
+  case msgpack::type::BIN:
+    s << '"';
+    for (uint32_t i = 0; i < o.via.str.size; ++i) {
+      char c = o.via.str.ptr[i];
+      s << "\\x" << std::hex << std::setw(2) << std::setfill('0') << (c & 0xff);
+    }
+    s << '"';
+    break;
+
+  case msgpack::type::EXT:
+    s << "\"EXT: ";
+    for (uint32_t i = 0; i < o.via.str.size; ++i) {
+      char c = o.via.str.ptr[i];
+      s << "\\x" << std::hex << std::setw(2) << std::setfill('0') << (c & 0xff);
+    }
+    s << '"';
+    break;
+
+  case msgpack::type::ARRAY:
+    s << "[";
+    if(o.via.array.size != 0) {
+      msgpack::object* p(o.via.array.ptr);
+      s << linear::type::any(*p);
+      ++p;
+      for(msgpack::object* const pend(o.via.array.ptr + o.via.array.size);
+          p < pend; ++p) {
+        s << ", " << linear::type::any(*p);
+      }
+    }
+    s << "]";
+    break;
+
+  case msgpack::type::MAP:
+    s << "{";
+    if(o.via.map.size != 0) {
+      msgpack::object_kv* p(o.via.map.ptr);
+      s << linear::type::any(p->key) << ':' << linear::type::any(p->val);
+      ++p;
+      for(msgpack::object_kv* const pend(o.via.map.ptr + o.via.map.size);
+          p < pend; ++p) {
+        s << ", " << linear::type::any(p->key) << ':' << linear::type::any(p->val);
+      }
+    }
+    s << "}";
+    break;
+
+  default:
+    s << "\"UNKNOWN: type = " << static_cast<uint16_t>(o.type) << "\"";
+  }
+  return s;
+}
+
+std::string linear::type::any::stringify(size_t length) const {
+  std::ostringstream os;
+  os << *this;
+  std::string s = os.str();
+  s = (length > 0 && s.size() > length) ? (s.substr(0, length) + "...(truncated)") : s;
+  return s;
+}
 
 }  // namespace type
 
