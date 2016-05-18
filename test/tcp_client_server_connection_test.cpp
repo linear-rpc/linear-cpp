@@ -21,7 +21,7 @@ typedef LinearTest TCPClientServerConnectionTest;
 TEST_F(TCPClientServerConnectionTest, ConnectRefuse) {
   shared_ptr<MockHandler> ch = linear::shared_ptr<MockHandler>(new MockHandler());
   TCPClient cl(ch);
-  TCPSocket cs = cl.CreateSocket(TEST_ADDR, TEST_PORT);
+  TCPSocket cs = cl.CreateSocket(TEST_ADDR, TEST_PORT + 5);
 
   EXPECT_CALL(*ch, OnConnectMock(_)).Times(0);
   EXPECT_CALL(*ch, OnDisconnectMock(cs, Error(LNR_ECONNREFUSED))).WillOnce(DoAll(Assign(&srv_finished, true), Assign(&cli_finished, true)));

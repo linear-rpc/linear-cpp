@@ -21,7 +21,7 @@ typedef LinearTest WSClientServerConnectionTest;
 TEST_F(WSClientServerConnectionTest, ConnectRefuse) {
   shared_ptr<MockHandler> ch = linear::shared_ptr<MockHandler>(new MockHandler());
   WSClient cl(ch);
-  WSSocket cs = cl.CreateSocket(TEST_ADDR, TEST_PORT);
+  WSSocket cs = cl.CreateSocket(TEST_ADDR, TEST_PORT + 5);
 
   EXPECT_CALL(*ch, OnConnectMock(_)).Times(0);
   EXPECT_CALL(*ch, OnDisconnectMock(cs, Error(LNR_ECONNREFUSED))).WillOnce(DoAll(Assign(&srv_finished, true), Assign(&cli_finished, true)));

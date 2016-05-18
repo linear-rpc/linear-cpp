@@ -34,7 +34,7 @@ TEST_F(WSSClientServerConnectionTest, ConnectRefuse) {
   context.SetCiphers(std::string(CIPHER_LIST));
   context.SetVerifyMode(SSLContext::VERIFY_PEER);
   WSSClient cl(ch, WSRequestContext(), context);
-  WSSSocket cs = cl.CreateSocket(TEST_ADDR, TEST_PORT);
+  WSSSocket cs = cl.CreateSocket(TEST_ADDR, TEST_PORT + 5);
 
   EXPECT_CALL(*ch, OnConnectMock(_)).Times(0);
   EXPECT_CALL(*ch, OnDisconnectMock(cs, Error(LNR_ECONNREFUSED))).WillOnce(DoAll(Assign(&srv_finished, true), Assign(&cli_finished, true)));
