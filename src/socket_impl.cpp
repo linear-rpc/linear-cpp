@@ -52,8 +52,8 @@ SocketImpl::SocketImpl(const std::string& host, int port,
   : state_(Socket::DISCONNECTED),
     stream_(NULL), ev_(NULL), peer_(Addrinfo(host, port)), loop_(loop), type_(type), id_(Id()),
     connectable_(true), handshaking_(false), last_error_(LNR_OK), delegate_(delegate),
-    connect_timeout_(0), connect_timer_(loop_),
-    max_buffer_size_(Socket::DEFAULT_MAX_BUFFER_SIZE) {
+    connect_timeout_(0), connect_timer_(loop_) {
+  SetMaxBufferSize(Socket::DEFAULT_MAX_BUFFER_SIZE);
   if (peer_.proto == Addrinfo::UNKNOWN) {
     LINEAR_LOG(LOG_ERR, "fail to create socket(id = %d, type = %s, peer = [%s]:%d, connectable): address not available",
                id_, GetTypeString(type_).c_str(),
@@ -73,8 +73,7 @@ SocketImpl::SocketImpl(tv_stream_t* stream,
                        Socket::Type type)
   : stream_(stream), ev_(NULL), loop_(loop), type_(type), id_(Id()),
     connectable_(false), last_error_(LNR_OK), delegate_(delegate),
-    connect_timeout_(0), connect_timer_(loop_),
-    max_buffer_size_(Socket::DEFAULT_MAX_BUFFER_SIZE) {
+    connect_timeout_(0), connect_timer_(loop_) {
   if (type == Socket::WS) {
     handshaking_ = true;
     state_ = Socket::CONNECTING;
@@ -110,6 +109,7 @@ SocketImpl::SocketImpl(tv_stream_t* stream,
     LINEAR_LOG(LOG_WARN, "fail to get peerinfo(id = %d) (may disconnected by peer): %s",
                id_, tv_strerror(reinterpret_cast<tv_handle_t*>(stream_), ret));
   }
+  SetMaxBufferSize(Socket::DEFAULT_MAX_BUFFER_SIZE);
   LINEAR_LOG(LOG_DEBUG, "socket(id = %d, type = %s, self = %s:%d, peer = %s:%d, not connectable) is created",
              id_, GetTypeString(type_).c_str(),
              (self_.proto == Addrinfo::IPv4) ? self_.addr.c_str() : (std::string("[" + self_.addr + "]")).c_str(),
@@ -125,6 +125,9 @@ SocketImpl::~SocketImpl() {
 
 void SocketImpl::SetMaxBufferSize(size_t limit) {
   max_buffer_size_ = limit;
+  if (stream_ != NULL) {
+    tv_set_max_sendbuf(stream_, limit);
+  }
 }
 
 Error SocketImpl::Connect(unsigned int timeout, EventLoopImpl::SocketEvent* ev) {
@@ -344,6 +347,7 @@ void SocketImpl::OnConnect(const shared_ptr<SocketImpl>& socket, tv_stream_t* st
   if (ret == 0) {
     self_ = Addrinfo(&addr.sa);
   }
+  SetMaxBufferSize(max_buffer_size_);
   // OK.starts to read
   last_error_ = StartRead(ev_);
   if (last_error_ != Error(LNR_OK)) {
