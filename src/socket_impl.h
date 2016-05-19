@@ -53,6 +53,8 @@ class SocketImpl {
   inline const linear::Addrinfo& GetPeerInfo() { return peer_; }
 
   void SetMaxBufferSize(size_t limit);
+  void SetMaxSendBufferSize(size_t limit);
+  void SetMaxRecvBufferSize(size_t limit);
   linear::Error Connect(unsigned int timeout, linear::EventLoopImpl::SocketEvent* ev);
   linear::Error Disconnect(bool handshaking = false);
   linear::Error Send(const linear::Message& message, int timeout);
@@ -96,7 +98,8 @@ class SocketImpl {
   std::vector<linear::Message*> pending_messages_;
   std::vector<linear::SocketImpl::RequestTimer*> request_timers_;
   linear::mutex request_timer_mutex_;
-  size_t max_buffer_size_;
+  size_t max_send_buffer_size_;
+  size_t max_recv_buffer_size_;
   msgpack::unpacker unpacker_;
 };
 

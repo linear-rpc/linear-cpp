@@ -124,10 +124,19 @@ SocketImpl::~SocketImpl() {
 }
 
 void SocketImpl::SetMaxBufferSize(size_t limit) {
-  max_buffer_size_ = limit;
+  SetMaxSendBufferSize(limit);
+  SetMaxRecvBufferSize(limit);
+}
+
+void SocketImpl::SetMaxSendBufferSize(size_t limit) {
+  max_send_buffer_size_ = limit;
   if (stream_ != NULL) {
     tv_set_max_sendbuf(stream_, limit);
   }
+}
+
+void SocketImpl::SetMaxRecvBufferSize(size_t limit) {
+  max_recv_buffer_size_ = limit;
 }
 
 Error SocketImpl::Connect(unsigned int timeout, EventLoopImpl::SocketEvent* ev) {
@@ -347,7 +356,7 @@ void SocketImpl::OnConnect(const shared_ptr<SocketImpl>& socket, tv_stream_t* st
   if (ret == 0) {
     self_ = Addrinfo(&addr.sa);
   }
-  SetMaxBufferSize(max_buffer_size_);
+  SetMaxSendBufferSize(max_send_buffer_size_);
   // OK.starts to read
   last_error_ = StartRead(ev_);
   if (last_error_ != Error(LNR_OK)) {
@@ -591,7 +600,7 @@ void SocketImpl::OnRead(const shared_ptr<SocketImpl>& socket, const tv_buf_t* bu
         throw std::bad_cast();
       }
     }
-    if (unpacker_.message_size() > max_buffer_size_) {
+    if (unpacker_.message_size() > max_recv_buffer_size_) {
       throw std::runtime_error("");
     }
   } catch (const std::bad_cast&) {

@@ -72,12 +72,26 @@ class LINEAR_EXTERN Socket {
     return SocketType(socket_);
   }
   /**
-   * set max message buffer size.
+   * set max send,recv buffer size.
    * @param [in] limit max limit of message size (byte)
    * @return linear::Error object
-   * @see linaer::Socket::DEFAULT_MAX_BUFFER_SIZE
+   * @see linear::Socket::DEFAULT_MAX_BUFFER_SIZE
    */
   virtual linear::Error SetMaxBufferSize(size_t limit) const;
+  /**
+   * set max send buffer size.
+   * @param [in] limit max limit of message size (byte)
+   * @return linear::Error object
+   * @see linear::Socket::DEFAULT_MAX_BUFFER_SIZE
+   */
+  virtual linear::Error SetMaxSendBufferSize(size_t limit) const;
+  /**
+   * set max recv buffer size.
+   * @param [in] limit max limit of message size (byte)
+   * @return linear::Error object
+   * @see linear::Socket::DEFAULT_MAX_BUFFER_SIZE
+   */
+  virtual linear::Error SetMaxRecvBufferSize(size_t limit) const;
   /**
    * connect to target.
    * @param [in] timeout connect timeout(msec)\n

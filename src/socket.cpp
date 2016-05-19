@@ -77,6 +77,22 @@ Error Socket::SetMaxBufferSize(size_t limit) const {
   return Error(LNR_OK);
 }
 
+Error Socket::SetMaxSendBufferSize(size_t limit) const {
+  if (!socket_) {
+    return Error(LNR_EBADF);
+  }
+  socket_->SetMaxSendBufferSize(limit);
+  return Error(LNR_OK);
+}
+
+Error Socket::SetMaxRecvBufferSize(size_t limit) const {
+  if (!socket_) {
+    return Error(LNR_EBADF);
+  }
+  socket_->SetMaxRecvBufferSize(limit);
+  return Error(LNR_OK);
+}
+
 Error Socket::Connect(unsigned int timeout) const {
   if (!socket_) {
     return Error(LNR_EBADF);
