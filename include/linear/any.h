@@ -268,6 +268,7 @@ public:
 };
 
 inline std::ostream& operator<< (std::ostream& s, const linear::type::any& a) {
+  std::ios_base::fmtflags orig = s.flags();
   const msgpack::object& o = a.object();
   switch(o.type) {
   case msgpack::type::NIL:
@@ -335,8 +336,8 @@ inline std::ostream& operator<< (std::ostream& s, const linear::type::any& a) {
 
   case msgpack::type::BIN:
     s << '"';
-    for (uint32_t i = 0; i < o.via.str.size; ++i) {
-      char c = o.via.str.ptr[i];
+    for (uint32_t i = 0; i < o.via.bin.size; ++i) {
+      char c = o.via.bin.ptr[i];
       s << "\\x" << std::hex << std::setw(2) << std::setfill('0') << (c & 0xff);
     }
     s << '"';
@@ -344,8 +345,8 @@ inline std::ostream& operator<< (std::ostream& s, const linear::type::any& a) {
 
   case msgpack::type::EXT:
     s << "\"EXT: ";
-    for (uint32_t i = 0; i < o.via.str.size; ++i) {
-      char c = o.via.str.ptr[i];
+    for (uint32_t i = 0; i < o.via.ext.size + 1; ++i) {
+      char c = o.via.ext.ptr[i];
       s << "\\x" << std::hex << std::setw(2) << std::setfill('0') << (c & 0xff);
     }
     s << '"';
@@ -382,6 +383,7 @@ inline std::ostream& operator<< (std::ostream& s, const linear::type::any& a) {
   default:
     s << "\"UNKNOWN: type = " << static_cast<uint16_t>(o.type) << "\"";
   }
+  s.flags(orig);
   return s;
 }
 

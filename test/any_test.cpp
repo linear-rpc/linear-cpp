@@ -1,6 +1,7 @@
 #include "gtest/gtest.h"
 
 #include "linear/any.h"
+#include <sstream>
 
 TEST(AnyTest, simple) {
   {
@@ -343,6 +344,22 @@ TEST(AnyTest, stringify) {
     std::string raw_cut = a1.stringify(128);
     std::cout << raw_cut << std::endl;
     EXPECT_EQ(expect_cut, raw_cut);
+  }
+}
+
+TEST(AnyTest, ext) {
+  {
+    msgpack::type::ext ext(10, "abcdef", 5);
+    linear::type::any a(ext);
+    std::string expect = "\"EXT: \\x0a\\x61\\x62\\x63\\x64\\x65\"";
+    EXPECT_EQ(expect, a.stringify());
+    std::cout << a.stringify() << std::endl;
+    std::map<std::string, linear::type::any> m;
+    m.insert(std::make_pair("k0", a));
+    linear::type::any resa = m["k0"];
+    EXPECT_EQ(expect, resa.stringify());
+    msgpack::type::ext res = resa.as<msgpack::type::ext>();
+    EXPECT_EQ(ext, res);
   }
 }
 
