@@ -21,8 +21,8 @@ class SocketImpl;
  */
 class LINEAR_EXTERN Socket {
  public:
-  //! default max message buffer size (64MB)
-  static const size_t DEFAULT_MAX_BUFFER_SIZE = (64 * 1024 * 1024);
+  //! default max message buffer size (8MB)
+  static const size_t DEFAULT_MAX_BUFFER_SIZE = 8 * 1024 * 1024;
 
   //! socket type indicator
   enum Type {
