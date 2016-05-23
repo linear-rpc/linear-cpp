@@ -33,7 +33,7 @@ unsigned int msleep(unsigned int milliseconds);
 // Test Base Class
 class LinearTest : public ::testing::Test {
  public:
- LinearTest() : srv_finished(false), cli_finished(false) {}
+  LinearTest() : srv_finished(false), cli_finished(false), block_finished(false) {}
   virtual ~LinearTest() {}
 
   virtual void SetUp() {
@@ -50,9 +50,16 @@ class LinearTest : public ::testing::Test {
     cli_finished = false;
     srv_finished = false;
   }
+  virtual void WAIT_TO_FINISH_BLOCK() {
+    while (!block_finished) {
+      msleep(1);
+    }
+    block_finished = false;
+  }
 
   bool srv_finished;
   bool cli_finished;
+  bool block_finished;
 };
 
 // Test Mock
@@ -146,6 +153,27 @@ class ThreadMockHandler : public linear::Handler {
   virtual ~ThreadMockHandler() {}
   void OnConnect(const linear::Socket& s);
   void OnDisconnect(const linear::Socket& s, const linear::Error& e);
+};
+
+class BlockMockHandler : public linear::Handler {
+ public:
+  MOCK_METHOD1(OnConnectMock,    void(const linear::Socket& s));
+  MOCK_METHOD2(OnDisconnectMock, void(const linear::Socket& s, const linear::Error& e));
+  MOCK_METHOD2(OnMessageMock,    void(const linear::Socket& s, const linear::Message& m));
+  MOCK_METHOD3(OnErrorMock,      void(const linear::Socket& s, const linear::Message& m, const linear::Error& e));
+  BlockMockHandler() : do_block(true) {}
+  virtual ~BlockMockHandler() {}
+  void OnConnect(const linear::Socket& s) {
+    OnConnectMock(s);
+  }
+  void OnDisconnect(const linear::Socket& s, const linear::Error& e) {
+    OnDisconnectMock(s, e);
+  }
+  void OnMessage(const linear::Socket& s, const linear::Message& m);
+  void OnError(const linear::Socket& s, const linear::Message& m, const linear::Error& e) {
+    OnErrorMock(s, m, e);
+  }
+  bool do_block;
 };
 
 // Param

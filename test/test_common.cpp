@@ -35,3 +35,10 @@ unsigned int msleep(unsigned int milliseconds) {
   return 0;
 }
 #endif
+
+void BlockMockHandler::OnMessage(const linear::Socket& s, const linear::Message& m) {
+  while (do_block) {
+    msleep(1);
+  }
+  OnMessageMock(s, m);
+}

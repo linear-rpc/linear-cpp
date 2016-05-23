@@ -1091,3 +1091,121 @@ TEST_F(WSSClientServerSendRecvTest, MalformedPacket) {
   }
   SSL_CTX_free(ctx);
 }
+
+ACTION(StartSendNotify_WSS) {
+  Socket s = arg0;
+  s.SetMaxSendBufferSize(10000);
+  linear::Notify notify("test", std::string(10000, 'a'));
+  for (int i = 0; i < 2; i++) {
+    linear::Error e = notify.Send(s);
+    ASSERT_EQ(linear::Error(LNR_OK), e);
+  }
+}
+
+ACTION(CheckEbusy_WSS) {
+  Error e = arg0;
+  ASSERT_EQ(linear::Error(LNR_EBUSY), e);
+}
+
+// Overflow SendBuffer
+TEST_F(WSSClientServerSendRecvTest, SendBuffer) {
+  linear::EventLoop loop;
+  shared_ptr<BlockMockHandler> ch = linear::shared_ptr<BlockMockHandler>(new BlockMockHandler());
+  WSSClient cl(ch, loop);
+  linear::shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
+  SSLContext server_context(SSLContext::SSLv23);
+  server_context.SetCertificate(std::string(SERVER_CERT));
+  server_context.SetPrivateKey(std::string(SERVER_PKEY));
+  server_context.SetCAFile(std::string(CA_CERT));
+  server_context.SetCiphers(std::string(CIPHER_LIST));
+  server_context.SetVerifyMode(SSLContext::VERIFY_NONE);
+  WSSServer sv(sh, server_context);
+
+  Error e;
+  for (int i = 0; i < 3; i++) {
+    e = sv.Start(TEST_ADDR, TEST_PORT);
+    if (e == linear::Error(LNR_OK)) {
+      break;
+    }
+    sleep(1);
+  }
+  ASSERT_EQ(LNR_OK, e.Code());
+  WSSSocket cs = cl.CreateSocket(TEST_ADDR, TEST_PORT);
+
+  EXPECT_CALL(*sh, OnConnectMock(_))
+    .WillOnce(DoAll(WithArg<0>(StartSendNotify_WSS()), Assign(&srv_finished, true)));
+  EXPECT_CALL(*sh, OnErrorMock(_, _, _))
+    .WillRepeatedly(DoAll(WithArg<2>(CheckEbusy_WSS()), Assign(&block_finished, true)));
+  EXPECT_CALL(*sh, OnDisconnectMock(_, _))
+    .Times(::testing::AtLeast(1))
+    .WillOnce(Assign(&srv_finished, true));
+  EXPECT_CALL(*ch, OnConnectMock(cs)).WillOnce(Assign(&cli_finished, true));
+  EXPECT_CALL(*ch, OnMessageMock(_, _))
+    .Times(::testing::AtLeast(1))
+    .WillOnce(WithArg<0>(Disconnect()));
+  EXPECT_CALL(*ch, OnDisconnectMock(_, _))
+    .Times(::testing::AtLeast(1))
+    .WillOnce(Assign(&cli_finished, true));
+
+  e = cs.Connect();
+  ASSERT_EQ(LNR_OK, e.Code());
+  WAIT_TO_FINISH_CALLBACK();
+  WAIT_TO_FINISH_BLOCK();
+  ch->do_block = false;
+  WAIT_TO_FINISH_CALLBACK();
+}
+
+ACTION(StartSendNotify_WSS2) {
+  Socket s = arg0;
+  linear::Notify notify("test", std::string(10000, 'a'));
+  for (int i = 0; i < 10; i++) {
+    linear::Error e = notify.Send(s);
+    ASSERT_EQ(linear::Error(LNR_OK), e);
+  }
+}
+// Must not Overflow SendBuffer
+TEST_F(WSSClientServerSendRecvTest, NotOverflowSendBuffer) {
+  shared_ptr<MockHandler> ch = linear::shared_ptr<MockHandler>(new MockHandler());
+  WSSClient cl(ch);
+  shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
+  SSLContext server_context(SSLContext::SSLv23);
+  server_context.SetCertificate(std::string(SERVER_CERT));
+  server_context.SetPrivateKey(std::string(SERVER_PKEY));
+  server_context.SetCAFile(std::string(CA_CERT));
+  server_context.SetCiphers(std::string(CIPHER_LIST));
+  server_context.SetVerifyMode(SSLContext::VERIFY_NONE);
+  WSSServer sv(sh, server_context);
+
+  Error e;
+  for (int i = 0; i < 3; i++) {
+    e = sv.Start(TEST_ADDR, TEST_PORT);
+    if (e == linear::Error(LNR_OK)) {
+      break;
+    }
+    sleep(1);
+  }
+  ASSERT_EQ(LNR_OK, e.Code());
+  WSSSocket cs = cl.CreateSocket(TEST_ADDR, TEST_PORT);
+
+  EXPECT_CALL(*sh, OnConnectMock(_))
+    .WillOnce(DoAll(WithArg<0>(StartSendNotify_WSS2()), Assign(&srv_finished, true)));
+  EXPECT_CALL(*sh, OnErrorMock(_, _, _)).Times(0);
+  EXPECT_CALL(*sh, OnDisconnectMock(_, _))
+    .WillOnce(Assign(&srv_finished, true));
+
+  EXPECT_CALL(*ch, OnConnectMock(cs)).WillOnce(Assign(&cli_finished, true));
+  {
+    InSequence dummy;
+    EXPECT_CALL(*ch, OnMessageMock(_, _))
+      .Times(9);
+    EXPECT_CALL(*ch, OnMessageMock(_, _))
+      .WillOnce(WithArg<0>(Disconnect()));
+  }
+  EXPECT_CALL(*ch, OnDisconnectMock(_, _))
+    .WillOnce(Assign(&cli_finished, true));
+
+  e = cs.Connect();
+  ASSERT_EQ(LNR_OK, e.Code());
+  WAIT_TO_FINISH_CALLBACK();
+  WAIT_TO_FINISH_CALLBACK();
+}
