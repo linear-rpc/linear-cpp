@@ -120,11 +120,11 @@ AC_ARG_WITH([ssl],
             [with_ssl=$withval], [with_ssl=no])
 if test "x$with_ssl" = "xyes"; then
    CXXFLAGS="$CXXFLAGS -DWITH_SSL"
-   LIBS="$LIB -lssl -lcrypto"
+   LIBS="-lssl -lcrypto $LIB"
 elif test "x${with_ssl}" != "xno"; then
    CXXFLAGS="$CXXFLAGS -DWITH_SSL -I$with_ssl/include"
    LDFLAGS="-L$with_ssl/lib $LDFLAGS"
-   LIBS="$LIBS -lssl -lcrypto"
+   LIBS="-lssl -lcrypto $LIB"
 fi
 AM_CONDITIONAL([WITH_SSL], [test "x${with_ssl}" != "xno"])
 
