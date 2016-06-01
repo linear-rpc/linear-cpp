@@ -633,7 +633,21 @@ void SocketImpl::OnWrite(const shared_ptr<SocketImpl>& socket, const Message* me
     if (shared_ptr<HandlerDelegate> delegate = delegate_.lock()) {
       switch(message->type) {
       case REQUEST:
-        delegate->OnError(socket, *(dynamic_cast<const Request*>(message)), Error(status));
+	{
+	  linear::Request request_fail = *(dynamic_cast<const Request*>(message));
+	  unique_lock<mutex> request_timer_lock(request_timer_mutex_);
+	  for (std::vector<SocketImpl::RequestTimer*>::iterator it = request_timers_.begin();
+	       it != request_timers_.end(); it++) {
+	    const Request& request = (*it)->request;
+	    if (request.msgid == request_fail.msgid) {
+	      delete *it;
+	      request_timers_.erase(it);
+	      request_timer_lock.unlock();
+	      break;
+	    }
+	  }
+	  delegate->OnError(socket, request_fail, Error(status));
+	}
         break;
       case RESPONSE:
         delegate->OnError(socket, *(dynamic_cast<const Response*>(message)), Error(status));
@@ -673,6 +687,7 @@ void SocketImpl::OnRequestTimeout(const shared_ptr<SocketImpl>& socket, const Re
 
 Error SocketImpl::_Send(Message* message) {
   assert(message != NULL);
+  RequestTimer* request_timer = NULL;
   msgpack::sbuffer sbuf;
   switch(message->type) {
   case REQUEST:
@@ -687,6 +702,14 @@ Error SocketImpl::_Send(Message* message) {
                  (peer_.proto == Addrinfo::IPv4) ? peer_.addr.c_str() : (std::string("[" + peer_.addr + "]")).c_str(),
                  peer_.port);
       msgpack::pack(sbuf, *request);
+      try {
+	request_timer = new RequestTimer(*request, ev_->socket, loop_);
+      } catch(...) {
+	Error err(LNR_ENOMEM);
+	LINEAR_LOG(LOG_ERR, "fail to send message(id = %d): %s",
+		   id_, err.Message().c_str());
+	return err;
+      }
       break;
     }
   case RESPONSE:
@@ -728,44 +751,42 @@ Error SocketImpl::_Send(Message* message) {
     Error err(LNR_ENOMEM);
     LINEAR_LOG(LOG_ERR, "fail to send message(id = %d): %s",
                id_, err.Message().c_str());
+    if (request_timer != NULL) {
+      delete request_timer;
+    }
     return err;
   }
   memcpy(copy_data, sbuf.data(), sbuf.size());
   tv_buf_t buffer = static_cast<tv_buf_t>(uv_buf_init(copy_data, sbuf.size()));
   tv_write_t* w = static_cast<tv_write_t*>(malloc(sizeof(tv_write_t)));
   if (w == NULL) {
-    free(copy_data);
     Error err(LNR_ENOMEM);
     LINEAR_LOG(LOG_ERR, "fail to send message(id = %d): %s",
                id_, err.Message().c_str());
+    free(copy_data);
+    if (request_timer != NULL) {
+      delete request_timer;
+    }
     return err;
   }
   w->data = message;
-  if (message->type == REQUEST) {
-    const Request* request = dynamic_cast<const Request*>(message);
-    try {
-      RequestTimer* request_timer = new RequestTimer(*request, ev_->socket, loop_);
-      unique_lock<mutex> request_timer_lock(request_timer_mutex_);
-      request_timers_.push_back(request_timer);
-      request_timer_lock.unlock();
-      request_timer->Start();
-    } catch(...) {
-      free(w);
-      free(copy_data);
-      Error err(LNR_ENOMEM);
-      LINEAR_LOG(LOG_ERR, "fail to send message(id = %d): %s",
-                 id_, err.Message().c_str());
-      return err;
-    }
-  }
   int ret = tv_write(w, stream_, buffer, EventLoopImpl::OnWrite);
   if (ret) { // EINVAL or ENOMEM
+    Error err(ret);
     free(w);
     free(copy_data);
-    Error err(ret);
+    if (request_timer != NULL) {
+      delete request_timer;
+    }
     LINEAR_LOG(LOG_ERR, "fail to send message(id = %d): %s",
                id_, err.Message().c_str());
     return err;
+  }
+  if (request_timer != NULL) {
+    unique_lock<mutex> request_timer_lock(request_timer_mutex_);
+    request_timers_.push_back(request_timer);
+    request_timer_lock.unlock();
+    request_timer->Start();
   }
   return Error(LNR_OK);
 }

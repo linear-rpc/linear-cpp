@@ -1,7 +1,16 @@
+#ifndef _WIN32
+# include <pthread.h>
+#endif
+
 #include "test_common.h"
 
 namespace global {
   linear::Socket gs_;
+}
+
+void* called_by_some_thread(void* param) {
+  global::gs_.Disconnect();
+  return NULL;
 }
 
 void DelayedMockHandler::OnConnect(const linear::Socket& s) {
@@ -35,10 +44,3 @@ unsigned int msleep(unsigned int milliseconds) {
   return 0;
 }
 #endif
-
-void BlockMockHandler::OnMessage(const linear::Socket& s, const linear::Message& m) {
-  while (do_block) {
-    msleep(1);
-  }
-  OnMessageMock(s, m);
-}

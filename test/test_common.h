@@ -33,7 +33,10 @@ unsigned int msleep(unsigned int milliseconds);
 // Test Base Class
 class LinearTest : public ::testing::Test {
  public:
-  LinearTest() : srv_finished(false), cli_finished(false), block_finished(false) {}
+  LinearTest()
+    : lock(false),
+      srv_connected(false), cli_connected(false),
+      srv_tested(false), cli_tested(false) {}
   virtual ~LinearTest() {}
 
   virtual void SetUp() {
@@ -43,23 +46,38 @@ class LinearTest : public ::testing::Test {
   virtual void TearDown() {
     linear::log::DisableStderr();
   }
-  virtual void WAIT_TO_FINISH_CALLBACK() {
-    while (!srv_finished || !cli_finished) {
+  virtual void WAIT_CONNECTED() {
+    while (!srv_connected || !cli_connected) {
       msleep(1);
     }
-    cli_finished = false;
-    srv_finished = false;
   }
-  virtual void WAIT_TO_FINISH_BLOCK() {
-    while (!block_finished) {
+  virtual void WAIT_DISCONNECTED() {
+    while (srv_connected || cli_connected) {
       msleep(1);
     }
-    block_finished = false;
   }
-
-  bool srv_finished;
-  bool cli_finished;
-  bool block_finished;
+  virtual void WAIT_TESTED() {
+    while (!srv_tested || !cli_tested) {
+      lock = true;
+      msleep(1);
+    }
+    lock = false;
+  }
+  virtual void WAIT_SRV_TESTED() {
+    while (!srv_tested) {
+      msleep(1);
+    }
+  }
+  virtual void WAIT_CLI_TESTED() {
+    while (!cli_tested) {
+      msleep(1);
+    }
+  }
+  bool lock;
+  bool srv_connected;
+  bool cli_connected;
+  bool srv_tested;
+  bool cli_tested;
 };
 
 // Test Mock
@@ -130,6 +148,7 @@ class MockHandler : public linear::Handler {
     OnErrorMock(s, m, e);
   }
 
+ public:
   linear::Socket s_;
   linear::Message* m_;
   linear::Message* err_m_;
@@ -169,7 +188,12 @@ class BlockMockHandler : public linear::Handler {
   void OnDisconnect(const linear::Socket& s, const linear::Error& e) {
     OnDisconnectMock(s, e);
   }
-  void OnMessage(const linear::Socket& s, const linear::Message& m);
+  void OnMessage(const linear::Socket& s, const linear::Message& m) {
+    while (do_block) {
+      msleep(1);
+    }
+    OnMessageMock(s, m);
+  }
   void OnError(const linear::Socket& s, const linear::Message& m, const linear::Error& e) {
     OnErrorMock(s, m, e);
   }
@@ -194,6 +218,16 @@ struct Params {
 };
 
 // ACTION
+ACTION_P(WAIT_TEST_LOCK, l) {
+  while (!*l) {
+    msleep(1);
+  }
+}
+ACTION_P(WAIT_PEER_CONNECTED, f) {
+  while(!*f) {
+    msleep(1);
+  }
+}
 ACTION(SendRequest) {
   linear::Socket s = arg0;
   linear::Request request(std::string(METHOD_NAME), Params());
@@ -225,6 +259,21 @@ ACTION(SendNotify2Group) {
   linear::Notify notify(std::string(METHOD_NAME), Params());
   notify.Send(GROUP_NAME);
 }
+ACTION_P2(MultiSendNotify, num, limit) {
+  linear::Socket s = arg0;
+  if (limit > 0) {
+    s.SetMaxSendBufferSize(limit);
+  }
+  linear::Notify notify("test", std::string(10000, 'a'));
+  for (int i = 0; i < num; i++) {
+    linear::Error e = notify.Send(s);
+    ASSERT_EQ(linear::Error(linear::LNR_OK), e);
+  }
+}
+ACTION(CheckEbusy) {
+  linear::Error e = arg0;
+  ASSERT_EQ(linear::Error(linear::LNR_EBUSY), e);
+}
 ACTION(JoinToGroup) {
   linear::Socket s = arg0;
   linear::Group::Join(GROUP_NAME, s);
@@ -241,5 +290,22 @@ ACTION(Disconnect) {
   linear::Socket s = arg0;
   s.Disconnect();
 }
+
+namespace global {
+extern linear::Socket gs_;
+}
+
+#ifndef _WIN32
+void* called_by_some_thread(void* param);
+
+ACTION(DisconnectFromOtherThread) {
+  pthread_t thread;
+  ASSERT_EQ(0, pthread_create(&thread, NULL, called_by_some_thread, NULL));
+  pthread_join(thread, NULL);
+  ASSERT_EQ(true,
+	    linear::Socket::DISCONNECTING == global::gs_.GetState() ||
+	    linear::Socket::DISCONNECTED == global::gs_.GetState());
+}
+#endif
 
 #endif // TEST_COMMON_H_
