@@ -36,7 +36,7 @@ TEST_F(WSSClientServerConnectionTest, ConnectRefuse) {
 
   EXPECT_CALL(*ch, OnConnectMock(_))
     .Times(0);
-  EXPECT_CALL(*ch, OnDisconnectMock(cs, Error(LNR_ECONNREFUSED)))
+  EXPECT_CALL(*ch, OnDisconnectMock(cs, _))
     .WillOnce(Assign(&cli_tested, true));
 
   Error e = cs.Connect();
@@ -58,7 +58,7 @@ TEST_F(WSSClientServerConnectionTest, ConnectTimeout) {
 
   EXPECT_CALL(*ch, OnConnectMock(_))
     .Times(0);
-  EXPECT_CALL(*ch, OnDisconnectMock(cs, Error(LNR_ETIMEDOUT)))
+  EXPECT_CALL(*ch, OnDisconnectMock(cs, _))
     .WillOnce(Assign(&cli_tested, true));
 
   Error e = cs.Connect(1);
