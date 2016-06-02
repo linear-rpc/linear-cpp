@@ -785,3 +785,102 @@ TEST_F(WSSClientServerConnectionTest, VerifyClientCert) {
   ASSERT_EQ(LNR_OK, e.Code());
   WAIT_TESTED();
 }
+
+// KeepAlive
+ACTION(KeepAliveWSS) {
+  Socket s = arg0;
+  ASSERT_EQ(s.GetType(), Socket::WSS);
+  s.KeepAlive(1, 1, linear::Socket::KEEPALIVE_WS);
+}
+TEST_F(WSSClientServerConnectionTest, KeepAliveServer) {
+  linear::EventLoop loop;
+  linear::shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
+  SSLContext server_context(SSLContext::TLSv1_1);
+  server_context.SetCertificate(std::string(SERVER_CERT));
+  server_context.SetPrivateKey(std::string(SERVER_PKEY));
+  server_context.SetCAFile(std::string(CA_CERT));
+  server_context.SetCiphers(std::string(CIPHER_LIST));
+  server_context.SetVerifyMode(SSLContext::VERIFY_PEER);
+  WSSServer sv(sh, server_context);
+  shared_ptr<BlockMockHandler> ch = linear::shared_ptr<BlockMockHandler>(new BlockMockHandler());
+  WSSClient cl(ch, loop);
+  WSSSocket cs = cl.CreateSocket(TEST_ADDR, TEST_PORT);
+
+  Error e;
+  for (int i = 0; i < 3; i++) {
+    e = sv.Start(TEST_ADDR, TEST_PORT);
+    if (e == linear::Error(LNR_OK)) {
+      break;
+    }
+    msleep(100);
+  }
+  ASSERT_EQ(LNR_OK, e.Code());
+
+  EXPECT_CALL(*sh, OnConnectMock(_))
+    .WillOnce(DoAll(Assign(&srv_connected, true),
+		    WithArg<0>(KeepAliveWSS()),
+		    WithArg<0>(SendNotify())));
+  EXPECT_CALL(*sh, OnDisconnectMock(_, _))
+    .WillOnce(DoAll(Assign(&srv_tested, true),
+		    Assign(&srv_connected, false),
+		    WithArg<0>(Disconnect())));
+  EXPECT_CALL(*ch, OnConnectMock(cs))
+    .WillOnce(Assign(&cli_connected, true));
+  EXPECT_CALL(*ch, OnMessageMock(_, _));
+  EXPECT_CALL(*ch, OnDisconnectMock(_, _))
+    .WillOnce(Assign(&cli_connected, false));
+
+  e = cs.Connect();
+  ASSERT_EQ(LNR_OK, e.Code());
+
+  WAIT_CONNECTED();
+  WAIT_SRV_TESTED();
+  ch->do_block = false;
+  WAIT_DISCONNECTED();
+}
+TEST_F(WSSClientServerConnectionTest, KeepAliveClient) {
+  linear::EventLoop loop;
+  linear::shared_ptr<BlockMockHandler> sh = linear::shared_ptr<BlockMockHandler>(new BlockMockHandler());
+  SSLContext server_context(SSLContext::TLSv1_1);
+  server_context.SetCertificate(std::string(SERVER_CERT));
+  server_context.SetPrivateKey(std::string(SERVER_PKEY));
+  server_context.SetCAFile(std::string(CA_CERT));
+  server_context.SetCiphers(std::string(CIPHER_LIST));
+  server_context.SetVerifyMode(SSLContext::VERIFY_PEER);
+  WSSServer sv(sh, server_context, loop);
+  shared_ptr<MockHandler> ch = linear::shared_ptr<MockHandler>(new MockHandler());
+  WSSClient cl(ch);
+  WSSSocket cs = cl.CreateSocket(TEST_ADDR, TEST_PORT);
+
+  Error e;
+  for (int i = 0; i < 3; i++) {
+    e = sv.Start(TEST_ADDR, TEST_PORT);
+    if (e == linear::Error(LNR_OK)) {
+      break;
+    }
+    msleep(100);
+  }
+  ASSERT_EQ(LNR_OK, e.Code());
+
+  EXPECT_CALL(*sh, OnConnectMock(_))
+    .WillOnce(Assign(&srv_connected, true));
+  EXPECT_CALL(*sh, OnMessageMock(_, _));
+  EXPECT_CALL(*sh, OnDisconnectMock(_, _))
+    .WillOnce(Assign(&srv_connected, false));
+  EXPECT_CALL(*ch, OnConnectMock(_))
+    .WillOnce(DoAll(Assign(&cli_connected, true),
+		    WithArg<0>(KeepAliveWSS()),
+		    WithArg<0>(SendNotify())));
+  EXPECT_CALL(*ch, OnDisconnectMock(_, _))
+    .WillOnce(DoAll(Assign(&cli_tested, true),
+		    Assign(&cli_connected, false),
+		    WithArg<0>(Disconnect())));
+
+  e = cs.Connect();
+  ASSERT_EQ(LNR_OK, e.Code());
+
+  WAIT_CONNECTED();
+  WAIT_CLI_TESTED();
+  sh->do_block = false;
+  WAIT_DISCONNECTED();
+}

@@ -539,3 +539,90 @@ TEST_F(WSClientServerConnectionTest, ConnectStop) {
 
   WAIT_CLI_TESTED();
 }
+
+// KeepAlive
+ACTION(KeepAliveWS) {
+  Socket s = arg0;
+  ASSERT_EQ(s.GetType(), Socket::WS);
+  s.KeepAlive(1, 1, linear::Socket::KEEPALIVE_WS);
+}
+TEST_F(WSClientServerConnectionTest, KeepAliveServer) {
+  linear::EventLoop loop;
+  linear::shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
+  WSServer sv(sh);
+  shared_ptr<BlockMockHandler> ch = linear::shared_ptr<BlockMockHandler>(new BlockMockHandler());
+  WSClient cl(ch, loop);
+  WSSocket cs = cl.CreateSocket(TEST_ADDR, TEST_PORT);
+
+  Error e;
+  for (int i = 0; i < 3; i++) {
+    e = sv.Start(TEST_ADDR, TEST_PORT);
+    if (e == linear::Error(LNR_OK)) {
+      break;
+    }
+    msleep(100);
+  }
+  ASSERT_EQ(LNR_OK, e.Code());
+
+  EXPECT_CALL(*sh, OnConnectMock(_))
+    .WillOnce(DoAll(Assign(&srv_connected, true),
+		    WithArg<0>(KeepAliveWS()),
+		    WithArg<0>(SendNotify())));
+  EXPECT_CALL(*sh, OnDisconnectMock(_, _))
+    .WillOnce(DoAll(Assign(&srv_tested, true),
+		    Assign(&srv_connected, false),
+		    WithArg<0>(Disconnect())));
+  EXPECT_CALL(*ch, OnConnectMock(cs))
+    .WillOnce(Assign(&cli_connected, true));
+  EXPECT_CALL(*ch, OnMessageMock(_, _));
+  EXPECT_CALL(*ch, OnDisconnectMock(_, _))
+    .WillOnce(Assign(&cli_connected, false));
+
+  e = cs.Connect();
+  ASSERT_EQ(LNR_OK, e.Code());
+
+  WAIT_CONNECTED();
+  WAIT_SRV_TESTED();
+  ch->do_block = false;
+  WAIT_DISCONNECTED();
+}
+TEST_F(WSClientServerConnectionTest, KeepAliveClient) {
+  linear::EventLoop loop;
+  linear::shared_ptr<BlockMockHandler> sh = linear::shared_ptr<BlockMockHandler>(new BlockMockHandler());
+  WSServer sv(sh, loop);
+  shared_ptr<MockHandler> ch = linear::shared_ptr<MockHandler>(new MockHandler());
+  WSClient cl(ch);
+  WSSocket cs = cl.CreateSocket(TEST_ADDR, TEST_PORT);
+
+  Error e;
+  for (int i = 0; i < 3; i++) {
+    e = sv.Start(TEST_ADDR, TEST_PORT);
+    if (e == linear::Error(LNR_OK)) {
+      break;
+    }
+    msleep(100);
+  }
+  ASSERT_EQ(LNR_OK, e.Code());
+
+  EXPECT_CALL(*sh, OnConnectMock(_))
+    .WillOnce(Assign(&srv_connected, true));
+  EXPECT_CALL(*sh, OnMessageMock(_, _));
+  EXPECT_CALL(*sh, OnDisconnectMock(_, _))
+    .WillOnce(Assign(&srv_connected, false));
+  EXPECT_CALL(*ch, OnConnectMock(_))
+    .WillOnce(DoAll(Assign(&cli_connected, true),
+		    WithArg<0>(KeepAliveWS()),
+		    WithArg<0>(SendNotify())));
+  EXPECT_CALL(*ch, OnDisconnectMock(_, _))
+    .WillOnce(DoAll(Assign(&cli_tested, true),
+		    Assign(&cli_connected, false),
+		    WithArg<0>(Disconnect())));
+
+  e = cs.Connect();
+  ASSERT_EQ(LNR_OK, e.Code());
+
+  WAIT_CONNECTED();
+  WAIT_CLI_TESTED();
+  sh->do_block = false;
+  WAIT_DISCONNECTED();
+}
