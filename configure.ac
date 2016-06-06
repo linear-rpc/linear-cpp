@@ -1,7 +1,7 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 
-AC_INIT([linear], [3.4.12], [https://github.com/linear-rpc/linear-cpp])
+AC_INIT([linear], [3.4.13], [https://github.com/linear-rpc/linear-cpp])
 AC_CONFIG_AUX_DIR(m4)
 AC_CONFIG_MACRO_DIR(m4)
 AC_CONFIG_SRCDIR([include/linear/handler.h])
@@ -17,6 +17,8 @@ LINEAR_COMMIT_ID="`git log --pretty=format:"%H" -1`"
 AC_SUBST(LINEAR_COMMIT_ID)
 
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
+
+AC_CANONICAL_HOST
 
 # Checks for programs.
 AC_PROG_CC
@@ -38,25 +40,29 @@ AC_SUBST(AWK)
 AC_CHECK_LIB([pthread], [pthread_create])
 AC_CHECK_LIB([rt], [timer_create])
 
-AS_IF([test "x${ac_cv_env_CFLAGS_set}" = "x"],
-      [CFLAGS="-Wall -Wextra -Werror -Wcast-align -Wcast-qual -Wdisabled-optimization -Wfloat-equal -Wformat=2 -Winit-self -Winvalid-pch -Wmissing-include-dirs -Wmissing-noreturn -Wpacked -Wpointer-arith -Wswitch-default -Wswitch-enum -Wvolatile-register-var -Wwrite-strings -ftrapv -D_FORTIFY_SOURCE=2 -fstack-protector-all -Wstack-protector -fstrict-aliasing -Wstrict-aliasing=2 -fno-omit-frame-pointer -Wbad-function-cast -Wmissing-declarations -Wmissing-prototypes -Wnested-externs -Wold-style-definition -Wstrict-prototypes -Wno-sign-compare"])
-AS_IF([test "x${ac_cv_env_CXXFLAGS_set}" = "x"],
-      [CXXFLAGS="-Wall -Wextra -Werror -Wcast-align -Wcast-qual -Wdisabled-optimization -Wfloat-equal -Wformat=2 -Winit-self -Winvalid-pch -Wmissing-include-dirs -Wmissing-noreturn -Wpacked -Wpointer-arith -Wswitch-default -Wswitch-enum -Wvolatile-register-var -Wwrite-strings -ftrapv -D_FORTIFY_SOURCE=2 -fstack-protector-all -Wstack-protector -fstrict-aliasing -Wstrict-aliasing=2 -fno-omit-frame-pointer -Wredundant-decls -Wshadow"])
-
-# for MacPorts
-AC_CANONICAL_HOST
-case $host_os in
-    darwin*)
-	is_darwin="yes"
-        ;;
-    *)
-        ;;
-esac
-if test "x$is_darwin" = "xyes" -a -d /opt/local/include; then
-   CFLAGS="$CFLAGS -I/opt/local/include"
-   CXXFLAGS="$CXXFLAGS -I/opt/local/include"
-   LDFLAGS="$LDFLAGS -L/opt/local/lib"
+# Checks for --enable-debug
+# Appear LINEAR_DEBUG macro only when --enable-debug=dev
+AC_MSG_CHECKING(whether --enable-debug option specified)
+AC_ARG_ENABLE([debug],
+              AC_HELP_STRING([--enable-debug], [enable debug@<:@default=yes@:>@]),
+              [debug=$enableval], [debug=yes])
+AC_MSG_RESULT(${debug})
+if test "x${debug}" != "xno"; then
+   DEBUG_CFLAGS="$CFLAGS -g"
+   DEBUG_CXXFLAGS="$CXXFLAGS -g"
+else
+   DEBUG_CFLAGS="$CFLAGS -O3 -D_FORTIFY_SOURCE=2"
+   DEBUG_CXXFLAGS="$CXXFLAGS -O3 -D_FORTIFY_SOURCE=2"
 fi
+if test "x${debug}" = "xdev"; then
+   DEBUG_CXXFLAGS="$CXXFLAGS -D_LINEAR_LOG_DEBUG_"
+fi
+AM_CONDITIONAL(LINEAR_LOG_DEBUG, test "x${debug}" = "xdev")
+
+AS_IF([test "x${ac_cv_env_CFLAGS_set}" = "x"],
+      [CFLAGS="-Wall -Wextra -Werror -Wcast-align -Wcast-qual -Wdisabled-optimization -Wfloat-equal -Wformat=2 -Winit-self -Winvalid-pch -Wmissing-include-dirs -Wmissing-noreturn -Wpacked -Wpointer-arith -Wswitch-default -Wswitch-enum -Wvolatile-register-var -Wwrite-strings -ftrapv -fstack-protector-all -Wstack-protector -fstrict-aliasing -Wstrict-aliasing=2 -fno-omit-frame-pointer -Wbad-function-cast -Wmissing-declarations -Wmissing-prototypes -Wnested-externs -Wold-style-definition -Wstrict-prototypes -Wno-sign-compare $DEBUG_CFLAGS"])
+AS_IF([test "x${ac_cv_env_CXXFLAGS_set}" = "x"],
+      [CXXFLAGS="-Wall -Wextra -Werror -Wcast-align -Wcast-qual -Wdisabled-optimization -Wfloat-equal -Wformat=2 -Winit-self -Winvalid-pch -Wmissing-include-dirs -Wmissing-noreturn -Wpacked -Wpointer-arith -Wswitch-default -Wswitch-enum -Wvolatile-register-var -Wwrite-strings -ftrapv -fstack-protector-all -Wstack-protector -fstrict-aliasing -Wstrict-aliasing=2 -fno-omit-frame-pointer -Wredundant-decls -Wshadow $DEBUG_CXXFLAGS"])
 
 AC_MSG_CHECKING(whether --enable-uvheader option specified)
 AC_ARG_ENABLE([uvheader],
@@ -68,23 +74,6 @@ if test "x${uvheader}" != "xno"; then
 else
    AC_SUBST(ENABLE_UVHEADER, 0)
 fi
-
-# Checks for --enable-debug
-# Appear LINEAR_DEBUG macro only when --enable-debug=dev
-AC_MSG_CHECKING(whether --enable-debug option specified)
-AC_ARG_ENABLE([debug],
-              AC_HELP_STRING([--enable-debug], [enable debug@<:@default=yes@:>@]),
-              [debug=$enableval], [debug=yes])
-AC_MSG_RESULT(${debug})
-if test "x${debug}" != "xno"; then
-   CXXFLAGS="$CXXFLAGS -g"
-else
-   CXXFLAGS="$CXXFLAGS -O3"
-fi
-if test "x${debug}" = "xdev"; then
-   CXXFLAGS="$CXXFLAGS -D_LINEAR_LOG_DEBUG_"
-fi
-AM_CONDITIONAL(LINEAR_LOG_DEBUG, test "x${debug}" = "xdev")
 
 # Check for shared_ptr
 HAVE_STD_SHARED_PTR="#undef HAVE_STD_SHARED_PTR"
