@@ -22,7 +22,7 @@
       '-Wno-unused-parameter',
     ],
     'other_cflags%': [
-      '-ftrapv -D_FORTIFY_SOURCE=2',
+      '-ftrapv',
       '-fstack-protector-all -Wstack-protector',
       # '-fmudflapth -lmudflapth',
       '-fstrict-aliasing -Wstrict-aliasing=2',

@@ -48,14 +48,14 @@ AC_ARG_ENABLE([debug],
               [debug=$enableval], [debug=yes])
 AC_MSG_RESULT(${debug})
 if test "x${debug}" != "xno"; then
-   DEBUG_CFLAGS="$CFLAGS -g"
-   DEBUG_CXXFLAGS="$CXXFLAGS -g"
+   DEBUG_CFLAGS="-O0 -g"
+   DEBUG_CXXFLAGS="-O0 -g"
 else
-   DEBUG_CFLAGS="$CFLAGS -O3 -D_FORTIFY_SOURCE=2"
-   DEBUG_CXXFLAGS="$CXXFLAGS -O3 -D_FORTIFY_SOURCE=2"
+   DEBUG_CFLAGS="-O3 -DNDEBUG -D_FORTIFY_SOURCE=2"
+   DEBUG_CXXFLAGS="-O3 -DNDEBUG -D_FORTIFY_SOURCE=2"
 fi
 if test "x${debug}" = "xdev"; then
-   DEBUG_CXXFLAGS="$CXXFLAGS -D_LINEAR_LOG_DEBUG_"
+   DEBUG_CXXFLAGS="$DEBUG_CXXFLAGS -D_LINEAR_LOG_DEBUG_"
 fi
 AM_CONDITIONAL(LINEAR_LOG_DEBUG, test "x${debug}" = "xdev")
 

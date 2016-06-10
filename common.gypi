@@ -9,7 +9,7 @@
     'runtime_library%': 'default', # 'md' or 'mt' or 'default'
     'with_ssl%': 'false',
     'debug_cflags%': [ '-g', '-fwrapv' ],
-    'release_cflags%': [ ],
+    'release_cflags%': [ '-D_FORTIFY_SOURCE=2' ],
   },
 
   'includes': [
