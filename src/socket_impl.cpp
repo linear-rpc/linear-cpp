@@ -212,16 +212,16 @@ Error SocketImpl::Send(const Message& message, int timeout) {
     switch(message.type) {
     case linear::REQUEST:
       {
-        Request* copy_request = new Request(dynamic_cast<const Request&>(message));
+        Request* copy_request = new Request(static_cast<const Request&>(message));
         copy_request->timeout_ = timeout;
         copy_message = copy_request;
       }
       break;
     case linear::RESPONSE:
-      copy_message = new Response(dynamic_cast<const Response&>(message));
+      copy_message = new Response(static_cast<const Response&>(message));
       break;
     case linear::NOTIFY:
-      copy_message = new Notify(dynamic_cast<const Notify&>(message));
+      copy_message = new Notify(static_cast<const Notify&>(message));
       break;
     default:
       LINEAR_LOG(LOG_ERR, "invalid type of message: %d", message.type);
@@ -419,7 +419,7 @@ void SocketImpl::OnDisconnect(const shared_ptr<SocketImpl>& socket) {
   if (connectable_) {
     if (type_ == Socket::WS) {
       if (last_error_ == Error(LNR_EWS)) {
-        if (dynamic_cast<WSSocketImpl*>(this)->CheckRetryAuth()) {
+        if (static_cast<WSSocketImpl*>(this)->CheckRetryAuth()) {
           try {
             EventLoopImpl::SocketEvent* ev = new EventLoopImpl::SocketEvent(socket);
             Connect(connect_timeout_, ev);
@@ -428,7 +428,7 @@ void SocketImpl::OnDisconnect(const shared_ptr<SocketImpl>& socket) {
             WSResponseContext ctx;
             ctx.code = LNR_WS_INTERNAL_SERVER_ERROR;
             try {
-              dynamic_cast<WSSocketImpl*>(this)->SetWSResponseContext(ctx);
+              static_cast<WSSocketImpl*>(this)->SetWSResponseContext(ctx);
             } catch(...) {}
           }
           return;
@@ -437,14 +437,14 @@ void SocketImpl::OnDisconnect(const shared_ptr<SocketImpl>& socket) {
         WSResponseContext ctx;
         ctx.code = LNR_WS_SERVICE_UNAVAILABLE;
         try {
-          dynamic_cast<WSSocketImpl*>(this)->SetWSResponseContext(ctx);
+          static_cast<WSSocketImpl*>(this)->SetWSResponseContext(ctx);
         } catch(...) {}
       }
 
 #ifdef WITH_SSL
     } else if (type_ == Socket::WSS) {
       if (last_error_ == Error(LNR_EWS)) {
-        if (dynamic_cast<WSSSocketImpl*>(this)->CheckRetryAuth()) {
+        if (static_cast<WSSSocketImpl*>(this)->CheckRetryAuth()) {
           try {
             EventLoopImpl::SocketEvent* ev = new EventLoopImpl::SocketEvent(socket);
             Connect(connect_timeout_, ev);
@@ -453,7 +453,7 @@ void SocketImpl::OnDisconnect(const shared_ptr<SocketImpl>& socket) {
             WSResponseContext ctx;
             ctx.code = LNR_WS_INTERNAL_SERVER_ERROR;
             try {
-              dynamic_cast<WSSSocketImpl*>(this)->SetWSResponseContext(ctx);
+              static_cast<WSSSocketImpl*>(this)->SetWSResponseContext(ctx);
             } catch(...) {}
           }
           return;
@@ -462,7 +462,7 @@ void SocketImpl::OnDisconnect(const shared_ptr<SocketImpl>& socket) {
         WSResponseContext ctx;
         ctx.code = LNR_WS_SERVICE_UNAVAILABLE;
         try {
-          dynamic_cast<WSSSocketImpl*>(this)->SetWSResponseContext(ctx);
+          static_cast<WSSSocketImpl*>(this)->SetWSResponseContext(ctx);
         } catch(...) {}
       }
 #endif
@@ -634,7 +634,7 @@ void SocketImpl::OnWrite(const shared_ptr<SocketImpl>& socket, const Message* me
       switch(message->type) {
       case REQUEST:
 	{
-	  linear::Request request_fail = *(dynamic_cast<const Request*>(message));
+	  linear::Request request_fail = *(static_cast<const Request*>(message));
 	  unique_lock<mutex> request_timer_lock(request_timer_mutex_);
 	  for (std::vector<SocketImpl::RequestTimer*>::iterator it = request_timers_.begin();
 	       it != request_timers_.end(); it++) {
@@ -650,10 +650,10 @@ void SocketImpl::OnWrite(const shared_ptr<SocketImpl>& socket, const Message* me
 	}
         break;
       case RESPONSE:
-        delegate->OnError(socket, *(dynamic_cast<const Response*>(message)), Error(status));
+        delegate->OnError(socket, *(static_cast<const Response*>(message)), Error(status));
         break;
       case NOTIFY:
-        delegate->OnError(socket, *(dynamic_cast<const Notify*>(message)), Error(status));
+        delegate->OnError(socket, *(static_cast<const Notify*>(message)), Error(status));
         break;
       default:
         LINEAR_LOG(LOG_ERR, "BUG: invalid type of message");
@@ -692,7 +692,7 @@ Error SocketImpl::_Send(Message* message) {
   switch(message->type) {
   case REQUEST:
     {
-      const Request* request = dynamic_cast<const Request*>(message);
+      const Request* request = static_cast<const Request*>(message);
       LINEAR_LOG(LOG_DEBUG, "send request(id = %d): msgid = %u, method = \"%s\", params = %s, %s:%d --- %s --> %s:%d",
                  id_,
                  request->msgid, request->method.c_str(), LINEAR_LOG_PRINTABLE_STRING(request->params).c_str(),
@@ -714,7 +714,7 @@ Error SocketImpl::_Send(Message* message) {
     }
   case RESPONSE:
     {
-      const Response* response = dynamic_cast<const Response*>(message);
+      const Response* response = static_cast<const Response*>(message);
       LINEAR_LOG(LOG_DEBUG, "send response(id = %d): msgid = %u, result = %s, error = %s, %s:%d --- %s --> %s:%d",
                  id_,
                  response->msgid,
@@ -730,7 +730,7 @@ Error SocketImpl::_Send(Message* message) {
     }
   case NOTIFY:
     {
-      const Notify* notify = dynamic_cast<const Notify*>(message);
+      const Notify* notify = static_cast<const Notify*>(message);
       LINEAR_LOG(LOG_DEBUG, "send notify(id = %d): method = \"%s\", params = %s, %s:%d --- %s --> %s:%d",
                  id_,
                  notify->method.c_str(), LINEAR_LOG_PRINTABLE_STRING(notify->params).c_str(),
@@ -817,13 +817,13 @@ void SocketImpl::_SendPendingMessages(const shared_ptr<SocketImpl>& socket) {
     if (delegate) {
       switch(message->type) {
       case REQUEST:
-        delegate->OnError(socket, *(dynamic_cast<Request*>(message)), pending_err);
+        delegate->OnError(socket, *(static_cast<Request*>(message)), pending_err);
         break;
       case RESPONSE:
-        delegate->OnError(socket, *(dynamic_cast<Response*>(message)), pending_err);
+        delegate->OnError(socket, *(static_cast<Response*>(message)), pending_err);
         break;
       case NOTIFY:
-        delegate->OnError(socket, *(dynamic_cast<Notify*>(message)), pending_err);
+        delegate->OnError(socket, *(static_cast<Notify*>(message)), pending_err);
         break;
       default:
         LINEAR_LOG(LOG_ERR, "BUG: invalid type of message");
@@ -845,13 +845,13 @@ void SocketImpl::_DiscardMessages(const shared_ptr<SocketImpl>& socket) {
     if (delegate) {
       switch(message->type) {
       case REQUEST:
-        delegate->OnError(socket, *(dynamic_cast<Request*>(message)), err);
+        delegate->OnError(socket, *(static_cast<Request*>(message)), err);
         break;
       case RESPONSE:
-        delegate->OnError(socket, *(dynamic_cast<Response*>(message)), err);
+        delegate->OnError(socket, *(static_cast<Response*>(message)), err);
         break;
       case NOTIFY:
-        delegate->OnError(socket, *(dynamic_cast<Notify*>(message)), err);
+        delegate->OnError(socket, *(static_cast<Notify*>(message)), err);
         break;
       default:
         LINEAR_LOG(LOG_ERR, "BUG: invalid type of message");
