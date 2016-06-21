@@ -20,16 +20,14 @@ Addrinfo::Addrinfo(const std::string& a, int p) : addr("undefined"), port(-1), p
     freeaddrinfo(res);
     return;
   }
-  freeaddrinfo(res);
-  res = NULL;
   hints.ai_family = AF_INET6;
   r = getaddrinfo(a.c_str(), NULL, &hints, &res);
   if (r == 0) {
     addr = a;
     port = p;
     proto = IPv6;
+    freeaddrinfo(res);
   }
-  freeaddrinfo(res);
   return;
 }
 

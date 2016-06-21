@@ -141,7 +141,7 @@ void SocketImpl::SetMaxRecvBufferSize(size_t limit) {
 
 Error SocketImpl::Connect(unsigned int timeout, EventLoopImpl::SocketEvent* ev) {
   lock_guard<mutex> state_lock(state_mutex_);
-  if (!connectable_) {
+  if (!connectable_ || peer_.proto == Addrinfo::UNKNOWN) {
     LINEAR_LOG(LOG_WARN, "this socket(id = %d) is not connectable", id_);
     return Error(LNR_EINVAL);
   }
