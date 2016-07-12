@@ -31,6 +31,7 @@ Addrinfo::Addrinfo(const std::string& a, int p) : addr("undefined"), port(-1), p
   return;
 }
 
+// ref: http://stackoverflow.com/questions/35551879/cast-from-sockaddr-to-sockaddr-in-increases-required-alignment
 Addrinfo::Addrinfo(const struct sockaddr* sa) : addr("undefined"), port(-1), proto(UNKNOWN) {
   switch (sa->sa_family) {
   case AF_INET:
@@ -42,7 +43,7 @@ Addrinfo::Addrinfo(const struct sockaddr* sa) : addr("undefined"), port(-1), pro
       } else {
         break;
       }
-      const struct sockaddr_in* src = reinterpret_cast<const struct sockaddr_in*>(sa);
+      const struct sockaddr_in* src = reinterpret_cast<const struct sockaddr_in*>((const void*)sa);
       port = ntohs(src->sin_port);
       proto = IPv4;
       break;
@@ -56,7 +57,7 @@ Addrinfo::Addrinfo(const struct sockaddr* sa) : addr("undefined"), port(-1), pro
       } else {
         break;
       }
-      const struct sockaddr_in6* src = reinterpret_cast<const struct sockaddr_in6*>(sa);
+      const struct sockaddr_in6* src = reinterpret_cast<const struct sockaddr_in6*>((const void*)sa);
       port = ntohs(src->sin6_port);
       proto = IPv6;
       break;
