@@ -531,7 +531,6 @@ void SocketImpl::OnRead(const shared_ptr<SocketImpl>& socket, const tv_buf_t* bu
     msgpack::object_handle result;
     while (unpacker_.next(&result)) {
       msgpack::object obj = result.get();
-      std::auto_ptr<msgpack::zone> zone = result.zone();
       Message message = obj.as<Message>();
       switch(message.type) {
       case REQUEST:
