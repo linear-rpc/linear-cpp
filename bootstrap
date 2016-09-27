@@ -15,7 +15,7 @@ set -ex
 (cd deps/libtv; sh ./bootstrap >/dev/null 2>&1)
 
 # msgpack
-(cd deps/msgpack; sh ./bootstrap >/dev/null 2>&1; sh ./bootstrap >/dev/null 2>&1)
+(cd deps/msgpack; sh ./bootstrap >/dev/null 2>&1)
 
 # linear
 $LIBTOOLIZE >/dev/null 2>&1
