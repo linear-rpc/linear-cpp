@@ -9,7 +9,7 @@ fi
 unzip -n deps/gmock-1.7.0.zip -d deps/ >/dev/null 2>&1
 
 # break on error
-set -ex
+set -x
 
 # libtv
 (cd deps/libtv; sh ./bootstrap >/dev/null 2>&1)
