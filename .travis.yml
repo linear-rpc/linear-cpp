@@ -21,7 +21,7 @@ before_install:
 
 before_script:
   - git submodule update --init --recursive
-  - ./bootstrap || true
+  - if [ $TRAVIS_OS_NAME == osx ]; then brew uninstall libtool && brew install libtool || true; fi
   - ./bootstrap
   - if [ $TRAVIS_OS_NAME == linux ]; then ./configure --with-ssl --with-test; fi
   - if [ $TRAVIS_OS_NAME == osx ]; then ./configure --with-ssl=/usr/local/opt/openssl --with-test; fi
