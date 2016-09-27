@@ -529,7 +529,7 @@ void SocketImpl::OnRead(const shared_ptr<SocketImpl>& socket, const tv_buf_t* bu
   shared_ptr<HandlerDelegate> delegate = delegate_.lock();
   try {
     msgpack::object_handle result;
-    while (unpacker_.next(&result)) {
+    while (unpacker_.next(result)) {
       msgpack::object obj = result.get();
       Message message = obj.as<Message>();
       switch(message.type) {

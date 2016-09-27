@@ -14,9 +14,6 @@ set -ex
 # libtv
 (cd deps/libtv; sh ./bootstrap >/dev/null 2>&1)
 
-# msgpack
-(cd deps/msgpack; sh ./bootstrap >/dev/null 2>&1)
-
 # linear
 $LIBTOOLIZE >/dev/null 2>&1
 aclocal -I m4
