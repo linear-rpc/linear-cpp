@@ -38,6 +38,9 @@ at TCPClient, TCPServer, SSLClient, SSLServer, WSClient, WSServer, WSSClient, WS
     If you want to create a manual, install doxygen and graphviz.
 
 ### How to make
+```
+$ git submodule update --init --recursive
+```
 * xNix<br>
 <pre class="fragment">
 $ ./bootstrap
