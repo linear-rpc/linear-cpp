@@ -156,6 +156,7 @@ class any {
   void msgpack_unpack(msgpack::object o) {
     zone_.clear();
     copy_msgpack_object(o, &object_, zone_);
+    type = static_cast<linear::type::any::Type>(object_.type);
   }
   template <typename MSGPACK_OBJECT>
   void msgpack_object(MSGPACK_OBJECT* o, msgpack::zone& z) const {
@@ -212,7 +213,7 @@ class any {
       dst->via.ext.ptr = ptr;
       dst->via.ext.size = src.via.ext.size;
 #ifdef _WIN32
-      memcpy_s(ptr, dst->via.ext.size, src.via.ext.ptr, src.via.ext.size + 1);
+      memcpy_s(ptr, dst->via.ext.size + 1, src.via.ext.ptr, src.via.ext.size + 1);
 #else
       memcpy(ptr, src.via.ext.ptr, src.via.ext.size + 1);
 #endif
