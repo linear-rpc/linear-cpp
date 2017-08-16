@@ -5,7 +5,7 @@ TESTS = \
 	log_test.sh \
 	log_onoff_test.sh
 
-CXXFLAGS = -g -O0 -Wno-deprecated-declarations
+CXXFLAGS += -Wno-deprecated-declarations -Wno-missing-noreturn -Wno-sign-compare
 
 if LINEAR_LOG_DEBUG
 CXXFLAGS += -D_LINEAR_LOG_DEBUG_
