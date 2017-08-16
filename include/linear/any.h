@@ -29,6 +29,10 @@ class any {
     POSITIVE_INTEGER = msgpack::type::POSITIVE_INTEGER, //!< POSITIVE_INTEGER
     NEGATIVE_INTEGER = msgpack::type::NEGATIVE_INTEGER, //!< NEGATIVE_INTEGER
     FLOAT            = msgpack::type::FLOAT,            //!< FLOAT
+#if MSGPACK_VERSION_MAJOR == 2 && MSGPACK_VERSION_MINOR >= 1 || MSGPACK_VERSION_MAJOR > 2
+    FLOAT32          = msgpack::type::FLOAT32,          //!< FLOAT32
+    FLOAT64          = msgpack::type::FLOAT64,          //!< FLOAT64 ( = FLOAT)
+#endif
     STR              = msgpack::type::STR,              //!< STRING
     BIN              = msgpack::type::BIN,              //!< BINARY
     EXT              = msgpack::type::EXT,              //!< EXT
@@ -183,7 +187,12 @@ class any {
     case msgpack::type::NEGATIVE_INTEGER:
       dst->via.i64 = src.via.i64;
       break;
+#if MSGPACK_VERSION_MAJOR == 2 && MSGPACK_VERSION_MINOR >= 1 || MSGPACK_VERSION_MAJOR > 2
+    case msgpack::type::FLOAT64:
+    case msgpack::type::FLOAT32:
+#else
     case msgpack::type::FLOAT:
+#endif
       dst->via.f64 = src.via.f64;
       break;
     case msgpack::type::STR: {
@@ -288,7 +297,12 @@ inline std::ostream& operator<< (std::ostream& s, const linear::type::any& a) {
     s << o.via.i64;
     break;
 
+#if MSGPACK_VERSION_MAJOR == 2 && MSGPACK_VERSION_MINOR >= 1 || MSGPACK_VERSION_MAJOR > 2
+  case msgpack::type::FLOAT64:
+  case msgpack::type::FLOAT32:
+#else
   case msgpack::type::FLOAT:
+#endif
     s << o.via.f64;
     break;
 

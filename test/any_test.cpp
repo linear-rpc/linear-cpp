@@ -27,12 +27,25 @@ TEST(AnyTest, simple) {
     EXPECT_EQ(linear::type::any::POSITIVE_INTEGER, a3.type);
     EXPECT_EQ(1, a3.as<int>());
   }
+#if MSGPACK_VERSION_MAJOR == 2 && MSGPACK_VERSION_MINOR >= 1 || MSGPACK_VERSION_MAJOR > 2
+  {
+    double d = 3.14;
+    float f = 3.14f;
+    linear::type::any a1(d);
+    EXPECT_EQ(linear::type::any::FLOAT64, a1.type);
+    EXPECT_EQ(d, a1.as<double>());
+    linear::type::any a2(f);
+    EXPECT_EQ(linear::type::any::FLOAT32, a2.type);
+    EXPECT_EQ(f, a2.as<float>());
+  }
+#else
   {
     float f = 3.14;
     linear::type::any a1(f);
     EXPECT_EQ(linear::type::any::FLOAT, a1.type);
     EXPECT_EQ(f, a1.as<float>());
   }
+#endif
   {
     std::string s = "test";
     linear::type::any a1(s);
@@ -94,7 +107,11 @@ TEST(AnyTest, anyVec) {
     res = a1.as<std::vector<linear::type::any> >();
     EXPECT_EQ(linear::type::any::POSITIVE_INTEGER, res[0].type);
     EXPECT_EQ(i, (res[0].as<int>()));
+#if MSGPACK_VERSION_MAJOR == 2 && MSGPACK_VERSION_MINOR >= 1 || MSGPACK_VERSION_MAJOR > 2
+    EXPECT_EQ(linear::type::any::FLOAT32, res[1].type);
+#else
     EXPECT_EQ(linear::type::any::FLOAT, res[1].type);
+#endif
     EXPECT_EQ(f, (res[1].as<float>()));
     EXPECT_EQ(linear::type::any::STR, res[2].type);
     EXPECT_EQ(s, (res[2].as<std::string>()));
@@ -136,7 +153,11 @@ TEST(AnyTest, anyMap) {
     res = a1.as<std::map<std::string, linear::type::any> >();
     EXPECT_EQ(linear::type::any::POSITIVE_INTEGER, res["k1"].type);
     EXPECT_EQ(i, (res["k1"].as<int>()));
+#if MSGPACK_VERSION_MAJOR == 2 && MSGPACK_VERSION_MINOR >= 1 || MSGPACK_VERSION_MAJOR > 2
+    EXPECT_EQ(linear::type::any::FLOAT32, res["k2"].type);
+#else
     EXPECT_EQ(linear::type::any::FLOAT, res["k2"].type);
+#endif
     EXPECT_EQ(f, (res["k2"].as<float>()));
     EXPECT_EQ(linear::type::any::STR, res["k3"].type);
     EXPECT_EQ(s, (res["k3"].as<std::string>()));
@@ -179,7 +200,11 @@ TEST(AnyTest, anyInAny) {
     res = a1.as<std::map<std::string, linear::type::any> >();
     EXPECT_EQ(linear::type::any::POSITIVE_INTEGER, res["k1"].type);
     EXPECT_EQ(i, (res["k1"].as<int>()));
+#if MSGPACK_VERSION_MAJOR == 2 && MSGPACK_VERSION_MINOR >= 1 || MSGPACK_VERSION_MAJOR > 2
+    EXPECT_EQ(linear::type::any::FLOAT32, res["k2"].type);
+#else
     EXPECT_EQ(linear::type::any::FLOAT, res["k2"].type);
+#endif
     EXPECT_EQ(f, (res["k2"].as<float>()));
     EXPECT_EQ(linear::type::any::STR, res["k3"].type);
     EXPECT_EQ(s, (res["k3"].as<std::string>()));
@@ -261,7 +286,11 @@ TEST(AnyTest, msgpack_object) {
     float f = 3.14;
     msgpack::object o1(f);
     linear::type::any a1(o1);
+#if MSGPACK_VERSION_MAJOR == 2 && MSGPACK_VERSION_MINOR >= 1 || MSGPACK_VERSION_MAJOR > 2
+    EXPECT_EQ(linear::type::any::FLOAT32, a1.type);
+#else
     EXPECT_EQ(linear::type::any::FLOAT, a1.type);
+#endif
     EXPECT_EQ(f, a1.as<float>());
   }
   {

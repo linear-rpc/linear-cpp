@@ -124,7 +124,12 @@ class optional {
     case msgpack::type::BOOLEAN:
     case msgpack::type::POSITIVE_INTEGER:
     case msgpack::type::NEGATIVE_INTEGER:
+#if MSGPACK_VERSION_MAJOR == 2 && MSGPACK_VERSION_MINOR >= 1 || MSGPACK_VERSION_MAJOR > 2
+    case msgpack::type::FLOAT64:
+    case msgpack::type::FLOAT32:
+#else
     case msgpack::type::FLOAT:
+#endif
     case msgpack::type::BIN:
     case msgpack::type::STR:
     case msgpack::type::EXT:
@@ -163,7 +168,12 @@ class optional {
     case msgpack::type::NEGATIVE_INTEGER:
       dst->via.i64 = src.via.i64;
       break;
+#if MSGPACK_VERSION_MAJOR == 2 && MSGPACK_VERSION_MINOR >= 1 || MSGPACK_VERSION_MAJOR > 2
+    case msgpack::type::FLOAT64:
+    case msgpack::type::FLOAT32:
+#else
     case msgpack::type::FLOAT:
+#endif
       dst->via.f64 = src.via.f64;
       break;
     case msgpack::type::BIN: {

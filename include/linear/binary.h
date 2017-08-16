@@ -51,7 +51,12 @@ class binary : public std::string {
     case msgpack::type::BOOLEAN:
     case msgpack::type::POSITIVE_INTEGER:
     case msgpack::type::NEGATIVE_INTEGER:
+#if MSGPACK_VERSION_MAJOR == 2 && MSGPACK_VERSION_MINOR >= 1 || MSGPACK_VERSION_MAJOR > 2
+    case msgpack::type::FLOAT64:
+    case msgpack::type::FLOAT32:
+#else
     case msgpack::type::FLOAT:
+#endif
     case msgpack::type::ARRAY:
     case msgpack::type::MAP:
     case msgpack::type::EXT:
