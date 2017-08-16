@@ -5,7 +5,7 @@ TESTS = \
 	log_test.sh \
 	log_onoff_test.sh
 
-CXXFLAGS += -Wno-deprecated-declarations -Wno-missing-noreturn -Wno-sign-compare -Wno-switch-enum -Wno-float-equal -Wno-unused-parameter -Wno-conversion-null
+CXXFLAGS += -Wno-deprecated-declarations -Wno-missing-noreturn -Wno-sign-compare -Wno-switch-enum -Wno-float-equal -Wno-unused-parameter -Wno-conversion-null -Wno-strict-aliasing
 
 if LINEAR_LOG_DEBUG
 CXXFLAGS += -D_LINEAR_LOG_DEBUG_
