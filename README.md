@@ -69,9 +69,9 @@ and documents at ${top\_project\_dir}/doc/html/index.html.<br>
 
 ### Behind WebServer with WebSocket-TCP Proxy
 <pre class="fragment">
-+-----------+               +---------------------------+         +-----------+
-| WSClient  | - WebSocket - | lighttpd w/ mod_websocket | - TCP - | TCPServer |
-+-----------+               +---------------------------+         +-----------+
++-----------+               +--------------------------+         +-----------+
+| WSClient  | - WebSocket - | lighttpd w/ mod_wstunnel | - TCP - | TCPServer |
++-----------+               +--------------------------+         +-----------+
 </pre>
 
 ### Combination
@@ -93,7 +93,7 @@ You can create an application that supports muliti protocols like follows.
   Bug fixes and security fixes etc.
 
 ## License
-The MIT License (MIT)  
-See LICENSE for details.  
+The MIT License (MIT)
+See LICENSE for details.
 
 And see some submodule LICENSEs(exist at deps dir).
