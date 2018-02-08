@@ -54,14 +54,9 @@ Error WSSocketImpl::Connect() {
     free(handle);
     return Error(LNR_ENOMEM);
   }
-  if (request_context_.authenticate.type == AuthContext::BASIC || authenticate_context_.type == AuthContext::DIGEST) {
-    std::string uri;
-    if (request_context_.path.compare(0, 1, "/") == 0) {
-      uri = request_context_.path;
-    } else {
-      uri = "/" + request_context_.path;
-    }
-    std::string authorization = authenticate_context_.CreateAuthorizationHeader(uri,
+  authenticate_context_.type = request_context_.authenticate.type;
+  if (authenticate_context_.type == AuthContext::BASIC || authenticate_context_.type == AuthContext::DIGEST) {
+    std::string authorization = authenticate_context_.CreateAuthorizationHeader(url,
                                                                                 request_context_.authenticate.username,
                                                                                 request_context_.authenticate.password);
     if (!authorization.empty()) {
