@@ -484,6 +484,7 @@ TEST_F(WSSClientServerConnectionTest, AutoReconnect) {
   context.SetVerifyMode(SSLContext::VERIFY_PEER);
   linear::WSRequestContext ws_context;
   // Digest Auth Validation (username = "user", password = "password")
+  ws_context.authenticate.type = linear::AuthContext::DIGEST;
   ws_context.authenticate.username = USER_NAME;
   ws_context.authenticate.password = PASSWORD;
   WSSClient cl(ch, ws_context, context);
