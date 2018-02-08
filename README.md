@@ -4,18 +4,6 @@
 
 a msgpack-rpc + α implementation for C++ language.
 
-## Important Notice
-### v3.0.0 -> v.3.0.3
-* Call linear::log::DisableXXX at the end of the application<br>
-If your application uses linear::log::EnableXXX function, must call linear::log::DisableXXX at the end of the application. 
-
-### v2.9.0 -> v.3.0.0
-* Constructor's var args are changed<br>
-<pre class="fragment">
-const linear::Handler& -&gt; const linear::shared_ptr&lt;linear::Handler&gt;&
-</pre>
-at TCPClient, TCPServer, SSLClient, SSLServer, WSClient, WSServer, WSSClient, WSSServer
-
 ## Build Instructions
 ### Required tools and Dependencies
 * xNix
