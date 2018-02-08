@@ -234,15 +234,15 @@ TEST_F(WSClientServerConnectionTest, DisconnectFromClientBT) {
     .WillOnce(Assign(&srv_connected, true));
   EXPECT_CALL(*sh, OnDisconnectMock(Eq(ByRef(sh->s_)), Error(LNR_ECONNRESET)))
     .WillOnce(DoAll(Assign(&srv_tested, true),
-		    Assign(&srv_connected, false)));
+                    Assign(&srv_connected, false)));
   EXPECT_CALL(*ch, OnConnectMock(cs))
     .WillOnce(DoAll(Assign(&cli_connected, true),
-		    WAIT_PEER_CONNECTED(&srv_connected),
-		    WAIT_TEST_LOCK(&lock),
-		    WithArg<0>(Disconnect())));
+                    WAIT_PEER_CONNECTED(&srv_connected),
+                    WAIT_TEST_LOCK(&lock),
+                    WithArg<0>(Disconnect())));
   EXPECT_CALL(*ch, OnDisconnectMock(cs, Error(LNR_OK)))
     .WillOnce(DoAll(Assign(&cli_tested, true),
-		    Assign(&cli_connected, false)));
+                    Assign(&cli_connected, false)));
 
   e = cs.Connect();
   ASSERT_EQ(LNR_OK, e.Code());
@@ -275,16 +275,16 @@ TEST_F(WSClientServerConnectionTest, DisconnectFromServerBT) {
     .WillOnce(Assign(&srv_connected, true));
   EXPECT_CALL(*sh, OnMessageMock(_, _))
     .WillOnce(DoAll(Assign(&srv_tested, true),
-		    WithArg<0>(Disconnect())));
+                    WithArg<0>(Disconnect())));
   EXPECT_CALL(*sh, OnDisconnectMock(Eq(ByRef(sh->s_)), Error(LNR_OK)))
     .WillOnce(Assign(&srv_connected, false));
   EXPECT_CALL(*ch, OnConnectMock(cs))
     .WillOnce(DoAll(Assign(&cli_connected, true),
-		    WAIT_TEST_LOCK(&lock),
-		    WithArg<0>(SendNotify())));
+                    WAIT_TEST_LOCK(&lock),
+                    WithArg<0>(SendNotify())));
   EXPECT_CALL(*ch, OnDisconnectMock(cs, Error(LNR_ECONNRESET)))
     .WillOnce(DoAll(Assign(&cli_tested, true),
-		    Assign(&cli_connected, false)));
+                    Assign(&cli_connected, false)));
 
   e = cs.Connect();
   ASSERT_EQ(LNR_OK, e.Code());
@@ -358,6 +358,7 @@ TEST_F(WSClientServerConnectionTest, AutoReconnect) {
   WSClient cl(ch);
   WSRequestContext context;
   // Digest Auth Validation (username = "user", password = "password")
+  context.authenticate.type = linear::AuthContext::DIGEST;
   context.authenticate.username = USER_NAME;
   context.authenticate.password = PASSWORD;
   WSSocket cs = cl.CreateSocket(TEST_ADDR, TEST_PORT, context);
@@ -418,17 +419,17 @@ TEST_F(WSClientServerConnectionTest, DelayedSocketDestruct) {
     .WillOnce(Assign(&srv_connected, true));
   EXPECT_CALL(*sh, OnMessageMock(_, _))
     .WillOnce(DoAll(Assign(&srv_tested, true),
-		    WithArg<0>(Disconnect())));
+                    WithArg<0>(Disconnect())));
   EXPECT_CALL(*sh, OnDisconnectMock(Eq(ByRef(sh->s_)), Error(LNR_OK)))
     .WillOnce(DoAll(Assign(&srv_tested, true),
-		    Assign(&srv_connected, false)));
+                    Assign(&srv_connected, false)));
   EXPECT_CALL(*ch, OnConnectMock(cs))
     .WillOnce(DoAll(Assign(&cli_connected, true),
-		    WAIT_TEST_LOCK(&lock),
-		    WithArg<0>(SendNotify())));
+                    WAIT_TEST_LOCK(&lock),
+                    WithArg<0>(SendNotify())));
   EXPECT_CALL(*ch, OnDisconnectMock(cs, Error(LNR_ECONNRESET)))
-	      .WillOnce(DoAll(Assign(&cli_tested, true),
-			      Assign(&cli_connected, false)));
+              .WillOnce(DoAll(Assign(&cli_tested, true),
+                              Assign(&cli_connected, false)));
 
   e = cs.Connect();
   ASSERT_EQ(LNR_OK, e.Code());
@@ -476,15 +477,15 @@ TEST_F(WSClientServerConnectionTest, OnConnectAndDisconnectFromOtherTherad) {
     .WillOnce(Assign(&srv_connected, true));
   EXPECT_CALL(*sh, OnDisconnectMock(Eq(ByRef(sh->s_)), Error(LNR_ECONNRESET)))
     .WillOnce(DoAll(Assign(&srv_tested, true),
-		    Assign(&srv_connected, false)));
+                    Assign(&srv_connected, false)));
   EXPECT_CALL(*ch, OnConnectMock(cs))
     .WillOnce(DoAll(Assign(&cli_connected, true),
-		    WAIT_PEER_CONNECTED(&srv_connected),
-		    WAIT_TEST_LOCK(&lock),
-		    WithArg<0>(DisconnectFromOtherThread())));
+                    WAIT_PEER_CONNECTED(&srv_connected),
+                    WAIT_TEST_LOCK(&lock),
+                    WithArg<0>(DisconnectFromOtherThread())));
   EXPECT_CALL(*ch, OnDisconnectMock(cs, Error(LNR_OK)))
     .WillOnce(DoAll(Assign(&cli_tested, true),
-		    Assign(&cli_connected, false)));
+                    Assign(&cli_connected, false)));
 
   e = cs.Connect();
   ASSERT_EQ(LNR_OK, e.Code());
@@ -566,12 +567,12 @@ TEST_F(WSClientServerConnectionTest, KeepAliveServer) {
 
   EXPECT_CALL(*sh, OnConnectMock(_))
     .WillOnce(DoAll(Assign(&srv_connected, true),
-		    WithArg<0>(KeepAliveWS()),
-		    WithArg<0>(SendNotify())));
+                    WithArg<0>(KeepAliveWS()),
+                    WithArg<0>(SendNotify())));
   EXPECT_CALL(*sh, OnDisconnectMock(_, _))
     .WillOnce(DoAll(Assign(&srv_tested, true),
-		    Assign(&srv_connected, false),
-		    WithArg<0>(Disconnect())));
+                    Assign(&srv_connected, false),
+                    WithArg<0>(Disconnect())));
   EXPECT_CALL(*ch, OnConnectMock(cs))
     .WillOnce(Assign(&cli_connected, true));
   EXPECT_CALL(*ch, OnMessageMock(_, _));
@@ -611,12 +612,12 @@ TEST_F(WSClientServerConnectionTest, KeepAliveClient) {
     .WillOnce(Assign(&srv_connected, false));
   EXPECT_CALL(*ch, OnConnectMock(_))
     .WillOnce(DoAll(Assign(&cli_connected, true),
-		    WithArg<0>(KeepAliveWS()),
-		    WithArg<0>(SendNotify())));
+                    WithArg<0>(KeepAliveWS()),
+                    WithArg<0>(SendNotify())));
   EXPECT_CALL(*ch, OnDisconnectMock(_, _))
     .WillOnce(DoAll(Assign(&cli_tested, true),
-		    Assign(&cli_connected, false),
-		    WithArg<0>(Disconnect())));
+                    Assign(&cli_connected, false),
+                    WithArg<0>(Disconnect())));
 
   e = cs.Connect();
   ASSERT_EQ(LNR_OK, e.Code());
