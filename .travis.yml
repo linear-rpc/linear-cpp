@@ -13,22 +13,22 @@ compiler:
   - gcc
   - clang
 
-before_install:
+before_script:
   - echo $LANG
   - echo $LC_ALL
-  - if [ $TRAVIS_OS_NAME == linux ]; then sudo apt-get update && sudo apt-get install libssl-dev; fi
-  - if [ $TRAVIS_OS_NAME == osx ]; then brew update && brew install openssl; fi
-
-before_script:
+  - if [[ $TRAVIS_OS_NAME == "linux" ]]; then sudo apt-get -qq update && sudo apt-get -qq install libssl-dev; fi
+  - if [[ $TRAVIS_OS_NAME == "osx" ]]; then brew update && brew install libtool openssl; fi
   - git submodule update --init --recursive
-  - if [ $TRAVIS_OS_NAME == osx ]; then brew uninstall libtool && brew install libtool || true; fi
   - ./bootstrap
-  - if [ $TRAVIS_OS_NAME == linux ]; then ./configure --with-ssl --with-test; fi
-  - if [ $TRAVIS_OS_NAME == osx ]; then ./configure --with-ssl=/usr/local/opt/openssl --with-test; fi
+  - if [[ $TRAVIS_OS_NAME == "linux" ]]; then ./configure --with-ssl --with-test; fi
+  - if [[ $TRAVIS_OS_NAME == "osx" ]]; then ./configure --with-ssl=/usr/local/opt/openssl --with-test; fi
 
 script:
-  - make clean all check
+  - make clean all
+  - cd test
+  - ./any_test
+  - ./optional_test
+  - ./run_tests
 
 notifications:
   email: false
-

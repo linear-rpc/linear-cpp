@@ -50,7 +50,7 @@ TEST_F(TimerTest, call0sec) {
 }
 
 TEST_F(TimerTest, heap) {
-  int count = 0, timer_msec = 10, wait_msec = 30 * 1000;
+  int count = 0, timer_msec = 10, wait_msec = 300 * 1000;
   linear::Timer* timer = new linear::Timer();
 
   timer->Start(onTimer, timer_msec, &count);
@@ -73,7 +73,7 @@ TEST_F(TimerTest, heap) {
 }
 
 TEST_F(TimerTest, stack) {
-  int count = 0, timer_msec = 10, wait_msec = 30 * 1000;
+  int count = 0, timer_msec = 10, wait_msec = 300 * 1000;
   linear::Timer timer;
 
   timer.Start(onTimer, timer_msec, &count);
@@ -95,7 +95,7 @@ TEST_F(TimerTest, stack) {
 }
 
 TEST_F(TimerTest, loop) {
-  int count = 0, timer_msec = 10, wait_msec = 30 * 1000;
+  int count = 0, timer_msec = 10, wait_msec = 300 * 1000;
   linear::EventLoop loop;
   linear::Timer timer(loop);
 
@@ -118,7 +118,7 @@ TEST_F(TimerTest, loop) {
 }
 
 TEST_F(TimerTest, newdeleteLoop) {
-  int count = 0, timer_msec = 10, wait_msec = 30 * 1000;
+  int count = 0, timer_msec = 10, wait_msec = 300 * 1000;
   linear::EventLoop* loop = new linear::EventLoop();
   linear::Timer timer(*loop);
 

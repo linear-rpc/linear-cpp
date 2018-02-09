@@ -37,7 +37,7 @@ LDADD = \
 	$(top_srcdir)/deps/gmock-1.7.0/gtest/lib/.libs/libgtest.a \
 	$(top_srcdir)/deps/gmock-1.7.0/lib/.libs/libgmock.a
 
-check_PROGRAMS = \
+noinst_PROGRAMS = \
 	log_file_test \
 	log_stderr_test \
 	log_function_test \
