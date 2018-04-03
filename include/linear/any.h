@@ -338,7 +338,9 @@ inline std::ostream& operator<< (std::ostream& s, const linear::type::any& a) {
       default: {
         unsigned int code = static_cast<unsigned int>(c);
         if (code < 0x20 || code == 0x7f) {
+          std::ios::fmtflags flags(s.flags());
           s << "\\u" << std::hex << std::setw(4) << std::setfill('0') << (code & 0xff);
+          s.flags(flags);
         }
         else {
           s << c;
@@ -350,21 +352,11 @@ inline std::ostream& operator<< (std::ostream& s, const linear::type::any& a) {
     break;
 
   case msgpack::type::BIN:
-    s << '"';
-    for (uint32_t i = 0; i < o.via.bin.size; ++i) {
-      char c = o.via.bin.ptr[i];
-      s << "\\x" << std::hex << std::setw(2) << std::setfill('0') << (c & 0xff);
-    }
-    s << '"';
+    s << "[BIN]";
     break;
 
   case msgpack::type::EXT:
-    s << "\"EXT: ";
-    for (uint32_t i = 0; i < o.via.ext.size + 1; ++i) {
-      char c = o.via.ext.ptr[i];
-      s << "\\x" << std::hex << std::setw(2) << std::setfill('0') << (c & 0xff);
-    }
-    s << '"';
+    s << "[EXT]";
     break;
 
   case msgpack::type::ARRAY:

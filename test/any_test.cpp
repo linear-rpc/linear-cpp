@@ -362,10 +362,10 @@ TEST(AnyTest, stringify) {
     m.insert(std::make_pair("k6", im));
     linear::type::any a1(m);
 
-    std::string expect = "{\"k0\":null, \"k1\":0, \"k2\":3.14, \"k3\":\"Abｶﾅ漢字,～－<>&$①Ⅰ㍉覬鎹\", \"k4\":\"\\x00\\x01\\x02\\x22\\x2c\", \"k5\":[null, 0, 3.14, \"Abｶﾅ漢字,～－<>&$①Ⅰ㍉覬鎹\"], \"k6\":{\"k0\":null, \"k1\":0, \"k2\":3.14, \"k3\":\"Abｶﾅ漢字,～－<>&$①Ⅰ㍉覬鎹\", \"k4\":[null, 0, 3.14, \"Abｶﾅ漢字,～－<>&$①Ⅰ㍉覬鎹\"]}}";
+    std::string expect = "{\"k0\":null, \"k1\":0, \"k2\":3.14, \"k3\":\"Abｶﾅ漢字,～－<>&$①Ⅰ㍉覬鎹\", \"k4\":[BIN], \"k5\":[null, 0, 3.14, \"Abｶﾅ漢字,～－<>&$①Ⅰ㍉覬鎹\"], \"k6\":{\"k0\":null, \"k1\":0, \"k2\":3.14, \"k3\":\"Abｶﾅ漢字,～－<>&$①Ⅰ㍉覬鎹\", \"k4\":[null, 0, 3.14, \"Abｶﾅ漢字,～－<>&$①Ⅰ㍉覬鎹\"]}}";
 
-    std::string expect_cut = "{\"k0\":null, \"k1\":0, \"k2\":3.14, \"k3\":\"Abｶﾅ漢字,～－<>&$①Ⅰ㍉覬鎹\", \"k4\":\"\\x00\\x01\\x02\\x22\\x2c\", \"k5\":[null, 0, 3.14...(truncated)";
-      
+    std::string expect_cut = "{\"k0\":null, \"k1\":0, \"k2\":3.14, \"k3\":\"Abｶﾅ漢字,～－<>&$①Ⅰ㍉覬鎹\", \"k4\":[BIN], \"k5\":[null, 0, 3.14, \"Ab\xEF\xBD\xB6\xEF\xBE\x85\xE6\xBC\xA2\xE5\xAD\x97...(truncated)";
+
     std::string raw = a1.stringify();
     std::cout << raw << std::endl;
     EXPECT_EQ(expect, raw);
@@ -380,7 +380,7 @@ TEST(AnyTest, ext) {
   {
     msgpack::type::ext ext(10, "abcdef", 5);
     linear::type::any a(ext);
-    std::string expect = "\"EXT: \\x0a\\x61\\x62\\x63\\x64\\x65\"";
+    std::string expect = "[EXT]";
     EXPECT_EQ(expect, a.stringify());
     std::cout << a.stringify() << std::endl;
     std::map<std::string, linear::type::any> m;
