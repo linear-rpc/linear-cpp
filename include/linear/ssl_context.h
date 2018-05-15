@@ -19,12 +19,18 @@ class LINEAR_EXTERN SSLContext {
  public:
   //! SSL Method indicator
   enum Method {
+#if OPENSSL_VERSION_NUMBER < 0x10100000
     SSLv23,
     SSLv23_client,
     SSLv23_server,
     TLSv1_1,
     TLSv1_1_client,
     TLSv1_1_server
+#else
+    TLS,
+    TLS_client,
+    TLS_server
+#endif
   };
 
   //! SSL Verify Mode indicator

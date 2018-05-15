@@ -25,7 +25,11 @@ typedef LinearTest WSSClientServerConnectionTest;
 // Refuse
 TEST_F(WSSClientServerConnectionTest, ConnectRefuse) {
   linear::shared_ptr<MockHandler> ch = linear::shared_ptr<MockHandler>(new MockHandler());
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
   SSLContext context(SSLContext::TLSv1_1);
+#else
+  SSLContext context(SSLContext::TLS);
+#endif
   context.SetCertificate(std::string(CLIENT_CERT));
   context.SetPrivateKey(std::string(CLIENT_PKEY));
   context.SetCAFile(std::string(CA_CERT));
@@ -47,7 +51,11 @@ TEST_F(WSSClientServerConnectionTest, ConnectRefuse) {
 // Timeout
 TEST_F(WSSClientServerConnectionTest, ConnectTimeout) {
   linear::shared_ptr<MockHandler> ch = linear::shared_ptr<MockHandler>(new MockHandler());
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
   SSLContext context(SSLContext::TLSv1_1);
+#else
+  SSLContext context(SSLContext::TLS);
+#endif
   context.SetCertificate(std::string(CLIENT_CERT));
   context.SetPrivateKey(std::string(CLIENT_PKEY));
   context.SetCAFile(std::string(CA_CERT));
@@ -69,7 +77,11 @@ TEST_F(WSSClientServerConnectionTest, ConnectTimeout) {
 // Cancel
 TEST_F(WSSClientServerConnectionTest, ConnectCancel) {
   linear::shared_ptr<MockHandler> ch = linear::shared_ptr<MockHandler>(new MockHandler());
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
   SSLContext context(SSLContext::TLSv1_1);
+#else
+  SSLContext context(SSLContext::TLS);
+#endif
   context.SetCertificate(std::string(CLIENT_CERT));
   context.SetPrivateKey(std::string(CLIENT_PKEY));
   context.SetCAFile(std::string(CA_CERT));
@@ -92,7 +104,11 @@ TEST_F(WSSClientServerConnectionTest, ConnectCancel) {
 // Disconnect EALREADY
 TEST_F(WSSClientServerConnectionTest, DisconnectEalready) {
   linear::shared_ptr<MockHandler> ch = linear::shared_ptr<MockHandler>(new MockHandler());
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
   SSLContext context(SSLContext::TLSv1_1);
+#else
+  SSLContext context(SSLContext::TLS);
+#endif
   context.SetCertificate(std::string(CLIENT_CERT));
   context.SetPrivateKey(std::string(CLIENT_PKEY));
   context.SetCAFile(std::string(CA_CERT));
@@ -113,7 +129,11 @@ TEST_F(WSSClientServerConnectionTest, DisconnectEalready) {
 // Connect EALREADY
 TEST_F(WSSClientServerConnectionTest, ConnectEalready) {
   linear::shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
   SSLContext server_context(SSLContext::TLSv1_1);
+#else
+  SSLContext server_context(SSLContext::TLS);
+#endif
   server_context.SetCertificate(std::string(SERVER_CERT));
   server_context.SetPrivateKey(std::string(SERVER_PKEY));
   server_context.SetCAFile(std::string(CA_CERT));
@@ -121,7 +141,11 @@ TEST_F(WSSClientServerConnectionTest, ConnectEalready) {
   server_context.SetVerifyMode(SSLContext::VERIFY_PEER);
   WSSServer sv(sh, server_context);
   linear::shared_ptr<MockHandler> ch = linear::shared_ptr<MockHandler>(new MockHandler());
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
   SSLContext context(SSLContext::TLSv1_1);
+#else
+  SSLContext context(SSLContext::TLS);
+#endif
   context.SetCertificate(std::string(CLIENT_CERT));
   context.SetPrivateKey(std::string(CLIENT_PKEY));
   context.SetCAFile(std::string(CA_CERT));
@@ -156,7 +180,11 @@ TEST_F(WSSClientServerConnectionTest, ConnectEalready) {
 // Connect EINVAL
 TEST_F(WSSClientServerConnectionTest, ConnectEinval) {
   linear::shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
   SSLContext server_context(SSLContext::TLSv1_1);
+#else
+  SSLContext server_context(SSLContext::TLS);
+#endif
   server_context.SetCertificate(std::string(SERVER_CERT));
   server_context.SetPrivateKey(std::string(SERVER_PKEY));
   server_context.SetCAFile(std::string(CA_CERT));
@@ -164,7 +192,11 @@ TEST_F(WSSClientServerConnectionTest, ConnectEinval) {
   server_context.SetVerifyMode(SSLContext::VERIFY_PEER);
   WSSServer sv(sh, server_context);
   linear::shared_ptr<MockHandler> ch = linear::shared_ptr<MockHandler>(new MockHandler());
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
   SSLContext context(SSLContext::TLSv1_1);
+#else
+  SSLContext context(SSLContext::TLS);
+#endif
   context.SetCertificate(std::string(CLIENT_CERT));
   context.SetPrivateKey(std::string(CLIENT_PKEY));
   context.SetCAFile(std::string(CA_CERT));
@@ -199,7 +231,11 @@ TEST_F(WSSClientServerConnectionTest, ConnectEinval) {
 // Connect - Disconnect from Client in front thread
 TEST_F(WSSClientServerConnectionTest, DisconnectFromClientFT) {
   linear::shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
   SSLContext server_context(SSLContext::TLSv1_1);
+#else
+  SSLContext server_context(SSLContext::TLS);
+#endif
   server_context.SetCertificate(std::string(SERVER_CERT));
   server_context.SetPrivateKey(std::string(SERVER_PKEY));
   server_context.SetCAFile(std::string(CA_CERT));
@@ -207,7 +243,11 @@ TEST_F(WSSClientServerConnectionTest, DisconnectFromClientFT) {
   server_context.SetVerifyMode(SSLContext::VERIFY_PEER);
   WSSServer sv(sh, server_context);
   linear::shared_ptr<MockHandler> ch = linear::shared_ptr<MockHandler>(new MockHandler());
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
   SSLContext context(SSLContext::TLSv1_1);
+#else
+  SSLContext context(SSLContext::TLS);
+#endif
   context.SetCertificate(std::string(CLIENT_CERT));
   context.SetPrivateKey(std::string(CLIENT_PKEY));
   context.SetCAFile(std::string(CA_CERT));
@@ -234,7 +274,7 @@ TEST_F(WSSClientServerConnectionTest, DisconnectFromClientFT) {
     .WillOnce(Assign(&cli_connected, true));
   EXPECT_CALL(*ch, OnDisconnectMock(cs, Error(LNR_OK)))
     .WillOnce(Assign(&cli_connected, false));
- 
+
   e = cs.Connect();
   ASSERT_EQ(LNR_OK, e.Code());
   WAIT_CONNECTED();
@@ -247,7 +287,11 @@ TEST_F(WSSClientServerConnectionTest, DisconnectFromClientFT) {
 // Connect - Disconnect from Server in front thread
 TEST_F(WSSClientServerConnectionTest, DisconnectFromServerFT) {
   linear::shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
   SSLContext server_context(SSLContext::TLSv1_1);
+#else
+  SSLContext server_context(SSLContext::TLS);
+#endif
   server_context.SetCertificate(std::string(SERVER_CERT));
   server_context.SetPrivateKey(std::string(SERVER_PKEY));
   server_context.SetCAFile(std::string(CA_CERT));
@@ -255,7 +299,11 @@ TEST_F(WSSClientServerConnectionTest, DisconnectFromServerFT) {
   server_context.SetVerifyMode(SSLContext::VERIFY_PEER);
   WSSServer sv(sh, server_context);
   linear::shared_ptr<MockHandler> ch = linear::shared_ptr<MockHandler>(new MockHandler());
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
   SSLContext context(SSLContext::TLSv1_1);
+#else
+  SSLContext context(SSLContext::TLS);
+#endif
   context.SetCertificate(std::string(CLIENT_CERT));
   context.SetPrivateKey(std::string(CLIENT_PKEY));
   context.SetCAFile(std::string(CA_CERT));
@@ -294,7 +342,11 @@ TEST_F(WSSClientServerConnectionTest, DisconnectFromServerFT) {
 // Connect - Disconnect from Client in back thread
 TEST_F(WSSClientServerConnectionTest, DisconnectFromClientBT) {
   linear::shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
   SSLContext server_context(SSLContext::TLSv1_1);
+#else
+  SSLContext server_context(SSLContext::TLS);
+#endif
   server_context.SetCertificate(std::string(SERVER_CERT));
   server_context.SetPrivateKey(std::string(SERVER_PKEY));
   server_context.SetCAFile(std::string(CA_CERT));
@@ -302,7 +354,11 @@ TEST_F(WSSClientServerConnectionTest, DisconnectFromClientBT) {
   server_context.SetVerifyMode(SSLContext::VERIFY_PEER);
   WSSServer sv(sh, server_context);
   linear::shared_ptr<MockHandler> ch = linear::shared_ptr<MockHandler>(new MockHandler());
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
   SSLContext context(SSLContext::TLSv1_1);
+#else
+  SSLContext context(SSLContext::TLS);
+#endif
   context.SetCertificate(std::string(CLIENT_CERT));
   context.SetPrivateKey(std::string(CLIENT_PKEY));
   context.SetCAFile(std::string(CA_CERT));
@@ -325,15 +381,15 @@ TEST_F(WSSClientServerConnectionTest, DisconnectFromClientBT) {
     .WillOnce(Assign(&srv_connected, true));
   EXPECT_CALL(*sh, OnDisconnectMock(Eq(ByRef(sh->s_)), Error(LNR_ECONNRESET)))
     .WillOnce(DoAll(Assign(&srv_tested, true),
-		    Assign(&srv_connected, false)));
+                    Assign(&srv_connected, false)));
   EXPECT_CALL(*ch, OnConnectMock(cs))
     .WillOnce(DoAll(Assign(&cli_connected, true),
-		    WAIT_PEER_CONNECTED(&srv_connected),
-		    WAIT_TEST_LOCK(&lock),
-		    WithArg<0>(Disconnect())));
+                    WAIT_PEER_CONNECTED(&srv_connected),
+                    WAIT_TEST_LOCK(&lock),
+                    WithArg<0>(Disconnect())));
   EXPECT_CALL(*ch, OnDisconnectMock(cs, Error(LNR_OK)))
     .WillOnce(DoAll(Assign(&cli_tested, true),
-		    Assign(&cli_connected, false)));
+                    Assign(&cli_connected, false)));
 
   e = cs.Connect();
   ASSERT_EQ(LNR_OK, e.Code());
@@ -346,7 +402,11 @@ TEST_F(WSSClientServerConnectionTest, DisconnectFromClientBT) {
 TEST_F(WSSClientServerConnectionTest, DisconnectFromServerBT) {
   linear::EventLoop loop;
   linear::shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
   SSLContext server_context(SSLContext::TLSv1_1);
+#else
+  SSLContext server_context(SSLContext::TLS);
+#endif
   server_context.SetCertificate(std::string(SERVER_CERT));
   server_context.SetPrivateKey(std::string(SERVER_PKEY));
   server_context.SetCAFile(std::string(CA_CERT));
@@ -354,7 +414,11 @@ TEST_F(WSSClientServerConnectionTest, DisconnectFromServerBT) {
   server_context.SetVerifyMode(SSLContext::VERIFY_PEER);
   WSSServer sv(sh, server_context);
   linear::shared_ptr<MockHandler> ch = linear::shared_ptr<MockHandler>(new MockHandler());
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
   SSLContext context(SSLContext::TLSv1_1);
+#else
+  SSLContext context(SSLContext::TLS);
+#endif
   context.SetCertificate(std::string(CLIENT_CERT));
   context.SetPrivateKey(std::string(CLIENT_PKEY));
   context.SetCAFile(std::string(CA_CERT));
@@ -378,16 +442,16 @@ TEST_F(WSSClientServerConnectionTest, DisconnectFromServerBT) {
     .WillOnce(Assign(&srv_connected, true));
   EXPECT_CALL(*sh, OnMessageMock(_, _))
     .WillOnce(DoAll(Assign(&srv_tested, true),
-		    WithArg<0>(Disconnect())));
+                    WithArg<0>(Disconnect())));
   EXPECT_CALL(*sh, OnDisconnectMock(Eq(ByRef(sh->s_)), Error(LNR_OK)))
     .WillOnce(Assign(&srv_connected, false));
   EXPECT_CALL(*ch, OnConnectMock(cs))
     .WillOnce(DoAll(Assign(&cli_connected, true),
-		    WAIT_TEST_LOCK(&lock),
-		    WithArg<0>(SendNotify())));
+                    WAIT_TEST_LOCK(&lock),
+                    WithArg<0>(SendNotify())));
   EXPECT_CALL(*ch, OnDisconnectMock(cs, Error(LNR_ECONNRESET)))
     .WillOnce(DoAll(Assign(&cli_tested, true),
-		    Assign(&cli_connected, false)));
+                    Assign(&cli_connected, false)));
 
   e = cs.Connect();
   ASSERT_EQ(LNR_OK, e.Code());
@@ -399,7 +463,11 @@ TEST_F(WSSClientServerConnectionTest, DisconnectFromServerBT) {
 // Reconnect at same socket
 TEST_F(WSSClientServerConnectionTest, Reconnect) {
   linear::shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
   SSLContext server_context(SSLContext::TLSv1_1);
+#else
+  SSLContext server_context(SSLContext::TLS);
+#endif
   server_context.SetCertificate(std::string(SERVER_CERT));
   server_context.SetPrivateKey(std::string(SERVER_PKEY));
   server_context.SetCAFile(std::string(CA_CERT));
@@ -407,7 +475,11 @@ TEST_F(WSSClientServerConnectionTest, Reconnect) {
   server_context.SetVerifyMode(SSLContext::VERIFY_PEER);
   WSSServer sv(sh, server_context);
   linear::shared_ptr<MockHandler> ch = linear::shared_ptr<MockHandler>(new MockHandler());
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
   SSLContext context(SSLContext::TLSv1_1);
+#else
+  SSLContext context(SSLContext::TLS);
+#endif
   context.SetCertificate(std::string(CLIENT_CERT));
   context.SetPrivateKey(std::string(CLIENT_PKEY));
   context.SetCAFile(std::string(CA_CERT));
@@ -468,7 +540,11 @@ ACTION(CheckDigestAuthWSS) {
 }
 TEST_F(WSSClientServerConnectionTest, AutoReconnect) {
   linear::shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
   SSLContext server_context(SSLContext::TLSv1_1);
+#else
+  SSLContext server_context(SSLContext::TLS);
+#endif
   server_context.SetCertificate(std::string(SERVER_CERT));
   server_context.SetPrivateKey(std::string(SERVER_PKEY));
   server_context.SetCAFile(std::string(CA_CERT));
@@ -476,7 +552,11 @@ TEST_F(WSSClientServerConnectionTest, AutoReconnect) {
   server_context.SetVerifyMode(SSLContext::VERIFY_PEER);
   WSSServer sv(sh, server_context, linear::AuthContext::DIGEST, "realm is here");
   linear::shared_ptr<MockHandler> ch = linear::shared_ptr<MockHandler>(new MockHandler());
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
   SSLContext context(SSLContext::TLSv1_1);
+#else
+  SSLContext context(SSLContext::TLS);
+#endif
   context.SetCertificate(std::string(CLIENT_CERT));
   context.SetPrivateKey(std::string(CLIENT_PKEY));
   context.SetCAFile(std::string(CA_CERT));
@@ -527,7 +607,11 @@ extern linear::Socket gs_;
 // Connect - Disconnect delayed Socket Destruct: must not SEGV
 TEST_F(WSSClientServerConnectionTest, DelayedSocketDestruct) {
   linear::shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
   SSLContext server_context(SSLContext::TLSv1_1);
+#else
+  SSLContext server_context(SSLContext::TLS);
+#endif
   server_context.SetCertificate(std::string(SERVER_CERT));
   server_context.SetPrivateKey(std::string(SERVER_PKEY));
   server_context.SetCAFile(std::string(CA_CERT));
@@ -535,7 +619,11 @@ TEST_F(WSSClientServerConnectionTest, DelayedSocketDestruct) {
   server_context.SetVerifyMode(SSLContext::VERIFY_PEER);
   WSSServer sv(sh, server_context);
   linear::shared_ptr<DelayedMockHandler> ch = linear::shared_ptr<DelayedMockHandler>(new DelayedMockHandler());
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
   SSLContext context(SSLContext::TLSv1_1);
+#else
+  SSLContext context(SSLContext::TLS);
+#endif
   context.SetCertificate(std::string(CLIENT_CERT));
   context.SetPrivateKey(std::string(CLIENT_PKEY));
   context.SetCAFile(std::string(CA_CERT));
@@ -558,17 +646,17 @@ TEST_F(WSSClientServerConnectionTest, DelayedSocketDestruct) {
     .WillOnce(Assign(&srv_connected, true));
   EXPECT_CALL(*sh, OnMessageMock(_, _))
     .WillOnce(DoAll(Assign(&srv_tested, true),
-		    WithArg<0>(Disconnect())));
+                    WithArg<0>(Disconnect())));
   EXPECT_CALL(*sh, OnDisconnectMock(Eq(ByRef(sh->s_)), Error(LNR_OK)))
     .WillOnce(DoAll(Assign(&srv_tested, true),
-		    Assign(&srv_connected, false)));
+                    Assign(&srv_connected, false)));
   EXPECT_CALL(*ch, OnConnectMock(cs))
     .WillOnce(DoAll(Assign(&cli_connected, true),
-		    WAIT_TEST_LOCK(&lock),
-		    WithArg<0>(SendNotify())));
+                    WAIT_TEST_LOCK(&lock),
+                    WithArg<0>(SendNotify())));
   EXPECT_CALL(*ch, OnDisconnectMock(cs, Error(LNR_ECONNRESET)))
-	      .WillOnce(DoAll(Assign(&cli_tested, true),
-			      Assign(&cli_connected, false)));
+              .WillOnce(DoAll(Assign(&cli_tested, true),
+                              Assign(&cli_connected, false)));
 
   e = cs.Connect();
   ASSERT_EQ(LNR_OK, e.Code());
@@ -596,7 +684,11 @@ TEST_F(WSSClientServerConnectionTest, DelayedSocketDestruct) {
 // Connect - Disconnect from other thread, and check certificate: must not SEGV
 TEST_F(WSSClientServerConnectionTest, OnConnectAndDisconnectFromOtherThread) {
   linear::shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
   SSLContext server_context(SSLContext::TLSv1_1);
+#else
+  SSLContext server_context(SSLContext::TLS);
+#endif
   server_context.SetCertificate(std::string(SERVER_CERT));
   server_context.SetPrivateKey(std::string(SERVER_PKEY));
   server_context.SetCAFile(std::string(CA_CERT));
@@ -604,7 +696,11 @@ TEST_F(WSSClientServerConnectionTest, OnConnectAndDisconnectFromOtherThread) {
   server_context.SetVerifyMode(SSLContext::VERIFY_PEER);
   WSSServer sv(sh, server_context);
   linear::shared_ptr<ThreadMockHandler> ch = linear::shared_ptr<ThreadMockHandler>(new ThreadMockHandler());
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
   SSLContext context(SSLContext::TLSv1_1);
+#else
+  SSLContext context(SSLContext::TLS);
+#endif
   context.SetCertificate(std::string(CLIENT_CERT));
   context.SetPrivateKey(std::string(CLIENT_PKEY));
   context.SetCAFile(std::string(CA_CERT));
@@ -627,15 +723,15 @@ TEST_F(WSSClientServerConnectionTest, OnConnectAndDisconnectFromOtherThread) {
     .WillOnce(Assign(&srv_connected, true));
   EXPECT_CALL(*sh, OnDisconnectMock(Eq(ByRef(sh->s_)), Error(LNR_ECONNRESET)))
     .WillOnce(DoAll(Assign(&srv_tested, true),
-		    Assign(&srv_connected, false)));
+                    Assign(&srv_connected, false)));
   EXPECT_CALL(*ch, OnConnectMock(cs))
     .WillOnce(DoAll(Assign(&cli_connected, true),
-		    WAIT_PEER_CONNECTED(&srv_connected),
-		    WAIT_TEST_LOCK(&lock),
-		    WithArg<0>(DisconnectFromOtherThread())));
+                    WAIT_PEER_CONNECTED(&srv_connected),
+                    WAIT_TEST_LOCK(&lock),
+                    WithArg<0>(DisconnectFromOtherThread())));
   EXPECT_CALL(*ch, OnDisconnectMock(cs, Error(LNR_OK)))
     .WillOnce(DoAll(Assign(&cli_tested, true),
-		    Assign(&cli_connected, false)));
+                    Assign(&cli_connected, false)));
 
   e = cs.Connect();
   ASSERT_EQ(LNR_OK, e.Code());
@@ -651,7 +747,11 @@ TEST_F(WSSClientServerConnectionTest, OnConnectAndDisconnectFromOtherThread) {
 TEST_F(WSSClientServerConnectionTest, ConnectStop) {
   linear::EventLoop loop;
   linear::shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
   SSLContext server_context(SSLContext::TLSv1_1);
+#else
+  SSLContext server_context(SSLContext::TLS);
+#endif
   server_context.SetCertificate(std::string(SERVER_CERT));
   server_context.SetPrivateKey(std::string(SERVER_PKEY));
   server_context.SetCAFile(std::string(CA_CERT));
@@ -659,7 +759,11 @@ TEST_F(WSSClientServerConnectionTest, ConnectStop) {
   server_context.SetVerifyMode(SSLContext::VERIFY_PEER);
   WSSServer sv(sh, server_context);
   linear::shared_ptr<MockHandler> ch = linear::shared_ptr<MockHandler>(new MockHandler());
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
   SSLContext context(SSLContext::TLSv1_1);
+#else
+  SSLContext context(SSLContext::TLS);
+#endif
   context.SetCertificate(std::string(CLIENT_CERT));
   context.SetPrivateKey(std::string(CLIENT_PKEY));
   context.SetCAFile(std::string(CA_CERT));
@@ -711,7 +815,11 @@ ACTION(VerifyWSS) {
 // Verify Server Cert
 TEST_F(WSSClientServerConnectionTest, VerifyServerCert) {
   linear::shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
   SSLContext server_context(SSLContext::TLSv1_1);
+#else
+  SSLContext server_context(SSLContext::TLS);
+#endif
   server_context.SetCertificate(std::string(SERVER_CERT));
   server_context.SetPrivateKey(std::string(SERVER_PKEY));
   server_context.SetCAFile(std::string(CA_CERT));
@@ -719,7 +827,11 @@ TEST_F(WSSClientServerConnectionTest, VerifyServerCert) {
   server_context.SetVerifyMode(SSLContext::VERIFY_PEER);
   WSSServer sv(sh, server_context);
   linear::shared_ptr<MockHandler> ch = linear::shared_ptr<MockHandler>(new MockHandler());
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
   SSLContext context(SSLContext::TLSv1_1);
+#else
+  SSLContext context(SSLContext::TLS);
+#endif
   context.SetCertificate(std::string(CLIENT_CERT));
   context.SetPrivateKey(std::string(CLIENT_PKEY));
   context.SetCAFile(std::string(CA_CERT));
@@ -750,7 +862,11 @@ TEST_F(WSSClientServerConnectionTest, VerifyServerCert) {
 // Verify Client Cert
 TEST_F(WSSClientServerConnectionTest, VerifyClientCert) {
   linear::shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
   SSLContext server_context(SSLContext::TLSv1_1);
+#else
+  SSLContext server_context(SSLContext::TLS);
+#endif
   server_context.SetCertificate(std::string(SERVER_CERT));
   server_context.SetPrivateKey(std::string(SERVER_PKEY));
   server_context.SetCAFile(std::string(CA_CERT));
@@ -758,7 +874,11 @@ TEST_F(WSSClientServerConnectionTest, VerifyClientCert) {
   server_context.SetVerifyMode(SSLContext::VERIFY_PEER);
   WSSServer sv(sh, server_context);
   linear::shared_ptr<MockHandler> ch = linear::shared_ptr<MockHandler>(new MockHandler());
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
   SSLContext context(SSLContext::TLSv1_1);
+#else
+  SSLContext context(SSLContext::TLS);
+#endif
   context.SetCertificate(std::string(CLIENT_CERT));
   context.SetPrivateKey(std::string(CLIENT_PKEY));
   context.SetCAFile(std::string(CA_CERT));
@@ -796,7 +916,11 @@ ACTION(KeepAliveWSS) {
 TEST_F(WSSClientServerConnectionTest, KeepAliveServer) {
   linear::EventLoop loop;
   linear::shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
   SSLContext server_context(SSLContext::TLSv1_1);
+#else
+  SSLContext server_context(SSLContext::TLS);
+#endif
   server_context.SetCertificate(std::string(SERVER_CERT));
   server_context.SetPrivateKey(std::string(SERVER_PKEY));
   server_context.SetCAFile(std::string(CA_CERT));
@@ -819,12 +943,12 @@ TEST_F(WSSClientServerConnectionTest, KeepAliveServer) {
 
   EXPECT_CALL(*sh, OnConnectMock(_))
     .WillOnce(DoAll(Assign(&srv_connected, true),
-		    WithArg<0>(KeepAliveWSS()),
-		    WithArg<0>(SendNotify())));
+                    WithArg<0>(KeepAliveWSS()),
+                    WithArg<0>(SendNotify())));
   EXPECT_CALL(*sh, OnDisconnectMock(_, _))
     .WillOnce(DoAll(Assign(&srv_tested, true),
-		    Assign(&srv_connected, false),
-		    WithArg<0>(Disconnect())));
+                    Assign(&srv_connected, false),
+                    WithArg<0>(Disconnect())));
   EXPECT_CALL(*ch, OnConnectMock(cs))
     .WillOnce(Assign(&cli_connected, true));
   EXPECT_CALL(*ch, OnMessageMock(_, _));
@@ -842,7 +966,11 @@ TEST_F(WSSClientServerConnectionTest, KeepAliveServer) {
 TEST_F(WSSClientServerConnectionTest, KeepAliveClient) {
   linear::EventLoop loop;
   linear::shared_ptr<BlockMockHandler> sh = linear::shared_ptr<BlockMockHandler>(new BlockMockHandler());
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
   SSLContext server_context(SSLContext::TLSv1_1);
+#else
+  SSLContext server_context(SSLContext::TLS);
+#endif
   server_context.SetCertificate(std::string(SERVER_CERT));
   server_context.SetPrivateKey(std::string(SERVER_PKEY));
   server_context.SetCAFile(std::string(CA_CERT));
@@ -870,12 +998,12 @@ TEST_F(WSSClientServerConnectionTest, KeepAliveClient) {
     .WillOnce(Assign(&srv_connected, false));
   EXPECT_CALL(*ch, OnConnectMock(_))
     .WillOnce(DoAll(Assign(&cli_connected, true),
-		    WithArg<0>(KeepAliveWSS()),
-		    WithArg<0>(SendNotify())));
+                    WithArg<0>(KeepAliveWSS()),
+                    WithArg<0>(SendNotify())));
   EXPECT_CALL(*ch, OnDisconnectMock(_, _))
     .WillOnce(DoAll(Assign(&cli_tested, true),
-		    Assign(&cli_connected, false),
-		    WithArg<0>(Disconnect())));
+                    Assign(&cli_connected, false),
+                    WithArg<0>(Disconnect())));
 
   e = cs.Connect();
   ASSERT_EQ(LNR_OK, e.Code());

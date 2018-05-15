@@ -10,6 +10,7 @@ class SSLContext::SSLContextImpl {
  public:
   explicit SSLContextImpl(const SSLContext::Method& method) {
     tv_ssl_library_init();
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
     switch (method) {
     case SSLContext::SSLv23_client:
       ssl_ctx_ = SSL_CTX_new(SSLv23_client_method());
@@ -36,6 +37,21 @@ class SSLContext::SSLContextImpl {
       ssl_ctx_ = SSL_CTX_new(TLSv1_1_method());
       break;
     }
+#else
+    switch (method) {
+    case SSLContext::TLS_client:
+      ssl_ctx_ = SSL_CTX_new(TLS_client_method());
+      break;
+    case SSLContext::TLS_server:
+      ssl_ctx_ = SSL_CTX_new(TLS_server_method());
+      break;
+    case SSLContext::TLS:
+    default:
+      ssl_ctx_ = SSL_CTX_new(TLS_method());
+      break;
+    }
+    SSL_CTX_set_options(ssl_ctx_, SSL_OP_NO_SSLv3 | SSL_OP_NO_TLSv1);
+#endif
     SSL_CTX_set_default_verify_paths(ssl_ctx_);
   }
   ~SSLContextImpl() {
@@ -242,7 +258,12 @@ class SSLContext::SSLContextImpl {
 };
 
 SSLContext::SSLContext()
-  : pimpl_(new SSLContext::SSLContextImpl(SSLContext::SSLv23)) {
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+  : pimpl_(new SSLContext::SSLContextImpl(SSLContext::SSLv23))
+#else
+  : pimpl_(new SSLContext::SSLContextImpl(SSLContext::TLS))
+#endif
+{
 }
 SSLContext::SSLContext(const SSLContext::Method& method)
   : pimpl_(new SSLContext::SSLContextImpl(method)) {

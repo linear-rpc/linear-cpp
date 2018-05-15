@@ -25,7 +25,11 @@ typedef LinearTest WSSClientServerSendRecvTest;
 // Send Request from Client in front thread and Send Response from Server in back thread
 TEST_F(WSSClientServerSendRecvTest, RequestFromClientFTResponseFromServerBT) {
   linear::shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
   SSLContext server_context(SSLContext::TLSv1_1);
+#else
+  SSLContext server_context(SSLContext::TLS);
+#endif
   server_context.SetCertificate(std::string(SERVER_CERT));
   server_context.SetPrivateKey(std::string(SERVER_PKEY));
   server_context.SetCAFile(std::string(CA_CERT));
@@ -33,7 +37,11 @@ TEST_F(WSSClientServerSendRecvTest, RequestFromClientFTResponseFromServerBT) {
   server_context.SetVerifyMode(SSLContext::VERIFY_PEER);
   WSSServer sv(sh, server_context);
   linear::shared_ptr<MockHandler> ch = linear::shared_ptr<MockHandler>(new MockHandler());
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
   SSLContext context(SSLContext::TLSv1_1);
+#else
+  SSLContext context(SSLContext::TLS);
+#endif
   context.SetCertificate(std::string(CLIENT_CERT));
   context.SetPrivateKey(std::string(CLIENT_PKEY));
   context.SetCAFile(std::string(CA_CERT));
@@ -89,7 +97,11 @@ TEST_F(WSSClientServerSendRecvTest, RequestFromClientFTResponseFromServerBT) {
 // Send Request from Server in front thread and Send Response from Client in back thread
 TEST_F(WSSClientServerSendRecvTest, RequestFromServerFTResponseFromClientBT) {
   linear::shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
   SSLContext server_context(SSLContext::TLSv1_1);
+#else
+  SSLContext server_context(SSLContext::TLS);
+#endif
   server_context.SetCertificate(std::string(SERVER_CERT));
   server_context.SetPrivateKey(std::string(SERVER_PKEY));
   server_context.SetCAFile(std::string(CA_CERT));
@@ -97,7 +109,11 @@ TEST_F(WSSClientServerSendRecvTest, RequestFromServerFTResponseFromClientBT) {
   server_context.SetVerifyMode(SSLContext::VERIFY_PEER);
   WSSServer sv(sh, server_context);
   linear::shared_ptr<MockHandler> ch = linear::shared_ptr<MockHandler>(new MockHandler());
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
   SSLContext context(SSLContext::TLSv1_1);
+#else
+  SSLContext context(SSLContext::TLS);
+#endif
   context.SetCertificate(std::string(CLIENT_CERT));
   context.SetPrivateKey(std::string(CLIENT_PKEY));
   context.SetCAFile(std::string(CA_CERT));
@@ -156,7 +172,11 @@ TEST_F(WSSClientServerSendRecvTest, RequestFromServerFTResponseFromClientBT) {
 // Send Request from Client in back thread and Send Response from Server in back thread
 TEST_F(WSSClientServerSendRecvTest, RequestFromClientBTResponseFromServerBT) {
   linear::shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
   SSLContext server_context(SSLContext::TLSv1_1);
+#else
+  SSLContext server_context(SSLContext::TLS);
+#endif
   server_context.SetCertificate(std::string(SERVER_CERT));
   server_context.SetPrivateKey(std::string(SERVER_PKEY));
   server_context.SetCAFile(std::string(CA_CERT));
@@ -164,7 +184,11 @@ TEST_F(WSSClientServerSendRecvTest, RequestFromClientBTResponseFromServerBT) {
   server_context.SetVerifyMode(SSLContext::VERIFY_PEER);
   WSSServer sv(sh, server_context);
   linear::shared_ptr<MockHandler> ch = linear::shared_ptr<MockHandler>(new MockHandler());
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
   SSLContext context(SSLContext::TLSv1_1);
+#else
+  SSLContext context(SSLContext::TLS);
+#endif
   context.SetCertificate(std::string(CLIENT_CERT));
   context.SetPrivateKey(std::string(CLIENT_PKEY));
   context.SetCAFile(std::string(CA_CERT));
@@ -214,7 +238,11 @@ TEST_F(WSSClientServerSendRecvTest, RequestFromClientBTResponseFromServerBT) {
 // Send Request from Server in back thread and Send Response from Client in back thread
 TEST_F(WSSClientServerSendRecvTest, RequestFromServerBTResponseFromClientBT) {
   linear::shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
   SSLContext server_context(SSLContext::TLSv1_1);
+#else
+  SSLContext server_context(SSLContext::TLS);
+#endif
   server_context.SetCertificate(std::string(SERVER_CERT));
   server_context.SetPrivateKey(std::string(SERVER_PKEY));
   server_context.SetCAFile(std::string(CA_CERT));
@@ -222,7 +250,11 @@ TEST_F(WSSClientServerSendRecvTest, RequestFromServerBTResponseFromClientBT) {
   server_context.SetVerifyMode(SSLContext::VERIFY_PEER);
   WSSServer sv(sh, server_context);
   linear::shared_ptr<MockHandler> ch = linear::shared_ptr<MockHandler>(new MockHandler());
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
   SSLContext context(SSLContext::TLSv1_1);
+#else
+  SSLContext context(SSLContext::TLS);
+#endif
   context.SetCertificate(std::string(CLIENT_CERT));
   context.SetPrivateKey(std::string(CLIENT_PKEY));
   context.SetCAFile(std::string(CA_CERT));
@@ -272,7 +304,11 @@ TEST_F(WSSClientServerSendRecvTest, RequestFromServerBTResponseFromClientBT) {
 // Send Request from Client in front thread and not Send Response from Server(Timeout)
 TEST_F(WSSClientServerSendRecvTest, RequestFromClientFTNotResponseFromServer) {
   linear::shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
   SSLContext server_context(SSLContext::TLSv1_1);
+#else
+  SSLContext server_context(SSLContext::TLS);
+#endif
   server_context.SetCertificate(std::string(SERVER_CERT));
   server_context.SetPrivateKey(std::string(SERVER_PKEY));
   server_context.SetCAFile(std::string(CA_CERT));
@@ -280,7 +316,11 @@ TEST_F(WSSClientServerSendRecvTest, RequestFromClientFTNotResponseFromServer) {
   server_context.SetVerifyMode(SSLContext::VERIFY_PEER);
   WSSServer sv(sh, server_context);
   linear::shared_ptr<MockHandler> ch = linear::shared_ptr<MockHandler>(new MockHandler());
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
   SSLContext context(SSLContext::TLSv1_1);
+#else
+  SSLContext context(SSLContext::TLS);
+#endif
   context.SetCertificate(std::string(CLIENT_CERT));
   context.SetPrivateKey(std::string(CLIENT_PKEY));
   context.SetCAFile(std::string(CA_CERT));
@@ -339,7 +379,11 @@ TEST_F(WSSClientServerSendRecvTest, RequestFromClientFTNotResponseFromServer) {
 // Send Request from Server in front thread and not Send Response from Client(Timeout)
 TEST_F(WSSClientServerSendRecvTest, RequestFromServerFTNotResponseFromClient) {
   linear::shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
   SSLContext server_context(SSLContext::TLSv1_1);
+#else
+  SSLContext server_context(SSLContext::TLS);
+#endif
   server_context.SetCertificate(std::string(SERVER_CERT));
   server_context.SetPrivateKey(std::string(SERVER_PKEY));
   server_context.SetCAFile(std::string(CA_CERT));
@@ -347,7 +391,11 @@ TEST_F(WSSClientServerSendRecvTest, RequestFromServerFTNotResponseFromClient) {
   server_context.SetVerifyMode(SSLContext::VERIFY_PEER);
   WSSServer sv(sh, server_context);
   linear::shared_ptr<MockHandler> ch = linear::shared_ptr<MockHandler>(new MockHandler());
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
   SSLContext context(SSLContext::TLSv1_1);
+#else
+  SSLContext context(SSLContext::TLS);
+#endif
   context.SetCertificate(std::string(CLIENT_CERT));
   context.SetPrivateKey(std::string(CLIENT_PKEY));
   context.SetCAFile(std::string(CA_CERT));
@@ -406,7 +454,11 @@ TEST_F(WSSClientServerSendRecvTest, RequestFromServerFTNotResponseFromClient) {
 // Cancel to Send Request
 TEST_F(WSSClientServerSendRecvTest, CancelRequestFromClientFT) {
   linear::shared_ptr<MockHandler> ch = linear::shared_ptr<MockHandler>(new MockHandler());
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
   SSLContext context(SSLContext::TLSv1_1);
+#else
+  SSLContext context(SSLContext::TLS);
+#endif
   context.SetCertificate(std::string(CLIENT_CERT));
   context.SetPrivateKey(std::string(CLIENT_PKEY));
   context.SetCAFile(std::string(CA_CERT));
@@ -445,7 +497,11 @@ TEST_F(WSSClientServerSendRecvTest, CancelRequestFromClientFT) {
 // Cancel to Send Request(Disconnected by peer)
 TEST_F(WSSClientServerSendRecvTest, CancelRequestWithDisconnectedFromClientFT) {
   linear::shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
   SSLContext server_context(SSLContext::TLSv1_1);
+#else
+  SSLContext server_context(SSLContext::TLS);
+#endif
   server_context.SetCertificate(std::string(SERVER_CERT));
   server_context.SetPrivateKey(std::string(SERVER_PKEY));
   server_context.SetCAFile(std::string(CA_CERT));
@@ -453,7 +509,11 @@ TEST_F(WSSClientServerSendRecvTest, CancelRequestWithDisconnectedFromClientFT) {
   server_context.SetVerifyMode(SSLContext::VERIFY_PEER);
   WSSServer sv(sh, server_context);
   linear::shared_ptr<MockHandler> ch = linear::shared_ptr<MockHandler>(new MockHandler());
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
   SSLContext context(SSLContext::TLSv1_1);
+#else
+  SSLContext context(SSLContext::TLS);
+#endif
   context.SetCertificate(std::string(CLIENT_CERT));
   context.SetPrivateKey(std::string(CLIENT_PKEY));
   context.SetCAFile(std::string(CA_CERT));
@@ -509,7 +569,11 @@ TEST_F(WSSClientServerSendRecvTest, CancelRequestWithDisconnectedFromClientFT) {
 // Send Notify from Client in front thread
 TEST_F(WSSClientServerSendRecvTest, NotifyFromClientFT) {
   linear::shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
   SSLContext server_context(SSLContext::TLSv1_1);
+#else
+  SSLContext server_context(SSLContext::TLS);
+#endif
   server_context.SetCertificate(std::string(SERVER_CERT));
   server_context.SetPrivateKey(std::string(SERVER_PKEY));
   server_context.SetCAFile(std::string(CA_CERT));
@@ -517,7 +581,11 @@ TEST_F(WSSClientServerSendRecvTest, NotifyFromClientFT) {
   server_context.SetVerifyMode(SSLContext::VERIFY_PEER);
   WSSServer sv(sh, server_context);
   linear::shared_ptr<MockHandler> ch = linear::shared_ptr<MockHandler>(new MockHandler());
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
   SSLContext context(SSLContext::TLSv1_1);
+#else
+  SSLContext context(SSLContext::TLS);
+#endif
   context.SetCertificate(std::string(CLIENT_CERT));
   context.SetPrivateKey(std::string(CLIENT_PKEY));
   context.SetCAFile(std::string(CA_CERT));
@@ -563,7 +631,11 @@ TEST_F(WSSClientServerSendRecvTest, NotifyFromClientFT) {
 // Send Notify from Server in front thread
 TEST_F(WSSClientServerSendRecvTest, NotifyFromServerFT) {
   linear::shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
   SSLContext server_context(SSLContext::TLSv1_1);
+#else
+  SSLContext server_context(SSLContext::TLS);
+#endif
   server_context.SetCertificate(std::string(SERVER_CERT));
   server_context.SetPrivateKey(std::string(SERVER_PKEY));
   server_context.SetCAFile(std::string(CA_CERT));
@@ -571,7 +643,11 @@ TEST_F(WSSClientServerSendRecvTest, NotifyFromServerFT) {
   server_context.SetVerifyMode(SSLContext::VERIFY_PEER);
   WSSServer sv(sh, server_context);
   linear::shared_ptr<MockHandler> ch = linear::shared_ptr<MockHandler>(new MockHandler());
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
   SSLContext context(SSLContext::TLSv1_1);
+#else
+  SSLContext context(SSLContext::TLS);
+#endif
   context.SetCertificate(std::string(CLIENT_CERT));
   context.SetPrivateKey(std::string(CLIENT_PKEY));
   context.SetCAFile(std::string(CA_CERT));
@@ -620,7 +696,11 @@ TEST_F(WSSClientServerSendRecvTest, NotifyFromServerFT) {
 // Send Notify from Client in back thread
 TEST_F(WSSClientServerSendRecvTest, NotifyFromClientBT) {
   linear::shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
   SSLContext server_context(SSLContext::TLSv1_1);
+#else
+  SSLContext server_context(SSLContext::TLS);
+#endif
   server_context.SetCertificate(std::string(SERVER_CERT));
   server_context.SetPrivateKey(std::string(SERVER_PKEY));
   server_context.SetCAFile(std::string(CA_CERT));
@@ -628,7 +708,11 @@ TEST_F(WSSClientServerSendRecvTest, NotifyFromClientBT) {
   server_context.SetVerifyMode(SSLContext::VERIFY_PEER);
   WSSServer sv(sh, server_context);
   linear::shared_ptr<MockHandler> ch = linear::shared_ptr<MockHandler>(new MockHandler());
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
   SSLContext context(SSLContext::TLSv1_1);
+#else
+  SSLContext context(SSLContext::TLS);
+#endif
   context.SetCertificate(std::string(CLIENT_CERT));
   context.SetPrivateKey(std::string(CLIENT_PKEY));
   context.SetCAFile(std::string(CA_CERT));
@@ -673,7 +757,11 @@ TEST_F(WSSClientServerSendRecvTest, NotifyFromClientBT) {
 // Send Notify from Server in back thread
 TEST_F(WSSClientServerSendRecvTest, NotifyFromServerBT) {
   linear::shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
   SSLContext server_context(SSLContext::TLSv1_1);
+#else
+  SSLContext server_context(SSLContext::TLS);
+#endif
   server_context.SetCertificate(std::string(SERVER_CERT));
   server_context.SetPrivateKey(std::string(SERVER_PKEY));
   server_context.SetCAFile(std::string(CA_CERT));
@@ -681,7 +769,11 @@ TEST_F(WSSClientServerSendRecvTest, NotifyFromServerBT) {
   server_context.SetVerifyMode(SSLContext::VERIFY_PEER);
   WSSServer sv(sh, server_context);
   linear::shared_ptr<MockHandler> ch = linear::shared_ptr<MockHandler>(new MockHandler());
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
   SSLContext context(SSLContext::TLSv1_1);
+#else
+  SSLContext context(SSLContext::TLS);
+#endif
   context.SetCertificate(std::string(CLIENT_CERT));
   context.SetPrivateKey(std::string(CLIENT_PKEY));
   context.SetCAFile(std::string(CA_CERT));
@@ -726,7 +818,11 @@ TEST_F(WSSClientServerSendRecvTest, NotifyFromServerBT) {
 // Send Notify from Server to Specific Group
 TEST_F(WSSClientServerSendRecvTest, NotifyFromServerToGroup) {
   linear::shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
   SSLContext server_context(SSLContext::TLSv1_1);
+#else
+  SSLContext server_context(SSLContext::TLS);
+#endif
   server_context.SetCertificate(std::string(SERVER_CERT));
   server_context.SetPrivateKey(std::string(SERVER_PKEY));
   server_context.SetCAFile(std::string(CA_CERT));
@@ -736,7 +832,11 @@ TEST_F(WSSClientServerSendRecvTest, NotifyFromServerToGroup) {
   shared_ptr<MockHandler> ch1 = linear::shared_ptr<MockHandler>(new MockHandler());
   shared_ptr<MockHandler> ch2 = linear::shared_ptr<MockHandler>(new MockHandler());
   shared_ptr<MockHandler> ch3 = linear::shared_ptr<MockHandler>(new MockHandler());
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
   SSLContext context(SSLContext::TLSv1_1);
+#else
+  SSLContext context(SSLContext::TLS);
+#endif
   context.SetCertificate(std::string(CLIENT_CERT));
   context.SetPrivateKey(std::string(CLIENT_PKEY));
   context.SetCAFile(std::string(CA_CERT));
@@ -765,7 +865,7 @@ TEST_F(WSSClientServerSendRecvTest, NotifyFromServerToGroup) {
     .Times(::testing::AtLeast(2))
     .WillOnce(::testing::Return())
     .WillOnce(DoAll(Assign(&srv_tested, true),
-		    Assign(&srv_connected, false)));
+                    Assign(&srv_connected, false)));
 
   EXPECT_CALL(*ch1, OnConnectMock(cs1))
     .WillOnce(Assign(&cli_connected, true));
@@ -827,7 +927,11 @@ TEST_F(WSSClientServerSendRecvTest, NotifyFromClientToGroup) {
   shared_ptr<MockHandler> sh1 = linear::shared_ptr<MockHandler>(new MockHandler());
   shared_ptr<MockHandler> sh2 = linear::shared_ptr<MockHandler>(new MockHandler());
   shared_ptr<MockHandler> sh3 = linear::shared_ptr<MockHandler>(new MockHandler());
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
   SSLContext server_context(SSLContext::TLSv1_1);
+#else
+  SSLContext server_context(SSLContext::TLS);
+#endif
   server_context.SetCertificate(std::string(SERVER_CERT));
   server_context.SetPrivateKey(std::string(SERVER_PKEY));
   server_context.SetCAFile(std::string(CA_CERT));
@@ -835,7 +939,11 @@ TEST_F(WSSClientServerSendRecvTest, NotifyFromClientToGroup) {
   server_context.SetVerifyMode(SSLContext::VERIFY_PEER);
   WSSServer sv1(sh1, server_context), sv2(sh2, server_context), sv3(sh3, server_context);
   linear::shared_ptr<MockHandler> ch = linear::shared_ptr<MockHandler>(new MockHandler());
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
   SSLContext context(SSLContext::TLSv1_1);
+#else
+  SSLContext context(SSLContext::TLS);
+#endif
   context.SetCertificate(std::string(CLIENT_CERT));
   context.SetPrivateKey(std::string(CLIENT_PKEY));
   context.SetCAFile(std::string(CA_CERT));
@@ -868,7 +976,7 @@ TEST_F(WSSClientServerSendRecvTest, NotifyFromClientToGroup) {
     .Times(::testing::AtLeast(2))
     .WillOnce(::testing::Return())
     .WillOnce(DoAll(Assign(&cli_tested, true),
-		    Assign(&cli_connected, false)));
+                    Assign(&cli_connected, false)));
 
   EXPECT_CALL(*sh1, OnConnectMock(_))
     .WillOnce(Assign(&srv_connected, true));
@@ -928,7 +1036,11 @@ TEST_F(WSSClientServerSendRecvTest, NotifyFromClientToGroup) {
 #ifndef _WIN32
 TEST_F(WSSClientServerSendRecvTest, ZeroLengthPacket) {
   linear::shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
   SSLContext server_context(SSLContext::SSLv23);
+#else
+  SSLContext server_context(SSLContext::TLS);
+#endif
   server_context.SetCertificate(std::string(SERVER_CERT));
   server_context.SetPrivateKey(std::string(SERVER_PKEY));
   server_context.SetCAFile(std::string(CA_CERT));
@@ -960,7 +1072,11 @@ TEST_F(WSSClientServerSendRecvTest, ZeroLengthPacket) {
   int ret = connect(fd, (struct sockaddr *)&s, sizeof(s));
   ASSERT_EQ(0, ret);
 
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
   SSL_CTX* ctx = SSL_CTX_new(SSLv23_client_method());
+#else
+  SSL_CTX* ctx = SSL_CTX_new(TLS_client_method());
+#endif
   SSL* ssl = SSL_new(ctx);
   SSL_set_fd(ssl, fd);
   SSL_connect(ssl);
@@ -984,7 +1100,11 @@ TEST_F(WSSClientServerSendRecvTest, ZeroLengthPacket) {
 // Recv malformed packet, issue #149: https://github.com/msgpack/msgpack-c/issues/149
 TEST_F(WSSClientServerSendRecvTest, MalformedPacket) {
   linear::shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
   SSLContext server_context(SSLContext::SSLv23);
+#else
+  SSLContext server_context(SSLContext::TLS);
+#endif
   server_context.SetCertificate(std::string(SERVER_CERT));
   server_context.SetPrivateKey(std::string(SERVER_PKEY));
   server_context.SetCAFile(std::string(CA_CERT));
@@ -1016,7 +1136,11 @@ TEST_F(WSSClientServerSendRecvTest, MalformedPacket) {
   int ret = connect(fd, (struct sockaddr *)&s, sizeof(s));
   ASSERT_EQ(0, ret);
 
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
   SSL_CTX* ctx = SSL_CTX_new(SSLv23_client_method());
+#else
+  SSL_CTX* ctx = SSL_CTX_new(TLS_client_method());
+#endif
   SSL* ssl = SSL_new(ctx);
   SSL_set_fd(ssl, fd);
   SSL_connect(ssl);
@@ -1047,7 +1171,11 @@ TEST_F(WSSClientServerSendRecvTest, MalformedPacket) {
 TEST_F(WSSClientServerSendRecvTest, SendBuffer) {
   linear::EventLoop loop;
   linear::shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
-  SSLContext server_context(SSLContext::SSLv23);
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+  SSLContext server_context(SSLContext::TLSv1_1);
+#else
+  SSLContext server_context(SSLContext::TLS);
+#endif
   server_context.SetCertificate(std::string(SERVER_CERT));
   server_context.SetPrivateKey(std::string(SERVER_PKEY));
   server_context.SetCAFile(std::string(CA_CERT));
@@ -1093,7 +1221,11 @@ TEST_F(WSSClientServerSendRecvTest, SendBuffer) {
 // Must not Overflow SendBuffer
 TEST_F(WSSClientServerSendRecvTest, NotOverflowSendBuffer) {
   shared_ptr<MockHandler> sh = linear::shared_ptr<MockHandler>(new MockHandler());
-  SSLContext server_context(SSLContext::SSLv23);
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+  SSLContext server_context(SSLContext::TLSv1_1);
+#else
+  SSLContext server_context(SSLContext::TLS);
+#endif
   server_context.SetCertificate(std::string(SERVER_CERT));
   server_context.SetPrivateKey(std::string(SERVER_PKEY));
   server_context.SetCAFile(std::string(CA_CERT));
