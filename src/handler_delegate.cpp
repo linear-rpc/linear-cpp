@@ -2,13 +2,13 @@
 # include <signal.h>
 #endif
 
-#ifdef WITH_SSL
-# include <openssl/crypto.h>
-#endif
-
 #include "linear/version.h"
 
 #include "handler_delegate.h"
+
+#ifdef WITH_SSL
+# include <openssl/crypto.h>
+#endif
 
 using namespace linear::log;
 
