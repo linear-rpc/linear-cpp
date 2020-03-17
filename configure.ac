@@ -105,8 +105,8 @@ AC_SUBST(HAVE_BOOST_SHARED_PTR)
 
 # Checks for --with-ssl
 AC_ARG_WITH([ssl],
-            [AC_HELP_STRING([--with-ssl], [supports SSL transport by using OpenSSL@<:@default=no@:>@])],
-            [with_ssl=$withval], [with_ssl=no])
+            [AC_HELP_STRING([--with-ssl], [supports SSL transport by using OpenSSL@<:@default=yes@:>@])],
+            [with_ssl=$withval], [with_ssl=yes])
 if test "x$with_ssl" = "xyes"; then
    CXXFLAGS="$CXXFLAGS -DWITH_SSL"
    LIBS="$LIBS -lssl -lcrypto"
