@@ -17,7 +17,7 @@ before_script:
   - echo $LANG
   - echo $LC_ALL
   - if [[ $TRAVIS_OS_NAME == "linux" ]]; then sudo apt-get -qq update && sudo apt-get -qq install libssl-dev; fi
-  - if [[ $TRAVIS_OS_NAME == "osx" ]]; then brew cleanup; brew update && brew install libtool openssl; fi
+  - if [[ $TRAVIS_OS_NAME == "osx" ]]; then brew cleanup; brew update && brew upgrade libtool openssl; fi
   - git submodule update --init --recursive
   - ./bootstrap
   - if [[ $TRAVIS_OS_NAME == "linux" ]]; then ./configure --with-ssl --with-test; fi
