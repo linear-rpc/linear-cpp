@@ -1087,6 +1087,7 @@ TEST_F(SSLClientServerSendRecvTest, RequestFromClientFTWithLongResponseFromServe
   e = cs.Connect();
   ASSERT_EQ(LNR_OK, e.Code());
 
+  msleep(100);
   std::string msg(65535, 'a');
   Request req(std::string(METHOD_NAME), msg);
   e = req.Send(cs);
