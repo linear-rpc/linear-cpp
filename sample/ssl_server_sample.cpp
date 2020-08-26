@@ -224,7 +224,11 @@ int main(int argc, char* argv[]) {
   int port = (argc >= 2) ? atoi(argv[1]) : 37800;
 #endif
 
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
   linear::SSLContext ssl_context(linear::SSLContext::TLSv1_1);
+#else
+  linear::SSLContext ssl_context(linear::SSLContext::TLS);
+#endif
   bool ret = ssl_context.SetCertificate(std::string(SERVER_CERT));
   if (!ret) {
     std::cerr << "SetCertificate error" << std::endl;

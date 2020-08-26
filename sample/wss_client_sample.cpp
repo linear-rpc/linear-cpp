@@ -239,7 +239,11 @@ int main(int argc, char* argv[]) {
 
   linear::shared_ptr<ApplicationHandler> handler = linear::shared_ptr<ApplicationHandler>(new ApplicationHandler());
   linear::WSSClient client = linear::WSSClient(handler);
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
   linear::SSLContext ssl_context(linear::SSLContext::TLSv1_1_client);
+#else
+  linear::SSLContext ssl_context(linear::SSLContext::TLS_client);
+#endif
   ssl_context.SetVerifyMode(linear::SSLContext::VERIFY_NONE);
   linear::WSRequestContext ws_context;
   ws_context.path = "linear";
