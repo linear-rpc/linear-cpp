@@ -19,6 +19,8 @@ namespace type {
 /**
  * @class any any.h "linear/any.h"
  * represent any type object
+ * An any object allocate more than 8192 bytes of memory.
+ * This values is defined as MSGPACK_ZONE_CHUNK_SIZE in deps/msgpack/include/msgpack/zone.h.
  */
 class any {
  public:
