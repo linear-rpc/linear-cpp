@@ -25,8 +25,13 @@ HandlerDelegate::HandlerDelegate(const weak_ptr<Handler>& handler,
 
 #ifdef WITH_SSL
   if (show_ssl_version) {
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
     LINEAR_LOG(LOG_DEBUG, "version: %s, sign: %s, %s",
                LINEAR_VERSION_ID, LINEAR_COMMIT_ID, SSLeay_version(SSLEAY_VERSION));
+#else
+    LINEAR_LOG(LOG_DEBUG, "version: %s, sign: %s, %s",
+               LINEAR_VERSION_ID, LINEAR_COMMIT_ID, OpenSSL_version(OPENSSL_VERSION));
+#endif
   } else
 #else
   (void)(show_ssl_version);
