@@ -133,8 +133,8 @@ std::string Log::GetDateTime() {
   if (ret == NULL) {
     snprintf(datetime_str, sizeof(datetime_str), "ERR: fail to get date");
   } else {
-    uint year = ts.tm_year + 1900;
-    uint month = ts.tm_mon + 1;
+    unsigned int year = ts.tm_year + 1900;
+    unsigned int month = ts.tm_mon + 1;
     snprintf(datetime_str, sizeof(datetime_str),
              "%d-%02d-%02d %02d:%02d:%02d.%03d",
              year, month, ts.tm_mday,
