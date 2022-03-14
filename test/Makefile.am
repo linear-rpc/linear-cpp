@@ -24,8 +24,8 @@ TESTS += any_test optional_test
 TESTS += run_tests
 
 AM_CPPFLAGS = \
-	-I$(top_srcdir)/deps/gmock-1.7.0/include \
-	-I$(top_srcdir)/deps/gmock-1.7.0/gtest/include \
+	-I$(top_srcdir)/deps/googletest-release-1.11.0/googlemock/include \
+	-I$(top_srcdir)/deps/googletest-release-1.11.0/googletest/include \
 	-I$(top_srcdir)/deps/msgpack/include \
 	-I$(top_srcdir)/include \
 	-I$(top_srcdir)/src
@@ -34,8 +34,8 @@ LDADD = \
 	$(top_srcdir)/src/.libs/liblinear.a \
 	$(top_srcdir)/deps/libtv/src/.libs/libtv.a \
 	$(top_srcdir)/deps/libtv/deps/libuv/.libs/libuv.a \
-	$(top_srcdir)/deps/gmock-1.7.0/gtest/lib/.libs/libgtest.a \
-	$(top_srcdir)/deps/gmock-1.7.0/lib/.libs/libgmock.a
+	$(top_srcdir)/deps/googletest-release-1.11.0/build/lib/libgtest.a \
+	$(top_srcdir)/deps/googletest-release-1.11.0/build/lib/libgmock.a -ldl
 
 noinst_PROGRAMS = \
 	log_file_test \

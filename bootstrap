@@ -6,7 +6,7 @@ else
     LIBTOOLIZE="libtoolize --force --copy"
 fi
 
-unzip -n deps/gmock-1.7.0.zip -d deps/ >/dev/null 2>&1
+unzip -n deps/googletest-release-1.11.0.zip -d deps/ >/dev/null 2>&1
 
 # break on error
 set -ex

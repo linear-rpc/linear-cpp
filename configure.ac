@@ -147,7 +147,7 @@ AC_CONFIG_FILES([Makefile
 AC_CONFIG_SUBDIRS([deps/msgpack deps/libtv])
 
 if test "x${with_test}" != "xno"; then
-   AC_CONFIG_SUBDIRS(deps/gmock-1.7.0)
+   AC_CONFIG_COMMANDS([runcmake], [cd deps/googletest-release-1.11.0; mkdir build; cd build; cmake ../])
 fi
 
 AC_CHECK_PROG(PKG_CONFIG, pkg-config, yes)

@@ -11,7 +11,7 @@ endif
 all-local:
 	(cd deps/libtv; $(MAKE))
 	@if [ $(WITH_TEST) ]; then \
-		(cd deps/gmock-1.7.0; $(MAKE)); \
+		(cd deps/googletest-release-1.11.0/build; $(MAKE)); \
 	fi
 
 install-data-local:
