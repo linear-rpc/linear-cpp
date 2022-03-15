@@ -1,4 +1,4 @@
-# Linear C++ [![Build Status](https://travis-ci.org/linear-rpc/linear-cpp.svg?branch=master)](https://travis-ci.org/linear-rpc/linear-cpp)
+# Linear C++ [![production CI](https://github.com/linear-rpc/linear-cpp/actions/workflows/production.yml/badge.svg)](https://github.com/linear-rpc/linear-cpp/actions/workflows/production.yml)
 
 ## Overview
 
