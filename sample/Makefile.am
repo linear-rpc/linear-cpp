@@ -8,7 +8,7 @@ AM_CPPFLAGS = \
 LDADD = \
 	$(top_srcdir)/src/.libs/liblinear.a \
 	$(top_srcdir)/deps/libtv/src/.libs/libtv.a \
-	$(top_srcdir)/deps/libtv/deps/libuv/.libs/libuv.a
+	$(top_srcdir)/deps/libtv/deps/libuv/.libs/libuv.a -ldl
 
 noinst_PROGRAMS = \
 	tcp_server_sample \
