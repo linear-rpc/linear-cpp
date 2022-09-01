@@ -1,0 +1,37 @@
+name: develop CI
+
+on:
+  push:
+    branches:
+      - develop
+  pull_request:
+    branches:
+      - develop
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [ ubuntu-latest, macos-latest ]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: install lib
+      if: ${{matrix.os}} == 'macos-latest'
+      run: (brew update; brew install automake autoconf libtool openssl@1.1; brew --prefix openssl@1.1)
+    - name: git
+      run: git fetch; git checkout develop; git submodule update --init --recursive
+    - name: bootstrap
+      run: ./bootstrap
+    - name: configure-macos
+      if: ${{matrix.os}} == 'macos-latest'
+      run: ./configure --with-test --with-ssl=$(brew --prefix openssl@1.1)
+    - name: configure-other
+      if: steps.configure.conclusion == 'skipped'
+      run: ./configure --with-test
+    - name: make
+      run: make
+    - name: make check
+      run: make check
