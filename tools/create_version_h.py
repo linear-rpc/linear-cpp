@@ -20,7 +20,7 @@ def read_commit_id_and_version(ac, kv):
     proc = subprocess.Popen(GET_COMMIT_ID,
                             stdout=subprocess.PIPE,
                             shell=True)
-    kv[COMMIT_ID_KEY] = proc.stdout.readlines()[0]
+    kv[COMMIT_ID_KEY] = proc.stdout.readlines()[0].decode('utf-8')
   except:
     kv[COMMIT_ID_KEY] = ""
     

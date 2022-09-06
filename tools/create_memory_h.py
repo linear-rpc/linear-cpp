@@ -48,7 +48,7 @@ def check_shared_ptr(kv):
         proc = subprocess.Popen(CHECK_STD,
                                 stdout=subprocess.PIPE,
                                 shell=True)
-        result = proc.stdout.readlines()[0].rstrip('\n\r')
+        result = proc.stdout.readlines()[0].decode('utf-8').rstrip('\n\r')
         if result == "0":
             kv[HAVE_STD_SHARED_PTR_KEY] = HAVE_STD_SHARED_PTR
         else:

@@ -46,9 +46,9 @@
         'include',
         'src/',
         'deps/msgpack/include',
+        'deps/libtv/deps/libuv/include',
       ],
       'dependencies': [
-        'deps/libtv/deps/libuv/uv.gyp:libuv',
         'deps/libtv/tv.gyp:libtv',
       ],
       'direct_dependent_settings': {
