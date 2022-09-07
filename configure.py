@@ -36,7 +36,7 @@ def host_arch():
 def run_gyp(args):
   rc = gyp.main(args)
   if rc != 0:
-    print 'Error running GYP'
+    print('Error running GYP')
     sys.exit(rc)
 
 
@@ -112,5 +112,5 @@ if __name__ == '__main__':
 
   args.append('--no-duplicate-basename-check')  # TODO:
   gyp_args = list(args)
-  print gyp_args
+  print(gyp_args)
   run_gyp(gyp_args)
