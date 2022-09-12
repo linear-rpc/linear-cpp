@@ -13,8 +13,10 @@ a msgpack-rpc + α implementation for C++ language.
     If you want to use {SSL, WSS} transport,
     install openssl developer packages.
 * Windows
-  * Python v2.x<br>
-    needed by gyp for creating a solution file etc.<br>
+  * Python v3.x<br>
+    needed for creating version.h files etc.<br>
+  * CMake v3.4 or later<br>
+    needed for creating visual studio solution file.
   * OpenSSL v1.0.1 or later<br>
     If you want to use {SSL, WSS} transport,
     download binary distributions from https://www.openssl.org/community/binaries.html and install it.<br>
@@ -42,15 +44,13 @@ $ ./configure --help
 </pre>
 * Windows<br>
 <pre class="fragment">
-$ vcbuild.bat [--prefix=/path/to/install] [--with-ssl=/path/to/OpenSSL] [shared]
+$ vcbuild.bat [--prefix=/path/to/install] [--with-ssl=/path/to/OpenSSL]
 </pre>
 For more options, please check
 <pre class="fragment">
 $ vcbuild.bat --help
 </pre>
-You can find headers at /path/to/install/include,
-libraries at /path/to/install/lib
-and documents at ${top\_project\_dir}/doc/html/index.html.<br>
+
 
 ## Available Network Architecture
 ### Basic
