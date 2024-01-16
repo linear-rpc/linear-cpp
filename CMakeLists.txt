@@ -158,7 +158,7 @@ set(linear_libraries ${linear_libraries} ${OPENSSL_CRYPTO_LIBRARY} ${OPENSSL_SSL
 
 add_subdirectory(deps/libtv)
 include_directories(deps/libtv/deps/http-parser deps/msgpack/include)
-set(linear_libraries ${linear_libraries} tv uv)
+set(linear_libraries ${linear_libraries} tv uv_a)
 
 add_library(linear STATIC ${linear_sources})
 target_compile_definitions(linear PRIVATE ${linear_defines})
