@@ -19,14 +19,14 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: install lib
-      if: ${{matrix.os}} == 'macos-latest'
+      if: ${{ matrix.os }} == 'macos-latest'
       run: (brew update; brew install automake autoconf libtool openssl@1.1; brew --prefix openssl@1.1)
     - name: git
       run: git fetch; git checkout develop; git submodule update --init --recursive
     - name: bootstrap
       run: ./bootstrap
     - name: configure-macos
-      if: ${{matrix.os}} == 'macos-latest'
+      if: ${{ matrix.os }} == 'macos-latest'
       run: ./configure --with-test --with-ssl=$(brew --prefix openssl@1.1)
     - name: configure-other
       if: steps.configure.conclusion == 'skipped'
