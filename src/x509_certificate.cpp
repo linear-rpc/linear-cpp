@@ -20,7 +20,8 @@ std::string X509Principal::GetCommonName() const {
 class X509Certificate::X509CertificateImpl {
  public:
   explicit X509CertificateImpl(X509* xcert) {
-    cert_ = X509_dup(xcert);
+    X509_up_ref(xcert);
+    cert_ = xcert;
   }
   ~X509CertificateImpl() {
     X509_free(cert_);
