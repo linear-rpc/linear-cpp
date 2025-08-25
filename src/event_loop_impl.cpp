@@ -5,6 +5,10 @@
 
 using namespace linear::log;
 
+#ifdef MAX_MSGPACK_MALLOC_SIZE
+size_t msgpack::zone::m_total_size = 0;
+#endif
+
 namespace linear {
 
 void EventLoopImpl::OnAccept(tv_stream_t* srv_stream, tv_stream_t* cli_stream, int status) {

@@ -44,14 +44,34 @@ class any {
 
   /// @cond hidden
   any() : zone_(), object_(), type(NIL) {
+    #ifdef MAX_MSGPACK_MALLOC_SIZE
+    if (!is_messagepack_memory_available(MSGPACK_ZONE_CHUNK_SIZE)) {
+      throw std::bad_alloc();
+    }
+    #endif
   }
   any(const any& a) : zone_() {
+    #ifdef MAX_MSGPACK_MALLOC_SIZE
+    if (!is_messagepack_memory_available(a.zone_.get_zone_size())) {
+      throw std::bad_alloc();
+    }
+    #endif
     copy_msgpack_object(a.object_, &object_, zone_);
     type = static_cast<linear::type::any::Type>(object_.type);
   }
   any(const linear::type::nil&) : zone_(), object_(), type(NIL) {
+    #ifdef MAX_MSGPACK_MALLOC_SIZE
+    if (!is_messagepack_memory_available(MSGPACK_ZONE_CHUNK_SIZE)) {
+      throw std::bad_alloc();
+    }
+    #endif
   }
   any(const msgpack::object& o) : zone_() {
+    #ifdef MAX_MSGPACK_MALLOC_SIZE
+    if (!is_messagepack_memory_available(MSGPACK_ZONE_CHUNK_SIZE)) {
+      throw std::bad_alloc();
+    }
+    #endif
     copy_msgpack_object(o, &object_, zone_);
     type = static_cast<linear::type::any::Type>(object_.type);
   }
@@ -174,6 +194,16 @@ class any {
   static int isnprint(char c) {
     return !isprint(c);
   }
+  #ifdef MAX_MSGPACK_MALLOC_SIZE
+  bool is_messagepack_memory_available(size_t size) const {
+    // std::cout << "is memory available " << zone_.get_total_size() << " " << size << std::endl;
+    if (zone_.get_total_size() + size >= MAX_MSGPACK_MALLOC_SIZE) {
+      // std::cout << "lack of memory" << std::endl;
+      return false;
+    }
+    return true;
+  }
+  #endif
 
   void copy_msgpack_object(const msgpack::object& src, msgpack::object* dst, msgpack::zone& z) const {
     dst->type = src.type;
