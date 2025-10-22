@@ -8,6 +8,7 @@
 
 #include <algorithm>
 #include <sstream>
+#include <iostream>
 
 #include "linear/binary.h"
 #include "linear/optional.h"
@@ -77,8 +78,17 @@ class any {
   }
   template <typename Value>
   any(const Value& value) : zone_(), object_(value, zone_), type(static_cast<linear::type::any::Type>(object_.type)) {
+    if (!is_messagepack_memory_available(MSGPACK_ZONE_CHUNK_SIZE)) {
+      throw std::bad_alloc();
+    }
   }
   ~any() {
+  #ifdef MAX_MSGPACK_MALLOC_SIZE
+    std::cout << "*** Delete Zone ***" << std::endl;
+    std::cout << "zone_address: " << static_cast<const void*>(&zone_) << std::endl;
+    std::cout << "total_size: " << zone_.get_total_size() << std::endl;
+    std::cout << "zone_size: " << zone_.get_zone_size() << std::endl;
+  #endif
   }
   template <typename Value>
   any& operator=(const Value& value) {
@@ -196,11 +206,18 @@ class any {
   }
   #ifdef MAX_MSGPACK_MALLOC_SIZE
   bool is_messagepack_memory_available(size_t size) const {
-    // std::cout << "is memory available " << zone_.get_total_size() << " " << size << std::endl;
+    std::cout << "########## is_messagepack_memory_available FUNC IN" << std::endl;
+    std::cout << "MAX=" << MAX_MSGPACK_MALLOC_SIZE << ": TOTAL=" << zone_.get_total_size() + size << " (Size=" << size << ")" << std::endl;
+    std::cout << "=== DETAILED MEMORY DEBUG ===" << std::endl;
+    std::cout << "zone_address: " << static_cast<const void*>(&zone_) << std::endl;
+    std::cout << "total_size: " << zone_.get_total_size() << std::endl;
+    std::cout << "zone_size: " << zone_.get_zone_size() << std::endl;
     if (zone_.get_total_size() + size >= MAX_MSGPACK_MALLOC_SIZE) {
-      // std::cout << "lack of memory" << std::endl;
-      return false;
+        std::cout << "########## MEMORY LIMIT EXCEEDED!" << std::endl;
+        std::cout << "########## is_messagepack_memory_available FUNC OUT(FALSE)" << std::endl;
+        return false;
     }
+    std::cout << "########## is_messagepack_memory_available FUNC OUT(TRUE)" << std::endl;
     return true;
   }
   #endif

@@ -12,105 +12,159 @@ size_t msgpack::zone::m_total_size = 0;
 namespace linear {
 
 void EventLoopImpl::OnAccept(tv_stream_t* srv_stream, tv_stream_t* cli_stream, int status) {
-  assert(srv_stream != NULL && srv_stream->data != NULL);
-  ServerEvent* ev = static_cast<ServerEvent*>(srv_stream->data);
-  if (linear::shared_ptr<ServerImpl> server = ev->server.lock()) {
-    server->OnAccept(srv_stream, cli_stream, status);
+  try {
+    assert(srv_stream != NULL && srv_stream->data != NULL);
+    ServerEvent* ev = static_cast<ServerEvent*>(srv_stream->data);
+    if (linear::shared_ptr<ServerImpl> server = ev->server.lock()) {
+      server->OnAccept(srv_stream, cli_stream, status);
+    }
+  } catch (const std::exception& e) {
+    LINEAR_LOG(LOG_ERR, "Exception in OnAccept: %s\n", e.what());
+  } catch (...) {
+    LINEAR_LOG(LOG_ERR, "Unknown exception in OnAccept\n");
   }
 }
 
 void EventLoopImpl::OnAcceptComplete(tv_stream_t* stream, int status) {
-  assert(stream != NULL && stream->data != NULL);
-  SocketEvent* ev = static_cast<SocketEvent*>(stream->data);
-  if (linear::shared_ptr<SocketImpl> socket = ev->socket.lock()) {
-    socket->OnHandshakeComplete(socket, stream, status);
+  try {
+    assert(stream != NULL && stream->data != NULL);
+    SocketEvent* ev = static_cast<SocketEvent*>(stream->data);
+    if (linear::shared_ptr<SocketImpl> socket = ev->socket.lock()) {
+      socket->OnHandshakeComplete(socket, stream, status);
+    }
+  } catch (const std::exception& e) {
+    LINEAR_LOG(LOG_ERR, "Exception in OnAcceptComplete: %s\n", e.what());
+  } catch (...) {
+    LINEAR_LOG(LOG_ERR, "Unknown exception in OnAcceptComplete\n");
   }
 }
 
 void EventLoopImpl::OnConnect(tv_stream_t* stream, int status) {
-  assert(stream != NULL && stream->data != NULL);
-  SocketEvent* ev = static_cast<SocketEvent*>(stream->data);
-  if (linear::shared_ptr<SocketImpl> socket = ev->socket.lock()) {
-    socket->OnConnect(socket, stream, status);
+  try {
+    assert(stream != NULL && stream->data != NULL);
+    SocketEvent* ev = static_cast<SocketEvent*>(stream->data);
+    if (linear::shared_ptr<SocketImpl> socket = ev->socket.lock()) {
+      socket->OnConnect(socket, stream, status);
+    }
+  } catch (const std::exception& e) {
+    LINEAR_LOG(LOG_ERR, "Exception in OnConnect: %s\n", e.what());
+  } catch (...) {
+    LINEAR_LOG(LOG_ERR, "Unknown exception in OnConnect\n");
   }
 }
 
 void EventLoopImpl::OnClose(tv_handle_t* handle) {
-  assert(handle != NULL && handle->data != NULL);
-  switch (static_cast<Event*>(handle->data)->type) {
-  case SERVER:
-    {
-      ServerEvent* ev = static_cast<ServerEvent*>(handle->data);
-      delete ev;
-    }
-    break;
-  case SOCKET:
-    {
-      SocketEvent* ev = static_cast<SocketEvent*>(handle->data);
-      if (linear::shared_ptr<SocketImpl> socket = ev->socket.lock()) {
-        socket->OnDisconnect(socket);
+  try {
+    assert(handle != NULL && handle->data != NULL);
+    switch (static_cast<Event*>(handle->data)->type) {
+    case SERVER:
+      {
+        ServerEvent* ev = static_cast<ServerEvent*>(handle->data);
+        delete ev;
       }
-      delete ev;
+      break;
+    case SOCKET:
+      {
+        SocketEvent* ev = static_cast<SocketEvent*>(handle->data);
+        if (linear::shared_ptr<SocketImpl> socket = ev->socket.lock()) {
+          socket->OnDisconnect(socket);
+        }
+        delete ev;
+      }
+      break;
+    case TIMER:
+      {
+        TimerEvent* ev = static_cast<TimerEvent*>(handle->data);
+        delete ev;
+      }
+      break;
+    default:
+      LINEAR_LOG(LOG_ERR, "BUG: invalid type of event");
+      assert(false);
     }
-    break;
-  case TIMER:
-    {
-      TimerEvent* ev = static_cast<TimerEvent*>(handle->data);
-      delete ev;
-    }
-    break;
-  default:
-    LINEAR_LOG(LOG_ERR, "BUG: invalid type of event");
-    assert(false);
+    free(handle);
+  } catch (const std::exception& e) {
+    LINEAR_LOG(LOG_ERR, "Exception in OnClose: %s\n", e.what());
+  } catch (...) {
+    LINEAR_LOG(LOG_ERR, "Unknown exception in OnClose\n");
   }
-  free(handle);
 }
 
 void EventLoopImpl::OnRead(tv_stream_t* stream, ssize_t nread, const tv_buf_t* buffer) {
-  assert(stream != NULL && stream->data != NULL && buffer != NULL);
-  SocketEvent* ev = static_cast<SocketEvent*>(stream->data);
-  if (linear::shared_ptr<SocketImpl> socket = ev->socket.lock()) {
-    socket->OnRead(socket, buffer, nread);
+  try {
+    assert(stream != NULL && stream->data != NULL && buffer != NULL);
+    SocketEvent* ev = static_cast<SocketEvent*>(stream->data);
+    if (linear::shared_ptr<SocketImpl> socket = ev->socket.lock()) {
+      socket->OnRead(socket, buffer, nread);
+    }
+  } catch (const std::exception& e) {
+    LINEAR_LOG(LOG_ERR, "Exception in OnRead: %s\n", e.what());
+  } catch (...) {
+    LINEAR_LOG(LOG_ERR, "Unknown exception in OnRead\n");
   }
 }
 
 void EventLoopImpl::OnWrite(tv_write_t* request, int status) {
-  assert(request != NULL && request->data != NULL &&
-         request->handle != NULL && request->handle->data != NULL &&
-         request->buf.base != NULL);
-  Message* message = static_cast<Message*>(request->data);
-  SocketEvent* ev = static_cast<SocketEvent*>(request->handle->data);
-  if (linear::shared_ptr<SocketImpl> socket = ev->socket.lock()) {
-    socket->OnWrite(socket, message, status);
+  try {
+    assert(request != NULL && request->data != NULL &&
+           request->handle != NULL && request->handle->data != NULL &&
+           request->buf.base != NULL);
+    Message* message = static_cast<Message*>(request->data);
+    SocketEvent* ev = static_cast<SocketEvent*>(request->handle->data);
+    if (linear::shared_ptr<SocketImpl> socket = ev->socket.lock()) {
+      socket->OnWrite(socket, message, status);
+    }
+    delete message;
+    free(request->buf.base);
+    free(request);
+  } catch (const std::exception& e) {
+    LINEAR_LOG(LOG_ERR, "Exception in OnWrite: %s\n", e.what());
+  } catch (...) {
+    LINEAR_LOG(LOG_ERR, "Unknown exception in OnWrite\n");
   }
-  delete message;
-  free(request->buf.base);
-  free(request);
 }
 
 void EventLoopImpl::OnTimer(tv_timer_t* handle) {
-  assert(handle != NULL && handle->data != NULL);
-  TimerEvent* ev = static_cast<TimerEvent*>(handle->data);
-  if (linear::shared_ptr<TimerImpl> timer = ev->timer.lock()) {
-    timer->OnTimer();
+  try {
+    assert(handle != NULL && handle->data != NULL);
+    TimerEvent* ev = static_cast<TimerEvent*>(handle->data);
+    if (linear::shared_ptr<TimerImpl> timer = ev->timer.lock()) {
+      timer->OnTimer();
+    }
+  } catch (const std::exception& e) {
+    LINEAR_LOG(LOG_ERR, "Exception in OnTimer: %s\n", e.what());
+  } catch (...) {
+    LINEAR_LOG(LOG_ERR, "Unknown exception in OnTimer\n");
   }
 }
 
 void EventLoopImpl::OnConnectTimeout(void* args) {
-  assert(args != NULL);
-  SocketEvent* ev = static_cast<SocketEvent*>(args);
-  if (linear::shared_ptr<SocketImpl> socket = ev->socket.lock()) {
-    socket->OnConnectTimeout(socket);
+  try {
+    assert(args != NULL);
+    SocketEvent* ev = static_cast<SocketEvent*>(args);
+    if (linear::shared_ptr<SocketImpl> socket = ev->socket.lock()) {
+      socket->OnConnectTimeout(socket);
+    }
+  } catch (const std::exception& e) {
+    LINEAR_LOG(LOG_ERR, "Exception in OnConnectTimeout: %s\n", e.what());
+  } catch (...) {
+    LINEAR_LOG(LOG_ERR, "Unknown exception in OnConnectTimeout\n");
   }
 }
 
 void EventLoopImpl::OnRequestTimeout(void* args) {
-  assert(args != NULL);
-  SocketImpl::RequestTimer* request_timer = static_cast<SocketImpl::RequestTimer*>(args);
-  if (linear::shared_ptr<SocketImpl> socket = request_timer->socket.lock()) {
-    socket->OnRequestTimeout(socket, request_timer->request);
+  try {
+    assert(args != NULL);
+    SocketImpl::RequestTimer* request_timer = static_cast<SocketImpl::RequestTimer*>(args);
+    if (linear::shared_ptr<SocketImpl> socket = request_timer->socket.lock()) {
+      socket->OnRequestTimeout(socket, request_timer->request);
+    }
+    delete request_timer;
+  } catch (const std::exception& e) {
+    LINEAR_LOG(LOG_ERR, "Exception in OnRequestTimeout: %s\n", e.what());
+  } catch (...) {
+    LINEAR_LOG(LOG_ERR, "Unknown exception in OnRequestTimeout\n");
   }
-  delete request_timer;
 }
 
 EventLoopImpl::EventLoopImpl() : handle_(tv_loop_new()) {
