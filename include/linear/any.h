@@ -78,9 +78,6 @@ class any {
   }
   template <typename Value>
   any(const Value& value) : zone_(), object_(value, zone_), type(static_cast<linear::type::any::Type>(object_.type)) {
-    if (!is_messagepack_memory_available(MSGPACK_ZONE_CHUNK_SIZE)) {
-      throw std::bad_alloc();
-    }
   }
   ~any() {
   #ifdef MAX_MSGPACK_MALLOC_SIZE
