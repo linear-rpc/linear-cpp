@@ -8,7 +8,6 @@
 
 #include <algorithm>
 #include <sstream>
-#include <iostream>
 
 #include "linear/binary.h"
 #include "linear/optional.h"
@@ -45,34 +44,14 @@ class any {
 
   /// @cond hidden
   any() : zone_(), object_(), type(NIL) {
-    #ifdef MAX_MSGPACK_MALLOC_SIZE
-    if (!is_messagepack_memory_available(MSGPACK_ZONE_CHUNK_SIZE)) {
-      throw std::bad_alloc();
-    }
-    #endif
   }
   any(const any& a) : zone_() {
-    #ifdef MAX_MSGPACK_MALLOC_SIZE
-    if (!is_messagepack_memory_available(a.zone_.get_zone_size())) {
-      throw std::bad_alloc();
-    }
-    #endif
     copy_msgpack_object(a.object_, &object_, zone_);
     type = static_cast<linear::type::any::Type>(object_.type);
   }
   any(const linear::type::nil&) : zone_(), object_(), type(NIL) {
-    #ifdef MAX_MSGPACK_MALLOC_SIZE
-    if (!is_messagepack_memory_available(MSGPACK_ZONE_CHUNK_SIZE)) {
-      throw std::bad_alloc();
-    }
-    #endif
   }
   any(const msgpack::object& o) : zone_() {
-    #ifdef MAX_MSGPACK_MALLOC_SIZE
-    if (!is_messagepack_memory_available(MSGPACK_ZONE_CHUNK_SIZE)) {
-      throw std::bad_alloc();
-    }
-    #endif
     copy_msgpack_object(o, &object_, zone_);
     type = static_cast<linear::type::any::Type>(object_.type);
   }
@@ -80,12 +59,6 @@ class any {
   any(const Value& value) : zone_(), object_(value, zone_), type(static_cast<linear::type::any::Type>(object_.type)) {
   }
   ~any() {
-  #ifdef MAX_MSGPACK_MALLOC_SIZE
-    std::cout << "*** Delete Zone ***" << std::endl;
-    std::cout << "zone_address: " << static_cast<const void*>(&zone_) << std::endl;
-    std::cout << "total_size: " << zone_.get_total_size() << std::endl;
-    std::cout << "zone_size: " << zone_.get_zone_size() << std::endl;
-  #endif
   }
   template <typename Value>
   any& operator=(const Value& value) {
@@ -201,23 +174,6 @@ class any {
   static int isnprint(char c) {
     return !isprint(c);
   }
-  #ifdef MAX_MSGPACK_MALLOC_SIZE
-  bool is_messagepack_memory_available(size_t size) const {
-    std::cout << "########## is_messagepack_memory_available FUNC IN" << std::endl;
-    std::cout << "MAX=" << MAX_MSGPACK_MALLOC_SIZE << ": TOTAL=" << zone_.get_total_size() + size << " (Size=" << size << ")" << std::endl;
-    std::cout << "=== DETAILED MEMORY DEBUG ===" << std::endl;
-    std::cout << "zone_address: " << static_cast<const void*>(&zone_) << std::endl;
-    std::cout << "total_size: " << zone_.get_total_size() << std::endl;
-    std::cout << "zone_size: " << zone_.get_zone_size() << std::endl;
-    if (zone_.get_total_size() + size >= MAX_MSGPACK_MALLOC_SIZE) {
-        std::cout << "########## MEMORY LIMIT EXCEEDED!" << std::endl;
-        std::cout << "########## is_messagepack_memory_available FUNC OUT(FALSE)" << std::endl;
-        return false;
-    }
-    std::cout << "########## is_messagepack_memory_available FUNC OUT(TRUE)" << std::endl;
-    return true;
-  }
-  #endif
 
   void copy_msgpack_object(const msgpack::object& src, msgpack::object* dst, msgpack::zone& z) const {
     dst->type = src.type;
