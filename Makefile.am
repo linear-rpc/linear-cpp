@@ -11,7 +11,7 @@ endif
 all-local:
 	(cd deps/libtv; $(MAKE))
 	@if [ $(WITH_TEST) ]; then \
-		(cd deps/googletest-release-1.11.0/build; $(MAKE)); \
+		(cd deps/googletest-1.17.0/build; $(MAKE)); \
 	fi
 
 install-data-local:
