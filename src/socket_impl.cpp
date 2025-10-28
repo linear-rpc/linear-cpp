@@ -523,7 +523,7 @@ void SocketImpl::OnRead(const shared_ptr<SocketImpl>& socket, const tv_buf_t* bu
   }
   // nread > 0
   #ifdef MAX_MSGPACK_MALLOC_SIZE
-  LINEAR_LOG(LOG_INFO, "receive message(%ld, %ld)", nread, unpacker_.nonparsed_size());
+  // LINEAR_LOG(LOG_INFO, "receive message(%ld, %ld)", nread, unpacker_.nonparsed_size());
   if (nread + unpacker_.nonparsed_size() > MAX_MSGPACK_MALLOC_SIZE) {
     LINEAR_LOG(LOG_ERR, "message size is too large(%ld)", nread + unpacker_.nonparsed_size());
     unpacker_.remove_nonparsed_buffer();
