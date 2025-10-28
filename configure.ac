@@ -1,7 +1,7 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 
-AC_INIT([linear], [3.6.3], [https://github.com/linear-rpc/linear-cpp])
+AC_INIT([linear], [3.6.4], [https://github.com/linear-rpc/linear-cpp])
 AC_CONFIG_AUX_DIR([m4])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_SRCDIR([include/linear/handler.h])
@@ -147,7 +147,7 @@ AC_CONFIG_FILES([Makefile
 AC_CONFIG_SUBDIRS([deps/msgpack deps/libtv])
 
 if test "x${with_test}" != "xno"; then
-   AC_CONFIG_COMMANDS([runcmake], [cd deps/googletest-release-1.11.0; mkdir build; cd build; cmake ../])
+   AC_CONFIG_COMMANDS([runcmake], [cd deps/googletest-release-1.11.0; mkdir build; cd build; cmake -DCMAKE_POLICY_VERSION_MINIMUM=3.5 ../])
 fi
 
 AC_CHECK_PROG(PKG_CONFIG, pkg-config, yes)

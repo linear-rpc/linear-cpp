@@ -249,6 +249,18 @@ int main(int argc, char* argv[]) {
       if (err.Code() != linear::LNR_OK) {
         std::cout << err.Message() << std::endl;
       }
+    } else if (cmd == "echo_big") {
+      std::string data(2000000, 'A');
+      std::cout << "A Response will be received by ApplicationHandler::OnMessage asynchronously" << std::endl;
+      std::cout << "Input some words: " << std::endl;
+      //std::getline(std::cin, data);
+
+      linear::Request request(cmd, data);
+      std::cout << "msgid: " << request.msgid << std::endl;
+      linear::Error err = request.Send(socket, 3000); // timeout == 3 sec
+      if (err.Code() != linear::LNR_OK) {
+        std::cout << err.Message() << std::endl;
+      }
     } else if (cmd == "notify") {
       linear::Notify notify("from client", Derived());
       linear::Error err = notify.Send(socket);
